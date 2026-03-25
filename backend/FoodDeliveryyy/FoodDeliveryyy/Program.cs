@@ -34,11 +34,12 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
     // Krijon tabelat automatikisht në MySQL
-    db.Database.EnsureCreated();
+    //db.Database.EnsureCreated();
 
-    // Shto një user për test
-    db.Users.Add(new User { Name = "Erza", Email = "erza@example.com" });
-    db.SaveChanges();
+    if (!db.Users.Any(u => u.Email == "erza@example.com")) {
+        db.Users.Add(new User { Name = "Erza", Email = "erza@example.com" });
+        db.SaveChanges();
+    }
 
     // Lexo dhe printo user-at
     var users = db.Users.ToList();
