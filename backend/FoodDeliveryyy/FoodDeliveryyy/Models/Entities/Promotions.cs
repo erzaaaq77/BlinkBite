@@ -1,0 +1,42 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace FoodDeliveryyy.Models.Entities;
+
+
+public class Promotions
+{
+    [Key]
+    public int Id { get; set; }
+
+    [Required]
+    public int RestaurantId { get; set; }
+
+    public string Kodi { get; set; } = string.Empty;
+
+    [Required]
+    [Column(TypeName = "decimal(5,2)")]
+    [Range(0, 100, ErrorMessage = "Discount percentage must be between 0 and 100")]
+    public decimal ZbritjaPerqind { get; set; } = decimal.Zero;
+
+    [Column(TypeName = "decimal(10,2)")]
+    [Range(0, double.MaxValue, ErrorMessage = "Maximum discount must be a positive number")]
+    public decimal ZbritjaMax { get; set; } = decimal.Zero;
+
+    [Required]
+    public DateTime DataFillimit { get; set; } = DateTime.Now;
+
+    [Required]
+    public DateTime DataPerfundimit { get; set; }
+
+    [Required]
+    [StringLength(20)]
+    public string Statusi { get; set; } = "Active";
+
+    [ForeignKey("RestaurantId")]
+    public virtual Restaurant? Restaurant { get; set; }
+
+    [Required]
+    [StringLength(20)]
+    public string Statusi { get; set; } = "Active";
+}
