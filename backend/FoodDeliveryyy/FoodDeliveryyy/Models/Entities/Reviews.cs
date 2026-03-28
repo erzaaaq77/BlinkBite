@@ -32,5 +32,8 @@ public class Reviews
 
     [ForeignKey("UserId")]
     public  virtual Identity.User? User { get; set; }
+
+    [ForeignKey("RestaurantId")]
+    public virtual Restaurant? Restaurant { get; set; }
      
 }
