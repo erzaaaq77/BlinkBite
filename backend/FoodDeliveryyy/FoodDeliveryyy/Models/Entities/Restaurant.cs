@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Enums;
+using FoodDeliveryyy.Models.Identity;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -43,7 +45,7 @@ public class Restaurant {
     public decimal Rating { get; set; }
 
     [StringLength(20)]
-    public string Statusi {  get; set; } = "Active";
+    public RestaurantStatus Statusi {  get; set; } = RestaurantStatus.Pending;
 
     [Required]
     public string UserId {  get; set; } = string.Empty;
@@ -54,11 +56,11 @@ public class Restaurant {
 
     public virtual ICollection<MenuCategory> MenuCategories { get; set; } = new List<MenuCategory>();
 
-    public virtual ICollection<Order> Orders { get; set; } = new List<Order>();
+    public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();
 
-    public virtual ICollection<Promotion> Promotions { get; set; } = new List<Promotion>();
+    public virtual ICollection<Promotions> Promotions { get; set; } = new List<Promotions>();
 
-    public virtual ICollection<Review> Reviews { get; set; } = new List<Review>();
+    public virtual ICollection<Reviews> Reviews { get; set; } = new List<Reviews>();
 
     [NotMapped]
 
@@ -72,4 +74,4 @@ public class Restaurant {
 
 }
 
-}
+

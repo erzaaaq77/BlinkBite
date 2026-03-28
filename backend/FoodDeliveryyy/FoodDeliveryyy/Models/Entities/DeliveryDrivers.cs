@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Enums;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -14,17 +15,17 @@ public class DeliveryDrivers
     public string Automjeti {  get; set; } = string.Empty;
 
 
-    [Reuqired]
+    [Required]
     [StringLength(20)]
     public string Targa { get; set; } = string.Empty;
 
-    [Reuqired]
+    [Required]
     [StringLength(100)]
     public string Zona {  get; set; } = string.Empty;
 
     [Required]
 
-    public string Statusi {  get; set; } = "Available";
+    public DriverStatus Statusi {  get; set; } = DriverStatus.Available;
 
     [Range(0,5)]
     public decimal Vlersimi {  get; set; }
@@ -33,7 +34,7 @@ public class DeliveryDrivers
     public int UserId {  get; set; }
 
     [ForeignKey("UserId")]
-    public virtual Order? Order {  get; set; }
+    public virtual Orders? Order {  get; set; }
 
     
 

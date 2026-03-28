@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Enums;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -9,9 +10,9 @@ public class Deliveries
     [Key]
     public int Id {  get; set; }
 
-    [Reuqired]
+    [Required]
     [StringLength(100)]
-    public string Statusi {  get; set; }  = string.Empty;
+    public DeliveryStatus Statusi {  get; set; }  = DeliveryStatus.Pending;
 
     
     public DateTime? DataMarrjes { get; set; }
@@ -27,7 +28,7 @@ public class Deliveries
     public int DriverId {  get; set; }
 
     [ForeignKey("OrderID")]
-    public virtual Order? Order { get; set; }
+    public virtual Orders? Order { get; set; }
 
     [ForeignKey("DriverId")]
     public virtual DeliveryDrivers? Driver {  get; set; }

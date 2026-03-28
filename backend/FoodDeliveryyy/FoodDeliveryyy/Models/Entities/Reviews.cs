@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Identity;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -30,6 +31,6 @@ public class Reviews
     public  virtual Orders? Order {  get; set; }
 
     [ForeignKey("UserId")]
-    public  virtual Identity.Users? User { get; set; }
+    public  virtual Identity.User? User { get; set; }
      
 }

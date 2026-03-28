@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Enums;
+using FoodDeliveryyy.Models.Identity;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -10,7 +12,7 @@ public class Orders {
     public int Id {  get; set; }
 
     [Required]
-    public int UserId { get; set; } = string.Empty;
+    public string UserId { get; set; } = string.Empty;
 
     [Required]
     public int RestaurantId { get; set; }
@@ -31,11 +33,11 @@ public class Orders {
 
     [Required]
     [StringLength(50)]
-    public string Statusi { get; set; } = "Pending";
+    public OrderStatus Statusi { get; set; } = OrderStatus.Pending;
 
     [Required]
     [StringLength(50)]
-    public string MetodaPageses { get; set; } = string.Empty;
+    public PaymentMethod MetodaPageses { get; set; } = PaymentMethod.Cash;
 
     public DateTime DataPorosis { get; set; } = DateTime.UtcNow;
 
@@ -48,10 +50,10 @@ public class Orders {
     [ForeignKey("RestaurantId")]
     public virtual Restaurant? Restaurant { get; set; }
 
-    public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public virtual ICollection<OrderItems> OrderItems { get; set; } = new List<OrderItems>();
 
-    public virtual Delivery? Delivery { get; set; }
+    public virtual Deliveries? Delivery { get; set; }
 
-    public virtual Review? Review { get; set; }
+    public virtual Reviews? Review { get; set; }
 
 }

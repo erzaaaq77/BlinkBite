@@ -29,7 +29,7 @@ public class Addresses
     public bool EshteKryesore {  get; set; }=false;
 
     [ForeignKey("UserId")]
-    public virtual Identity.Users? User { get; set; }
+    public virtual Identity.User? User { get; set; }
 
 
 

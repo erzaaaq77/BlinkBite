@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Enums;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -31,12 +32,12 @@ public class Promotions
 
     [Required]
     [StringLength(20)]
-    public string Statusi { get; set; } = "Active";
+    public PromotionStatus Statusi { get; set; } = PromotionStatus.Active;
 
     [ForeignKey("RestaurantId")]
     public virtual Restaurant? Restaurant { get; set; }
 
     [Required]
     [StringLength(20)]
-    public string Statusi { get; set; } = "Active";
+    public PromotionStatus Status { get; set; } = PromotionStatus.Active;
 }

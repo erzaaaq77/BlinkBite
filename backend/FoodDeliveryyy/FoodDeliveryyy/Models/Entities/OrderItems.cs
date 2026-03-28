@@ -25,10 +25,10 @@ public class OrderItems {
     public int MenuItemId {  get; set; }
 
     [ForeignKey("OrderId")]
-    public virtual Order? Order { get; set; }
+    public virtual Orders? Order { get; set; }
 
     [ForeignKey("MenuItemId")]
-    public virtual MenuItem? MenuItem { get; set; }
+    public virtual MenuItems? MenuItem { get; set; }
 
 
 
