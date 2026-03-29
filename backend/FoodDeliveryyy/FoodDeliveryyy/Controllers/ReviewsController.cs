@@ -1,5 +1,6 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -130,7 +131,7 @@ public class ReviewsController : ControllerBase
             return BadRequest("Porosia nuk ekziston");
         }
 
-        if (order.Statusi != "Delivered")
+        if (order.Statusi != OrderStatus.Delivered)
         {
             return BadRequest("Mund të vlerësoni vetëm porositë e dorëzuara");
         }

@@ -20,6 +20,10 @@ public class Addresses
     [Required]
     [StringLength(600)]
     public string Adresa { get; set; }
+    
+    [Required]
+    [StringLength(50)]
+    public string Qyteti { get; set; } = string.Empty;
 
     [Column(TypeName = "decimal(9,6)")]
     public decimal Latitude { get; set; }
