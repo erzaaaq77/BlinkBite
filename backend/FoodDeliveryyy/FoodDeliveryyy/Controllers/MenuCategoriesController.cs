@@ -18,13 +18,13 @@ public class MenuCategoriesController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MenuCategory>>> GetMenuCategories()
     {
-        return await _context.MenuCategory.ToListAsync();
+        return await _context.MenuCategories.ToListAsync();
     }
 
     [HttpGet("{id}")]
     public async Task<ActionResult<MenuCategory>> GetMenuCategory(int id)
     {
-        var category = await _context.MenuCategory.FindAsync(id);
+        var category = await _context.MenuCategories.FindAsync(id);
         if (category == null) return NotFound();
         return category;
     }
@@ -32,7 +32,7 @@ public class MenuCategoriesController : ControllerBase
     [HttpGet("by-restaurant/{restaurantId}")]
     public async Task<ActionResult<IEnumerable<MenuCategory>>> GetByRestaurant(int restaurantId)
     {
-        var categories = await _context.MenuCategory
+        var categories = await _context.MenuCategories
             .Where(c => c.RestaurantId == restaurantId)
             .OrderBy(c => c.Renditja)
             .ToListAsync();
@@ -42,7 +42,7 @@ public class MenuCategoriesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<MenuCategory>> CreateMenuCategory(MenuCategory category)
     {
-        _context.MenuCategory.Add(category);
+        _context.MenuCategories.Add(category);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetMenuCategory), new { id = category.Id }, category);
     }
@@ -59,9 +59,9 @@ public class MenuCategoriesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeleteMenuCategory(int id)
     {
-        var category = await _context.MenuCategory.FindAsync(id);
+        var category = await _context.MenuCategories.FindAsync(id);
         if (category == null) return NotFound();
-        _context.MenuCategory.Remove(category);
+        _context.MenuCategories.Remove(category);
         await _context.SaveChangesAsync();
         return NoContent();
     }

@@ -1,4 +1,7 @@
-﻿using FoodDeliveryyy.Models.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Enums;
+using FoodDeliveryyy.Models.Identity;
 
 public class DeliveryDrivers
 {
@@ -23,12 +26,11 @@ public class DeliveryDrivers
     [Range(0, 5)]
     public decimal Vlersimi { get; set; }
 
+   
     [Required]
-    public int UserId {  get; set; }
-
-    [ForeignKey("UserId")]
-    public virtual Orders? Order {  get; set; }
+    public string UserId { get; set; } = string.Empty;
 
     
-
+    [ForeignKey("UserId")]
+    public virtual User User { get; set; } = null!;
 }
