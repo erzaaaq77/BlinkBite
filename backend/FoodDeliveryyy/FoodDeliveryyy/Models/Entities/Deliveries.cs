@@ -27,7 +27,7 @@ public class Deliveries
     [Required]
     public int DriverId {  get; set; }
 
-    [ForeignKey("OrderID")]
+    [ForeignKey("OrderId")]
     public virtual Orders? Order { get; set; }
 
     [ForeignKey("DriverId")]
