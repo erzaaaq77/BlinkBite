@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace FoodDeliveryyy.Data.Migrations
+namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
@@ -21,47 +21,6 @@ namespace FoodDeliveryyy.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 64);
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
-
-            modelBuilder.Entity("DeliveryDrivers", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Automjeti")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
-                    b.Property<string>("Statusi")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Targa")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<decimal>("Vlersimi")
-                        .HasColumnType("decimal(65,30)");
-
-                    b.Property<string>("Zona")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("DeliveryDrivers");
-                });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Addresses", b =>
                 {
@@ -142,6 +101,47 @@ namespace FoodDeliveryyy.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Deliveries");
+                });
+
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.DeliveryDrivers", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Automjeti")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("Statusi")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Targa")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<decimal>("Vlersimi")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<string>("Zona")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("DeliveryDrivers");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
@@ -362,11 +362,6 @@ namespace FoodDeliveryyy.Data.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Adresa")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -394,11 +389,6 @@ namespace FoodDeliveryyy.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("varchar(500)");
 
-                    b.Property<string>("Qyteti")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("varchar(50)");
-
                     b.Property<decimal>("Rating")
                         .HasColumnType("decimal(65,30)");
 
@@ -409,8 +399,7 @@ namespace FoodDeliveryyy.Data.Migrations
 
                     b.Property<string>("Telefoni")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("longtext");
 
                     b.Property<string>("UserId")
                         .IsRequired()
@@ -418,11 +407,55 @@ namespace FoodDeliveryyy.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Qyteti");
-
                     b.HasIndex("UserId");
 
                     b.ToTable("Restaurants");
+                });
+
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.RestaurantAddress", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Adresa")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsMain")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double");
+
+                    b.Property<string>("Qyteti")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<int>("RestaurantId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Zona")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Qyteti");
+
+                    b.HasIndex("RestaurantId");
+
+                    b.ToTable("RestaurantAddresses");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Reviews", b =>
@@ -646,14 +679,9 @@ namespace FoodDeliveryyy.Data.Migrations
                         .IsRequired()
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("UserId1")
-                        .HasColumnType("varchar(255)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("AspNetUserClaims", (string)null);
                 });
@@ -688,19 +716,9 @@ namespace FoodDeliveryyy.Data.Migrations
                     b.Property<string>("RoleId")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("RoleId1")
-                        .HasColumnType("varchar(255)");
-
-                    b.Property<string>("UserId1")
-                        .HasColumnType("varchar(255)");
-
                     b.HasKey("UserId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("RoleId1");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("AspNetUserRoles", (string)null);
                 });
@@ -716,28 +734,12 @@ namespace FoodDeliveryyy.Data.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("UserId1")
-                        .HasColumnType("varchar(255)");
-
                     b.Property<string>("Value")
                         .HasColumnType("longtext");
 
                     b.HasKey("UserId", "LoginProvider", "Name");
 
-                    b.HasIndex("UserId1");
-
                     b.ToTable("AspNetUserTokens", (string)null);
-                });
-
-            modelBuilder.Entity("DeliveryDrivers", b =>
-                {
-                    b.HasOne("FoodDeliveryyy.Models.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Addresses", b =>
@@ -753,7 +755,7 @@ namespace FoodDeliveryyy.Data.Migrations
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Deliveries", b =>
                 {
-                    b.HasOne("DeliveryDrivers", "Driver")
+                    b.HasOne("FoodDeliveryyy.Models.Entities.DeliveryDrivers", "Driver")
                         .WithMany()
                         .HasForeignKey("DriverId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -768,6 +770,17 @@ namespace FoodDeliveryyy.Data.Migrations
                     b.Navigation("Driver");
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.DeliveryDrivers", b =>
+                {
+                    b.HasOne("FoodDeliveryyy.Models.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
@@ -852,6 +865,17 @@ namespace FoodDeliveryyy.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.RestaurantAddress", b =>
+                {
+                    b.HasOne("FoodDeliveryyy.Models.Entities.Restaurant", "Restaurant")
+                        .WithMany("Adresat")
+                        .HasForeignKey("RestaurantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Restaurant");
+                });
+
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Reviews", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Entities.Orders", "Order")
@@ -902,14 +926,10 @@ namespace FoodDeliveryyy.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany()
+                        .WithMany("UserClaims")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany("UserClaims")
-                        .HasForeignKey("UserId1");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
@@ -924,37 +944,25 @@ namespace FoodDeliveryyy.Data.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Identity.Role", null)
-                        .WithMany()
+                        .WithMany("UserRoles")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("FoodDeliveryyy.Models.Identity.Role", null)
-                        .WithMany("UserRoles")
-                        .HasForeignKey("RoleId1");
-
                     b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany()
+                        .WithMany("UserRoles")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany("UserRoles")
-                        .HasForeignKey("UserId1");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany()
+                        .WithMany("UserTokens")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany("UserTokens")
-                        .HasForeignKey("UserId1");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
@@ -973,6 +981,8 @@ namespace FoodDeliveryyy.Data.Migrations
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Restaurant", b =>
                 {
+                    b.Navigation("Adresat");
+
                     b.Navigation("MenuCategories");
 
                     b.Navigation("Orders");

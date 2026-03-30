@@ -1,8 +1,9 @@
 using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Identity;
-using Microsoft.AspNetCore.Identity;
+using FoodDeliveryyy.Models.Entities;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Microsoft.AspNetCore.Identity;
 
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    DbInitializer.Initialize(context);
+}
+app.UseStaticFiles();
 // -------------------
 // Middleware pipeline
 // -------------------

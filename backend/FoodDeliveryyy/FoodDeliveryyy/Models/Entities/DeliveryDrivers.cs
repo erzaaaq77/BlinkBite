@@ -34,7 +34,7 @@ public class DeliveryDrivers
 
     
     [ForeignKey("UserId")]
-    public virtual Orders? Order {  get; set; }
+    public virtual User? User {  get; set; }
 
     
 

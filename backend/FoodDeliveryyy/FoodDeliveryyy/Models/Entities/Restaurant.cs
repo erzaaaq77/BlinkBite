@@ -18,15 +18,6 @@ public class Restaurant {
     public string Pershkrimi {  get; set; } = string.Empty;
 
     [Required]
-    [StringLength(200)]
-    public string Adresa { get; set; } = string.Empty;
-
-    [Required]
-    [StringLength(50)]
-    public string Qyteti { get; set; } = string.Empty;
-
-    [Required]
-    [StringLength(20)]
     public string Telefoni { get; set; } = string.Empty;
 
     [Required]
@@ -53,7 +44,7 @@ public class Restaurant {
     [ForeignKey("UserId")]
     //virtual -> mundeson lazyloading (te dhenat i marrim veq kur na duhen)
     public virtual User? User { get; set; }
-
+    public virtual ICollection<RestaurantAddress> Adresat { get; set; } = new List<RestaurantAddress>();
     public virtual ICollection<MenuCategory> MenuCategories { get; set; } = new List<MenuCategory>();
 
     public virtual ICollection<Orders> Orders { get; set; } = new List<Orders>();

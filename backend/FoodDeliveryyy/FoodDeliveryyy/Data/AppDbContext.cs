@@ -11,6 +11,7 @@ namespace FoodDeliveryyy.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Restaurant> Restaurants { get; set; } = null!;
+        public DbSet<RestaurantAddress> RestaurantAddresses { get; set; } = null!;
         public DbSet<MenuCategory> MenuCategories { get; set; } = null!;
         public DbSet<MenuItems> MenuItems { get; set; } = null!;
         public DbSet<Orders> Orders { get; set; } = null!;
@@ -55,7 +56,7 @@ namespace FoodDeliveryyy.Data
                 .Property(r => r.Statusi)
                 .HasConversion<string>();
 
-            builder.Entity<Restaurant>()
+            builder.Entity<RestaurantAddress>()
                 .HasIndex(r => r.Qyteti);
 
             builder.Entity<Orders>()
