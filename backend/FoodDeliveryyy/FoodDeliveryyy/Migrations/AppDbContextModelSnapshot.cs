@@ -146,10 +146,6 @@ namespace FoodDeliveryyy.Migrations
                     b.ToTable("Deliveries");
                 });
 
-
-                    b.ToTable("DeliveryDrivers");
-                });
-
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -710,17 +706,15 @@ namespace FoodDeliveryyy.Migrations
                         .WithMany()
                         .HasForeignKey("DriverId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .HasForeignKey("FoodDeliveryyy.Models.Entities.Deliveries", "OrderId")
-                {
+                        .IsRequired();
+
                     b.HasOne("FoodDeliveryyy.Models.Entities.Orders", "Order")
-                        .WithMany()
+                        .WithOne("Delivery")
+                        .HasForeignKey("FoodDeliveryyy.Models.Entities.Deliveries", "OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Driver");
-
-                    b.Navigation("Order");
-
-                    b.HasOne("FoodDeliveryyy.Models.Identity.User", null)
-                        .WithMany("DeliveryDrivers")
-                        .HasForeignKey("UserId1");
 
                     b.Navigation("Order");
                 });
