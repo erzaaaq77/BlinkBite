@@ -1,3 +1,11 @@
+body {
+  min-height: 100vh;
+  min-width: 100vw;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(135deg, #fffbe6 0%, #f7e7c4 60%, #bfa76a 100%);
+  font-family: 'Poppins', sans-serif;
+}
 .counter {
   font-size: 16px;
   padding: 5px 10px;
