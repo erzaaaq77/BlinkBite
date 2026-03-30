@@ -28,15 +28,14 @@ public class DeliveryDrivers
     [Range(0, 5)]
     public decimal Vlersimi { get; set; }
 
+   
     [Required]
-    public int UserId { get; set; }
+    public string UserId { get; set; } = string.Empty;
 
-    // navigation property for the related User
+    
     [ForeignKey("UserId")]
-    public virtual User User { get; set; } = null!;
+    public virtual Orders? Order {  get; set; }
 
-    public int? OrderId { get; set; }
+    
 
-    [ForeignKey("OrderId")]
-    public virtual Orders? Order { get; set; }
 }
