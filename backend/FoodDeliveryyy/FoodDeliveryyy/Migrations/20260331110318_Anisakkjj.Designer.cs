@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260330185043_AddedTabless")]
-    partial class AddedTabless
+    [Migration("20260331110318_Anisakkjj")]
+    partial class Anisakkjj
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
