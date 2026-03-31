@@ -46,6 +46,7 @@ builder.Services.AddCors(options =>
     });
 });
 
+Console.WriteLine("Application starting...");
 var app = builder.Build();
 
 
