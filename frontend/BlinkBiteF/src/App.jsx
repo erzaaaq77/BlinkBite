@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import heroImg from './assets/hero.png'
@@ -9,6 +9,33 @@ import api from "./services/api";
 
 function App() {
   const [count, setCount] = useState(0)
+  const [restaurants, setRestaurants] = useState([])
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await api.get('/restaurants')
+        const transformedData = response.data.map((restaurant) => ({
+          id: restaurant.id,
+          name: restaurant.emertimi,
+          image: restaurant.logo || 'https://via.placeholder.com/150?text=No+Image',
+        }))
+        setRestaurants(transformedData)
+      } catch (error) {
+        console.error('Error fetching restaurants:', error)
+        // Fallback to hardcoded data if backend not available
+        setRestaurants([
+          { id: 1, name: 'Burger King', image: 'https://via.placeholder.com/150?text=BK' },
+          { id: 2, name: 'KFC', image: 'https://via.placeholder.com/150?text=KFC' },
+          { id: 3, name: 'Proper Pizza', image: 'https://via.placeholder.com/150?text=PP' },
+          { id: 4, name: 'Sushi Co', image: 'https://via.placeholder.com/150?text=SC' },
+          { id: 5, name: 'Agusholli', image: 'https://via.placeholder.com/150?text=AG' },
+          { id: 6, name: 'Maqa', image: 'https://via.placeholder.com/150?text=MA' },
+        ])
+      }
+    }
+    fetchRestaurants()
+  }, [])
 
   return (
     <main style={{
@@ -97,6 +124,48 @@ function App() {
           onClick={() => alert(`Zgjodhe: ${cat.name}`)}
           >{cat.name}</div>
         ))}
+      </div>
+
+      {/* Restorantet */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        marginTop: '2rem',
+        width: '90%'
+      }}>
+        <h2 style={{ fontWeight: 700, fontSize: '2rem', color: '#4e3c1e', marginBottom: '1.5rem' }}>Restorantet Popullore</h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+          gap: '1.5rem',
+          width: '100%',
+          maxWidth: '1200px'
+        }}>
+          {restaurants.map((restaurant) => (
+            <div key={restaurant.id} style={{
+              background: '#fff',
+              borderRadius: '15px',
+              padding: '1rem',
+              boxShadow: '0 4px 15px #bfa76a33',
+              textAlign: 'center',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              border: '1px solid #f7e7c4'
+            }}
+            onClick={() => alert(`Zgjodhe: ${restaurant.name}`)}
+            >
+              <img src={restaurant.image} alt={restaurant.name} style={{
+                width: '100%',
+                height: '120px',
+                objectFit: 'cover',
+                borderRadius: '10px',
+                marginBottom: '0.5rem'
+              }} />
+              <h3 style={{ fontSize: '1.2rem', color: '#4e3c1e', margin: 0 }}>{restaurant.name}</h3>
+            </div>
+          ))}
+        </div>
       </div>
     </main>
   )

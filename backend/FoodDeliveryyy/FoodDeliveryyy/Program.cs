@@ -26,7 +26,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // -------------------
 // Identity
 // -------------------
-builder.Services.AddIdentity<User, IdentityRole>()
+builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
@@ -51,8 +51,11 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    DbInitializer.Initialize(context);
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<AppDbContext>();
+    var userManager = services.GetRequiredService<UserManager<User>>();
+    // initialize database and seed identity data
+    await DbInitializer.InitializeAsync(context, userManager);
 }
 app.UseStaticFiles();
 // -------------------
