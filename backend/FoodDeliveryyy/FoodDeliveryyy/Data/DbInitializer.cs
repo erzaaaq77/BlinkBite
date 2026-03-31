@@ -1,37 +1,36 @@
-﻿using FoodDeliveryyy.Data;
-using FoodDeliveryyy.Models.Entities;
+﻿using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
-using System;
-using System.Linq;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace FoodDeliveryyy.Data
 {
     public static class DbInitializer
     {
-        public static void Initialize(AppDbContext context)
+        public static async Task InitializeAsync(AppDbContext context, UserManager<User> userManager)
         {
-            context.Database.EnsureCreated();
+            // apply any pending migrations
+            await context.Database.MigrateAsync();
 
-            if (!context.Users.Any())
+            // create admin user via UserManager so Identity fields/password hashing are handled
+            if (!await userManager.Users.AnyAsync())
             {
-                var user = new User
+                var admin = new User
                 {
                     UserName = "admin",
-                    Email = "admin@example.com"
+                    Email = "admin@example.com",
+                    EmailConfirmed = true
                 };
 
-                context.Users.Add(user);
-                context.SaveChanges();
+                // create with a default password (change in production)
+                await userManager.CreateAsync(admin, "Admin@1234");
             }
 
-            if (!context.Restaurants.Any())
+            if (!await context.Restaurants.AnyAsync())
             {
-                // Get the admin user to assign as owner of the seeded restaurants
-                var adminUser = context.Users.FirstOrDefault(u => u.UserName == "admin");
-                if (adminUser == null)
-                {
-                    return; // nothing to attach restaurants to
-                }
+                var adminUser = await userManager.FindByNameAsync("admin");
+                if (adminUser == null) return;
 
                 var restaurants = new Restaurant[]
                 {
@@ -62,7 +61,7 @@ namespace FoodDeliveryyy.Data
                 };
 
                 context.Restaurants.AddRange(restaurants);
-                context.SaveChanges();
+                await context.SaveChangesAsync();
             }
         }
     }
