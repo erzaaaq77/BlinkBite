@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace FoodDeliveryyy.Migrations
 {
     /// <inheritdoc />
-    public partial class Anisakkjj : Migration
+    public partial class Migrationw : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
