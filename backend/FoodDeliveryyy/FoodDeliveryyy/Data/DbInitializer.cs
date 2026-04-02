@@ -405,17 +405,121 @@ public static class DbInitializer
 
                         }
 
-                        else if(restaurant.Emertimi=="Fika Eatery")
+                        else if (restaurant.Emertimi == "Fika Eatery")
                         {
                             addresses.Add(new RestaurantAddress
                             {
                                 RestaurantId = restaurant.Id,
                                 Adresa = "Bashkim Fehmiu 47",
                                 Qyteti = "Prishtinë",
-                                Zona = "",
+                                Zona = "Lakrishtë",
                                 IsMain = true
                             });
                         }
+                        else if (restaurant.Emertimi == "Mulliri")
+                        {
+                            addresses.Add(new RestaurantAddress
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Rr  Luan Haradinaj",
+                                Qyteti = "Prishtinë",
+                                Zona = "Qendër",
+                                IsMain = true
+
+
+
+                            });
+                        }
+
+                        else if (restaurant.Emertimi == "Gjiks&Chiks")
+                        {
+                            addresses.Add(new RestaurantAddress
+
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Rruga Vicianum",
+                                Qyteti = "Prishtinë",
+                                Zona = "Arbëri",
+                                IsMain = true
+                            });
+
+                        }
+
+                        else if (restaurant.Emertimi == "Smach Burger CO")
+                        {
+                            addresses.Add(new RestaurantAddress
+
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Ramiz Sadiku",
+                                Qyteti = "Prishtinë",
+                                Zona = "Pejton",
+                                IsMain = true
+                            });
+
+                        }
+                        else if (restaurant.Emertimi == "Buffalo Burgers")
+                        {
+                            addresses.Add(new RestaurantAddress
+
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Rruga Muharrem Fejza",
+                                Qyteti = "Prishtinë",
+                                Zona = "Bregu i Diellit",
+                                IsMain = false
+                            });
+
+                            addresses.Add(new RestaurantAddress
+
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Rr Nurije Zeka",
+                                Qyteti = "Prishtinë",
+                                Zona = "Qendër",
+                                IsMain = true
+                            });
+
+                        }
+
+                        else if (restaurant.Emertimi == "Hook Fish&Chips")
+                        {
+                            addresses.Add(new RestaurantAddress
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Rruga Hajdar Dushi",
+                                Qyteti = "Prishtinë",
+                                Zona = "Qafa",
+                                IsMain = true
+                            });
+                        }
+
+
+                        else if (restaurant.Emertimi == "Frix")
+                        {
+                            addresses.Add(new RestaurantAddress
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Albi Mall, Veternik",
+                                Qyteti = "Prishtinë",
+                                Zona = "Veternik",
+                                IsMain = true
+                            });
+                        }
+
+                        else if (restaurant.Emertimi == "Frix")
+                        {
+                            addresses.Add(new RestaurantAddress
+                            {
+                                RestaurantId = restaurant.Id,
+                                Adresa = "Prishtina Mall, Zona Industriale",
+                                Qyteti = "Prishtinë",
+                                Zona = "Çagllavicë",
+                                IsMain = true
+                            });
+                        }
+
+
                     }
                  
 
@@ -425,10 +529,67 @@ public static class DbInitializer
                     Console.WriteLine("Addresses inserted");
                 }
             }
+
+
             else
             {
                 Console.WriteLine("No new restaurants to insert.");
             }
+
+            var seedDrviers = new DeliveryDrivers[]
+            {
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 000 AA", Zona="Qendër", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 111 AA", Zona="Qendër", Statusi = DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 000 BB", Zona="Qendër", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 000 CC", Zona="Qendër", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 222 AA", Zona="Arbëri", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 333 AA", Zona="Arbëri", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 111 BB", Zona="Arbëri", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 111 CC", Zona="Arbëri", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 444 AA", Zona="Bregu i Diellit", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 222 CC", Zona="Bregu i Diellit", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 222 BB",Zona="Bregu i Diellit", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 666 AA", Zona="Bregu i Diellit", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 555 AA", Zona="Veternik", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 333 BB", Zona="Veternik", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 333 CC", Zona="Veternik", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 777 AA", Zona="Veternik", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 888 AA", Zona="Çagllavicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 444 BB", Zona="Çagllavicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 444 CC", Zona="Çagllavicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 999 AA", Zona="Çagllavicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 000 BB", Zona="Pejton", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 555 BB", Zona="Pejton",Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 555 CC", Zona="Pejton",  Statusi = DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 111 BB", Zona="Pejton",Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 222 BB", Zona="Lakrishtë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 666 BB", Zona="Lakrishtë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 666 CC", Zona="Lakrishtë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 333 BB", Zona="Lakrishtë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 444 BB", Zona="Qafa", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 777 BB", Zona="Qafa", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 777 CC", Zona="Qafa", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 555 BB", Zona="Emshir", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 888 BB", Zona="Emshir", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 888 CC", Zona="Emshir", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 666 BB", Zona="Emshir", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 777 BB", Zona="Bill Clinton", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 999 BB", Zona="Bill Clinton", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 999 CC", Zona="Bill Clinton", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 888 BB", Zona="Bill Clinton", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 999 BB", Zona="M9 Fushë Kosovë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 000 CC", Zona="M9 Fushë Kosovë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 000 CC", Zona="M9 Fushë Kosovë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 000 CC", Zona="M9 Fushë Kosovë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 111 CC", Zona="Bulevardi Nënë Tereza", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 111 CC", Zona="Bulevardi Nënë Tereza", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 111 CC", Zona="Bulevardi Nënë Tereza", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 222 CC", Zona="Bulevardi Nënë Tereza", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Scooter", Targa="AA 333 CC", Zona="Kolovicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Motorcycle", Targa="BB 222 CC", Zona="Kolovicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id },
+                new DeliveryDrivers { Automjeti="Bicycle", Targa="CC 222 CC", Zona="Kolovicë", Statusi=DriverStatus.Available, Vlersimi=4.5m, UserId=adminUser.Id }
+
+            };
         }
         catch (Exception ex)
         {
