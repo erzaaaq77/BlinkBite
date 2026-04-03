@@ -41,7 +41,8 @@ public class Restaurant {
     [Required]
     public string UserId {  get; set; } = string.Empty;
 
-  
+    [StringLength(50)]
+    public string Kategoria { get; set; } = string.Empty;
 
     [ForeignKey("UserId")]
     //virtual -> mundeson lazyloading (te dhenat i marrim veq kur na duhen)

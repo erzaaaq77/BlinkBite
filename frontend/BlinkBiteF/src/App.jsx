@@ -106,9 +106,8 @@ function App() {
               <i className="bi bi-cart3 fs-5"></i>
               <span className="cart-badge">{cartCount || 0}</span>
             </button>
-
-            <button className="btn btn-outline-primary">Login</button>
-            <button className="btn btn-primary">Sign up</button>
+<button className="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#loginModal">Login</button>
+<button className="btn btn-primary" data-bs-toggle="modal" data-bs-target="#signupModal">Sign up</button>
           </div>
         </div>
       </nav>
@@ -150,6 +149,47 @@ function App() {
         </div>
       </div>
 
+      {/* LOGIN MODAL */}
+<div className="modal fade" id="loginModal" tabIndex="-1" aria-hidden="true">
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content p-3 rounded-4 shadow">
+      <div className="modal-header">
+        <h5 className="modal-title">Login</h5>
+        <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div className="modal-body">
+        <input type="email" className="form-control mb-3" placeholder="Email" />
+        <input type="password" className="form-control mb-3" placeholder="Password" />
+      </div>
+      <div className="modal-footer">
+        <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button className="btn btn-primary">Login</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/* SIGNUP MODAL */}
+<div className="modal fade" id="signupModal" tabIndex="-1" aria-hidden="true">
+  <div className="modal-dialog modal-dialog-centered">
+    <div className="modal-content p-3 rounded-4 shadow">
+      <div className="modal-header">
+        <h5 className="modal-title">Sign Up</h5>
+        <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div className="modal-body">
+        <input type="text" className="form-control mb-3" placeholder="Full Name" />
+        <input type="email" className="form-control mb-3" placeholder="Email" />
+        <input type="password" className="form-control mb-3" placeholder="Password" />
+      </div>
+      <div className="modal-footer">
+        <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button className="btn btn-success">Sign Up</button>
+      </div>
+    </div>
+  </div>
+</div>
+
       {/* HERO */}
       <section className="hero">
         <h1>Order your favorite food instantly</h1>
@@ -161,27 +201,26 @@ function App() {
         </div>
       </section>
 
-      {/* CATEGORIES */}
-      <section className="container py-5 text-center">
-        <h2>Categories</h2>
-        <div className="row g-3 mt-3">
-          {categories.map(cat => (
-            <div className="col-md-3 col-6" key={cat.name}>
-              <div
-                className="category-card"
-                style={{
-                  backgroundImage: `url(${cat.image})`,
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  backgroundRepeat: 'no-repeat',
-                }}
-              >
-                <span>{cat.name}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+<section className="container py-5 text-center categories">
+  <h2 className="text-center mb-3">Categories</h2>
+  <div className="categories-row">
+    {categories.map(cat => (
+      <div
+        className="category-card"
+        key={cat.name}
+        style={{
+          flex: '1',  
+          backgroundImage: `url(${cat.image})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+        onClick={() => console.log("Clicked category:", cat.name)}
+      >
+        <span>{cat.name}</span>
+      </div>
+    ))}
+  </div>
+</section>
 
       {/* RESTAURANTS */}
       <section className="container pb-5">
