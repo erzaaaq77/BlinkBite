@@ -372,6 +372,11 @@ namespace FoodDeliveryyy.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<string>("Kategoria")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
                     b.Property<string>("Logo")
                         .IsRequired()
                         .HasColumnType("longtext");

@@ -73,17 +73,17 @@ public static class DbInitializer
 
             var seedRestaurants = new Restaurant[]
             {
-                new Restaurant { Emertimi="SushiCo", Pershkrimi="SuchiCo – Fresh sushi...", Telefoni="+383 49 000 000", Email="info@sushicokosova.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="BurgerKing", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Pasta Fasta", Pershkrimi="Delicious pasta", Telefoni="+383 49 111 000", Email="info@pastafasta.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Proper Pizza", Pershkrimi="Fresh pizza", Telefoni="+383 49 000 100", Email="info@properpizaaks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="KFC", Pershkrimi="Fameous fastfood", Telefoni="+383 49 222 000", Email="info@kfc-ks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Green and Protein", Pershkrimi="Delicous healthy meals", Telefoni="+383 49 000 000", Email="info@greenandproteinks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="My Shawarma", Pershkrimi="Your authentic Shawarma", Telefoni="+383 49 000 000", Email="info@myshawarma.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Heavy Hit", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@heavyhit-ks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Popeyes", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@popeyes.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Agusholli", Pershkrimi="Sweet sweets!", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id },
-                new Restaurant { Emertimi="Saray Sweets", Pershkrimi="Baklava and much more!", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id }
+               new Restaurant { Emertimi="SushiCo", Pershkrimi="SuchiCo – Fresh sushi...", Telefoni="+383 49 000 000", Email="info@sushicokosova.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Sushi" },
+               new Restaurant { Emertimi="BurgerKing", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Fast Food" },
+               new Restaurant { Emertimi="Pasta Fasta", Pershkrimi="Delicious pasta", Telefoni="+383 49 111 000", Email="info@pastafasta.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Italian" },
+               new Restaurant { Emertimi="Proper Pizza", Pershkrimi="Fresh pizza", Telefoni="+383 49 000 100", Email="info@properpizaaks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Pizza" },
+               new Restaurant { Emertimi="KFC", Pershkrimi="Fameous fastfood", Telefoni="+383 49 222 000", Email="info@kfc-ks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Fast Food" },
+               new Restaurant { Emertimi="Green and Protein", Pershkrimi="Delicous healthy meals", Telefoni="+383 49 000 000", Email="info@greenandproteinks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Healthy" },
+               new Restaurant { Emertimi="My Shawarma", Pershkrimi="Your authentic Shawarma", Telefoni="+383 49 000 000", Email="info@myshawarma.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Middle Eastern" },
+               new Restaurant { Emertimi="Heavy Hit", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@heavyhit-ks.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Fast Food" },
+               new Restaurant { Emertimi="Popeyes", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@popeyes.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Fast Food" },
+               new Restaurant { Emertimi="Agusholli", Pershkrimi="Sweet sweets!", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Dessert" },
+               new Restaurant { Emertimi="Saray Sweets", Pershkrimi="Baklava and much more!", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=adminUser.Id, Kategoria="Dessert" }
             };
 
             var toAdd = seedRestaurants
@@ -92,8 +92,6 @@ public static class DbInitializer
 
             if (toAdd.Any())
             {
-                context.Restaurants.AddRange(toAdd);
-                await context.SaveChangesAsync();
 
                 Console.WriteLine($"Inserted {toAdd.Length} restaurants");
 
