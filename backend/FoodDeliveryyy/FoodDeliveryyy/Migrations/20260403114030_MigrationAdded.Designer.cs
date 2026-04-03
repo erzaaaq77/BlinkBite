@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260401194934_Migrationw")]
-    partial class Migrationw
+    [Migration("20260403114030_MigrationAdded")]
+    partial class MigrationAdded
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -374,6 +374,11 @@ namespace FoodDeliveryyy.Migrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Kategoria")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<string>("Logo")
                         .IsRequired()
