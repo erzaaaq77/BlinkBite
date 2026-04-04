@@ -57,5 +57,27 @@ namespace FoodDeliveryyy.Controllers;
         await _context.SaveChangesAsync();
         return NoContent();
     }
+    [HttpGet("kategori")]
+    public async Task<ActionResult<IEnumerable<string>>> GetCategories()
+    {
+        var categories = await _context.Restaurants
+            .Select(r => r.Kategori)   
+            .Distinct()
+            .ToListAsync();
+
+        return Ok(categories);
+    }
+
+    [HttpGet("bykategori/{kategori}")]
+    public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurantsByCategory(string kategori)
+    {
+        var restaurants = await _context.Restaurants
+            .Where(r => r.Kategori == kategori)
+            .ToListAsync();
+
+        return Ok(restaurants);
+    }
+
+
 }
 

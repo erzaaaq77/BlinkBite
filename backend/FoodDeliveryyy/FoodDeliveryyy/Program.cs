@@ -5,17 +5,12 @@ using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 
+var builder = WebApplication.CreateBuilder(args);
 
-WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// -------------------
-// DbContext për MySQL
-// -------------------
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -23,9 +18,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 
-// -------------------
-// Identity
-// -------------------
 builder.Services.AddIdentity<User, Role>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -33,20 +25,17 @@ builder.Services.AddIdentity<User, Role>()
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
 
-// -------------------
-// CORS për React
-// -------------------
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000") // React dev server
+        policy.WithOrigins("http://localhost:5176") 
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
 
-Console.WriteLine("Application starting...");
 var app = builder.Build();
 
 
@@ -55,13 +44,12 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     var context = services.GetRequiredService<AppDbContext>();
     var userManager = services.GetRequiredService<UserManager<User>>();
-    // initialize database and seed identity data
-    await DbInitializer.InitializeAsync(context, userManager);
+    var roleManager = services.GetRequiredService<RoleManager<Role>>();
+    DbInitializer.InitializeAsync(context, userManager, roleManager)
+        .GetAwaiter().GetResult();
 }
-app.UseStaticFiles();
-// -------------------
-// Middleware pipeline
-// -------------------
+
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -69,13 +57,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
-// CORS duhet para Authentication/Authorization
+app.UseStaticFiles();
 app.UseCors("ReactPolicy");
-
 app.UseAuthentication();
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();

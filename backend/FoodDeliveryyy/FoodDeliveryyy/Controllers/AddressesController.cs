@@ -1,7 +1,9 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -17,6 +19,7 @@ public class AddressesController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin")]
     public async Task<ActionResult<IEnumerable<Addresses>>> GetAddresses()
     {
         return await _context.Addresses
@@ -24,7 +27,19 @@ public class AddressesController : ControllerBase
             .ToListAsync();
     }
 
+    [HttpGet("my")]
+    [Authorize(Roles = "Customer")]
+    public async Task<ActionResult<IEnumerable<Addresses>>> GetMyAddresses()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var addresses = await _context.Addresses
+            .Where(a => a.UserId == userId)
+            .ToListAsync();
+        return Ok(addresses);
+    }
+
     [HttpGet("{id}")]
+    [Authorize(Roles = "Admin,Customer")]
     public async Task<ActionResult<Addresses>> GetAddress(int id)
     {
         var address = await _context.Addresses
@@ -32,66 +47,27 @@ public class AddressesController : ControllerBase
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (address == null)
-        {
             return NotFound();
-        }
+
+        if (User.IsInRole("Customer") && address.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
+            return Forbid();
 
         return address;
     }
 
-    [HttpGet("by-user/{userId}")]
-    public async Task<ActionResult<IEnumerable<Addresses>>> GetAddressesByUser(string userId)
-    {
-        var addresses = await _context.Addresses
-            .Where(a => a.UserId == userId)
-            .ToListAsync();
-
-        return Ok(addresses);
-    }
-
-    [HttpGet("primary/{userId}")]
-    public async Task<ActionResult<Addresses>> GetPrimaryAddress(string userId)
-    {
-        var primaryAddress = await _context.Addresses
-            .FirstOrDefaultAsync(a => a.UserId == userId && a.EshteKryesore == true);
-
-        if (primaryAddress == null)
-        {
-            return NotFound("Nuk ka adresë kryesore për këtë përdorues");
-        }
-
-        return Ok(primaryAddress);
-    }
-
-    [HttpGet("by-city/{city}")]
-    public async Task<ActionResult<IEnumerable<Addresses>>> GetAddressesByCity(string city)
-    {
-        var addresses = await _context.Addresses
-            .Where(a => a.Qyteti == city)
-            .Include(a => a.User)
-            .ToListAsync();
-
-        return Ok(addresses);
-    }
-
     [HttpPost]
+    [Authorize(Roles = "Customer")]
     public async Task<ActionResult<Addresses>> CreateAddress(Addresses address)
     {
-        var user = await _context.Users.FindAsync(address.UserId);
-        if (user == null)
-        {
-            return BadRequest("Përdoruesi nuk ekziston");
-        }
+        
+        address.UserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
         if (address.EshteKryesore)
         {
             var existingPrimary = await _context.Addresses
-                .FirstOrDefaultAsync(a => a.UserId == address.UserId && a.EshteKryesore == true);
-
+                .FirstOrDefaultAsync(a => a.UserId == address.UserId && a.EshteKryesore);
             if (existingPrimary != null)
-            {
                 existingPrimary.EshteKryesore = false;
-            }
         }
 
         _context.Addresses.Add(address);
@@ -105,26 +81,25 @@ public class AddressesController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> UpdateAddress(int id, Addresses address)
     {
         if (id != address.Id)
-        {
             return BadRequest();
-        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (address.UserId != userId)
+            return Forbid();
 
         if (address.EshteKryesore)
         {
             var existingPrimary = await _context.Addresses
-                .FirstOrDefaultAsync(a => a.UserId == address.UserId && a.EshteKryesore == true && a.Id != id);
-
+                .FirstOrDefaultAsync(a => a.UserId == address.UserId && a.EshteKryesore && a.Id != id);
             if (existingPrimary != null)
-            {
                 existingPrimary.EshteKryesore = false;
-            }
         }
 
         _context.Entry(address).State = EntityState.Modified;
-
         try
         {
             await _context.SaveChangesAsync();
@@ -132,9 +107,7 @@ public class AddressesController : ControllerBase
         catch (DbUpdateConcurrencyException)
         {
             if (!AddressExists(id))
-            {
                 return NotFound();
-            }
             throw;
         }
 
@@ -142,40 +115,41 @@ public class AddressesController : ControllerBase
     }
 
     [HttpPatch("{id}/set-primary")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> SetPrimaryAddress(int id)
     {
         var address = await _context.Addresses.FindAsync(id);
         if (address == null)
-        {
             return NotFound();
-        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (address.UserId != userId)
+            return Forbid();
 
         var userAddresses = await _context.Addresses
-            .Where(a => a.UserId == address.UserId)
+            .Where(a => a.UserId == userId)
             .ToListAsync();
 
         foreach (var addr in userAddresses)
-        {
             addr.EshteKryesore = (addr.Id == id);
-        }
 
         await _context.SaveChangesAsync();
-
         return Ok(new { id = address.Id, eshteKryesore = true });
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Customer")]
     public async Task<IActionResult> DeleteAddress(int id)
     {
         var address = await _context.Addresses.FindAsync(id);
         if (address == null)
-        {
             return NotFound();
-        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (address.UserId != userId)
+            return Forbid();
 
         var wasPrimary = address.EshteKryesore;
-        var userId = address.UserId;
-
         _context.Addresses.Remove(address);
         await _context.SaveChangesAsync();
 
@@ -192,16 +166,6 @@ public class AddressesController : ControllerBase
         }
 
         return NoContent();
-    }
-
-    [HttpGet("count/{userId}")]
-    public async Task<ActionResult<int>> GetAddressCount(string userId)
-    {
-        var count = await _context.Addresses
-            .Where(a => a.UserId == userId)
-            .CountAsync();
-
-        return Ok(count);
     }
 
     private bool AddressExists(int id)
