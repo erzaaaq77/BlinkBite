@@ -1732,15 +1732,273 @@ public static class DbInitializer
                         Cmimi = 12.60m,
                         Foto = "sushico/thaibeef.jpg",
                         Disponueshme = true,
-                        Alergjene = "Gluten,Soy,Sesame,Fish",
+                        Alergjene = "Gluten,Soy,Sesame",
                         Kalori = 500,
+                        CategoryId = beefS.Id
+                    },
+                     new MenuItems{
+                       Emertimi = "Beef with Black Garlic",
+                        Pershkrimi = "Tender beef cooked with rich, aromatic black garlic in a savory sauce.",
+                        Cmimi = 12.10m,
+                        Foto = "sushico/beefgarlic.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Soy,Sesame",
+                        Kalori = 550,
                         CategoryId = beefS.Id
                     }
                 };
                 context.MenuItems.AddRange(beefItems);
                 context.SaveChanges();
 
-            
+                var seafoodItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Beef with Black Garlic",
+                        Pershkrimi = "Grilled salmon glazed with a sweet and savory teriyaki sauce, served with vegetables.",
+                        Cmimi = 14.50m,
+                        Foto = "sushico/salmonteryaki.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Soy,Sesame,Fish",
+                        Kalori = 470,
+                        CategoryId = seafoodS.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Beef with Black Garlic",
+                        Pershkrimi = "Delicately steamed salmon served with a light, savory sauce.",
+                        Cmimi = 13.40m,
+                        Foto = "sushico/steamedsalmon.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Soy,Fish",
+                        Kalori = 360,
+                        CategoryId = seafoodS.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Spicy Calamari with Cashews",
+                        Pershkrimi = "Crispy calamari stir-fried with spicy seasonings and crunchy cashews.",
+                        Cmimi = 13.40m,
+                        Foto = "sushico/spicycalamari.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Mollusks,Nuts,Soy,Gluten",
+                        Kalori = 450,
+                        CategoryId = seafoodS.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Sweet & Sour Shrimp",
+                        Pershkrimi = "Crispy shrimp tossed in a tangy and sweet sauce with vegetables",
+                        Cmimi = 14.50m,
+                        Foto = "sushico/ssshrimp.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Crustaceans,Sesame,Soy,Gluten",
+                        Kalori = 450,
+                        CategoryId = seafoodS.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Shrimp with Cashews",
+                        Pershkrimi = "Succulent shrimp stir-fried with crunchy cashews in a savory sauce.",
+                        Cmimi = 14.50m,
+                        Foto = "sushico/cashewsshrimp.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Crustaceans,Sesame,Soy,Gluten,Nuts",
+                        Kalori = 570,
+                        CategoryId = seafoodS.Id
+                    }
+                   
+                };
+                context.MenuItems.AddRange(seafoodItems);
+                context.SaveChanges();
+
+                var noodleItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                    Emertimi = "Udon with Shrimp & Black Garlic",
+                        Pershkrimi = "Thick udon noodles stir-fried with shrimp and rich black garlic in a savory sauce",
+                        Cmimi = 11.50m,
+                        Foto = "sushico/shrimpgarlic.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Crustaceans,Sesame,Soy,Gluten",
+                        Kalori = 570,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Udon with Chicken & Black Garlic",
+                        Pershkrimi = "Thick udon noodles stir-fried with tender chicken and rich black garlic in a savory sauce.",
+                        Cmimi = 11.50m,
+                        Foto = "sushico/shrimpgarlic.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 570,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Plain Noodles",
+                        Pershkrimi = "Simple stir-fried noodles with a light savory flavor.",
+                        Cmimi = 5.50m,
+                        Foto = "sushico/plainnoodles.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 350,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Korean-Style Chicken Bulgogi Udon",
+                        Pershkrimi = "Thick udon noodles stir-fried with tender chicken in a sweet and savory Korean bulgogi sauce",
+                        Cmimi = 9.10m,
+                        Foto = "sushico/chickenudon.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 560,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Korean-Style Beef Bulgogi Udon",
+                        Pershkrimi = "Thick udon noodles stir-fried with tender beef in a sweet and savory Korean bulgogi sauce.",
+                        Cmimi = 10.40m,
+                        Foto = "sushico/beefudon.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 560,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Vegetable Noodles",
+                        Pershkrimi = "Stir-fried noodles with fresh seasonal vegetables in a light savory sauce.",
+                        Cmimi = 10.40m,
+                        Foto = "sushico/vegetablenoodle.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 400,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Chicken Noodles",
+                        Pershkrimi = "Stir-fried noodles with tender chicken and fresh vegetables in a savory sauce.",
+                        Cmimi = 10.40m,
+                        Foto = "sushico/chickennoodle.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 500,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Beef Noodles",
+                        Pershkrimi = "Stir-fried noodles with tender beef and fresh vegetables in a savory sauce.",
+                        Cmimi =9.20m,
+                        Foto = "sushico/beefnoodle.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 500,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Thai-Style Chicken Noodles",
+                        Pershkrimi = "Stir-fried noodles with tender chicken, vegetables, and aromatic Thai spices.",
+                        Cmimi =10.30m,
+                        Foto = "sushico/thaichicken.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 500,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Thai-Style Beef Noodles",
+                        Pershkrimi = "Stir-fried noodles with tender beef, vegetables, and aromatic Thai spices",
+                        Cmimi =11.50m,
+                        Foto = "sushico/beefthai.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten",
+                        Kalori = 500,
+                        CategoryId = noodlesS.Id
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Thai-Style Shrimp Noodles",
+                        Pershkrimi = "Stir-fried noodles with succulent shrimp, vegetables, and aromatic Thai spices.",
+                        Cmimi =12.60m,
+                        Foto = "sushico/shrimpthai.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Sesame,Soy,Gluten,Fish",
+                        Kalori = 560,
+                        CategoryId = noodlesS.Id
+                    }
+                };
+                context.MenuItems.AddRange(noodleItems);
+                context.SaveChanges();
+
+                var riceItems = new List<MenuItems>
+                {
+                new MenuItems
+                    {
+                    Emertimi = "Steamed Rice",
+                        Pershkrimi = "Fluffy, perfectly steamed white rice – a simple and versatile side.",
+                        Cmimi =2.50m,
+                        Foto = "sushico/rice.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = rice.Id
+                   },
+                new MenuItems
+                    {
+                    Emertimi = "Vegetable Rice",
+                        Pershkrimi = "Fluffy steamed rice stir-fried with fresh seasonal vegetables.",
+                        Cmimi =5.50m,
+                        Foto = "sushico/vegetablerice.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 300,
+                        CategoryId = rice.Id
+                   },
+                new MenuItems
+                    {
+                    Emertimi = "Curry Beef Rice",
+                        Pershkrimi = "Steamed rice served with tender beef cooked in a flavorful curry sauce.",
+                        Cmimi =7.50m,
+                        Foto = "sushico/curryrice.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Sesame",
+                        Kalori = 500,
+                        CategoryId = rice.Id
+                   },
+                new MenuItems
+                    {
+                    Emertimi = "Thai-Style Pineapple Rice",
+                        Pershkrimi = "Fragrant Thai-style fried rice with pineapple, vegetables, and a touch of spices.",
+                        Cmimi =7.20m,
+                        Foto = "sushico/thaiananas.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Eggs",
+                        Kalori = 550,
+                        CategoryId = rice.Id
+                   },
+                new MenuItems
+                    {
+                    Emertimi = "Shrimp Rice",
+                        Pershkrimi = "Steamed or fried rice served with succulent shrimp and fresh vegetables.",
+                        Cmimi =8.50m,
+                        Foto = "sushico/shrimprice.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Crustaceans,Soy,Gluten,Eggs",
+                        Kalori = 550,
+                        CategoryId = rice.Id
+                   },
+                };
+                context.MenuItems.AddRange(riceItems);
+                context.SaveChanges();
             }
             
         }
