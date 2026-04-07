@@ -1277,7 +1277,7 @@ public static class DbInitializer
                     Renditja = 20,
                     RestaurantId = sushico.Id
                 };
-                categoriesSushi.AddRange(new[] { appetizer, soup, dimsum, ramen, saladS, chickenS, beefS, seafoodS, noodlesS, rice, donburi,sushirolls,nigiri,setmenu,sashimi,specialrolls,cookedrolls,beveragesS,extra,alcohol });
+                categoriesSushi.AddRange(new[] { appetizer, soup, dimsum, ramen, saladS, chickenS, beefS, seafoodS, noodlesS, rice, donburi, sushirolls, nigiri, setmenu, sashimi, specialrolls, cookedrolls, beveragesS, extra, alcohol });
                 context.MenuCategories.AddRange(categoriesSushi);
                 context.SaveChanges();
 
@@ -1681,7 +1681,7 @@ public static class DbInitializer
                         CategoryId = chickenS.Id
                      }
                  };
-                context.MenuItems.AddRange(chickenItems); 
+                context.MenuItems.AddRange(chickenItems);
                 context.SaveChanges();
 
                 var beefItems = new List<MenuItems>
@@ -1807,7 +1807,7 @@ public static class DbInitializer
                         Kalori = 570,
                         CategoryId = seafoodS.Id
                     }
-                   
+
                 };
                 context.MenuItems.AddRange(seafoodItems);
                 context.SaveChanges();
@@ -1995,12 +1995,295 @@ public static class DbInitializer
                         Alergjene = "Crustaceans,Soy,Gluten,Eggs",
                         Kalori = 550,
                         CategoryId = rice.Id
-                   },
+                   }
                 };
                 context.MenuItems.AddRange(riceItems);
                 context.SaveChanges();
+
+                var donburiItems = new List<MenuItems>
+                {
+
+                new MenuItems
+                {
+                     Emertimi = "Unagi Donburi",
+                        Pershkrimi = "Grilled eel glazed in sweet soy sauce, served over steamed rice.",
+                        Cmimi =12.70m,
+                        Foto = "sushico/unagidonburi.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 650,
+                        CategoryId = donburi.Id
+                },
+                new MenuItems
+                {
+                     Emertimi = "Duck Donburi",
+                        Pershkrimi = "Sliced duck served over steamed rice with savory sauce.",
+                        Cmimi =12.70m,
+                        Foto = "sushico/duckdonburi.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 700,
+                        CategoryId = donburi.Id
+                },
+                new MenuItems
+                {
+                     Emertimi = "Salmon Donburi",
+                        Pershkrimi = "Sliced duck served over steamed rice with savory sauce.",
+                        Cmimi =12.10m,
+                        Foto = "sushico/salmondonburi.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten.Fish",
+                        Kalori = 700,
+                        CategoryId = donburi.Id
+                }
+
+                };
+                context.MenuItems.AddRange(donburiItems);
+                context.SaveChanges();
+
+                var sushirollItems = new List<MenuItems>
+                {
+                    new MenuItems{
+                        Emertimi = "Quinoa California Roll",
+                        Pershkrimi = "Sushi roll with quinoa, crab, avocado, and cucumber.",
+                        Cmimi = 8.50m,
+                        Foto = "sushico/quinoaroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Crustaceans,Soy,Gluten,Eggs",
+                        Kalori = 250,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Maguro Roll",
+                        Pershkrimi = "Sushi roll with quinoa, crab, avocado, and cucumber.",
+                        Cmimi = 6.60m,
+                        Foto = "sushico/maguroroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 250,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Tofu Takuan Roll",
+                        Pershkrimi = "Tofu and pickled radish wrapped with rice and seaweed.",
+                        Cmimi = 6.60m,
+                        Foto = "sushico/tofuroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 250,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Ebi Roll",
+                        Pershkrimi = "Shrimp with rice and seaweed, often with avocado or cucumber.",
+                        Cmimi = 6.60m,
+                        Foto = "sushico/ebiroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Shellfish,Eggs",
+                        Kalori = 250,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Kani Roll",
+                        Pershkrimi = "Crab stick with rice and seaweed, often with avocado or cucumber.",
+                        Cmimi = 6.10m,
+                        Foto = "sushico/kaniroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Shellfish,Eggs",
+                        Kalori = 250,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Sake Roll",
+                        Pershkrimi = "Fresh salmon rolled with rice and seaweed.",
+                        Cmimi = 6.60m,
+                        Foto = "sushico/sakeroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Shellfish,Eggs",
+                        Kalori = 250,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Unagi Roll",
+                        Pershkrimi = "Grilled eel with rice and seaweed, glazed in sweet soy sauce.",
+                        Cmimi = 6.60m,
+                        Foto = "sushico/unagiroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 350,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Saba Roll",
+                        Pershkrimi = "Marinated mackerel rolled with rice and seaweed.",
+                        Cmimi =5.50m,
+                        Foto = "sushico/unagiroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 350,
+                        CategoryId = sushirolls.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Avocado Sake Roll",
+                        Pershkrimi = "Fresh salmon and avocado rolled with rice and seaweed.",
+                        Cmimi =7.90m,
+                        Foto = "sushico/avocadoroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 350,
+                        CategoryId = sushirolls.Id
+                     }
+                };
+                context.MenuItems.AddRange(sushirollItems);
+                context.SaveChanges();
+
+                var nigiriItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                      Emertimi = "Salmon poke bowl",
+                        Pershkrimi = "Cubed fresh salmon over rice with vegetables and sesame dressing.",
+                        Cmimi =12.70m,
+                        Foto = "sushico/salmonbowl.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Sesame,Fish",
+                        Kalori = 350,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Tamago (N)",
+                        Pershkrimi = "Sweet Japanese omelette rolled with rice and seaweed.",
+                        Cmimi =12.70m,
+                        Foto = "sushico/tamago.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Eggs",
+                        Kalori = 250,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Ikura (N)",
+                        Pershkrimi = "Salmon roe served over rice or as sushi topping.",
+                        Cmimi =5.50m,
+                        Foto = "sushico/ikura.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 250,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Saba (N)",
+                        Pershkrimi = "Marinated mackerel served over sushi rice.",
+                        Cmimi =1.70m,
+                        Foto = "sushico/ikura.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten,Fish",
+                        Kalori = 200,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Salmon & Maguro Poke Bowl",
+                        Pershkrimi = "Fresh salmon and tuna cubes over rice with vegetables and sesame dressing.",
+                        Cmimi =12.70m,
+                        Foto = "sushico/salmonmaguro.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Sesame,Fish",
+                        Kalori = 550,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Maguro (N)",
+                        Pershkrimi = "Fresh salmon and tuna cubes over rice with vegetables and sesame dressing.",
+                        Cmimi =2.80m,
+                        Foto = "sushico/maguro.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Sesame,Fish",
+                        Kalori = 550,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Ebi Tempura (N)",
+                        Pershkrimi = "Deep-fried battered shrimp served with dipping sauce.",
+                        Cmimi =3.30m,
+                        Foto = "sushico/ebitempura.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Wheat,Soy,Gluten,Fish",
+                        Kalori = 170,
+                        CategoryId = nigiri.Id
+                    },
+                    new MenuItems
+                    {
+                      Emertimi = "Nigiri Mix 9 pcs",
+                        Pershkrimi = "Assorted nigiri sushi with a variety of fresh fish over rice.",
+                        Cmimi =19.50m,
+                        Foto = "sushico/nigirimix.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Fish,Soy,Gluten",
+                        Kalori = 400,
+                        CategoryId = nigiri.Id
+                    }
+
+                };
+
+                context.MenuItems.AddRange(nigiriItems);
+                context .SaveChanges();
+
+
+                var setmenuItems = new List<MenuItems>
+                {
+
+                new MenuItems
+                    {
+                    Emertimi = "Ebi Love (15pcs)",
+                        Pershkrimi = "Shrimp sushi and rolls assortment, 15 pieces.",
+                        Cmimi = 19.90m,
+                        Foto = "sushico/ebilove.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Eggs,Soy,Gluten",
+                        Kalori = 800,
+                        CategoryId = setmenu.Id
+                     },
+                new MenuItems
+                    {
+                    Emertimi = "Warm Nigiri Plate",
+                        Pershkrimi = "Assorted nigiri sushi served slightly warm.",
+                        Cmimi = 9.90m,
+                        Foto = "sushico/warmnigiri.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Eggs,Soy,Gluten,Fish",
+                        Kalori = 450,
+                        CategoryId = setmenu.Id
+                     },
+                new MenuItems
+                    {
+                    Emertimi = "Sushi Queen",
+                        Pershkrimi = "Assorted premium sushi rolls and nigiri selection..",
+                        Cmimi = 22.20m,
+                        Foto = "sushico/sushiqueen.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Eggs,Soy,Gluten,Fish",
+                        Kalori = 750,
+                        CategoryId = setmenu.Id
+                     },
+                new MenuItems
+                    {
+                    Emertimi = "California Dream",
+                        Pershkrimi = "California-style sushi rolls with crab, avocado, and cucumber.",
+                        Cmimi = 9.90m,
+                        Foto = "sushico/californiadream.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Eggs,Soy,Gluten",
+                        Kalori = 350,
+                        CategoryId = setmenu.Id
+                     }
+                };
+                context.MenuItems.AddRange(setmenuItems);
+                context.SaveChanges();
+
             }
-            
-        }
-    }
-}
+        } } }
