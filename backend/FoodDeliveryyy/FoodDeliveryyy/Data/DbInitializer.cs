@@ -2234,7 +2234,7 @@ public static class DbInitializer
                 };
 
                 context.MenuItems.AddRange(nigiriItems);
-                context .SaveChanges();
+                context.SaveChanges();
 
 
                 var setmenuItems = new List<MenuItems>
@@ -2288,5 +2288,337 @@ public static class DbInitializer
                 context.MenuItems.AddRange(setmenuItems);
                 context.SaveChanges();
 
+                var sashimiItems = new List<MenuItems>
+                {
+
+                new MenuItems
+                {
+                     Emertimi = "Sake Nigiri 12 pcs",
+                        Pershkrimi = "Fresh salmon served over sushi rice.",
+                        Cmimi = 12.10m,
+                        Foto = "sushico/sake.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Fish,Soy,Gluten",
+                        Kalori = 240,
+                        CategoryId = sashimi.Id
+                },
+                new MenuItems
+                {
+                     Emertimi = "Maguro 12 pcs",
+                        Pershkrimi = "Fresh tuna and salmon served over sushi rice.",
+                        Cmimi = 12.10m,
+                        Foto = "sushico/maguros.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Fish,Soy,Gluten",
+                        Kalori = 280,
+                        CategoryId = sashimi.Id
+                },
+                new MenuItems
+                {
+                     Emertimi = "Sashimi Mix 12 pcs",
+                        Pershkrimi = "Assorted fresh raw fish slices, 12 pieces.",
+                        Cmimi = 12.10m,
+                        Foto = "sushico/sashimimix.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Fish,Soy,Gluten,Shellfish",
+                        Kalori = 360,
+                        CategoryId = sashimi.Id
+                },
+                new MenuItems
+                {
+                     Emertimi = "Deluxe Set - 13 pcs",
+                        Pershkrimi = "Premium assortment of sushi rolls and nigiri, 13 pieces.",
+                        Cmimi = 12.10m,
+                        Foto = "sushico/sashimimix.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Fish,Soy,Gluten,Shellfish,Eggs",
+                        Kalori = 550,
+                        CategoryId = sashimi.Id
+                }
+
+                };
+                context.MenuItems.AddRange(sashimiItems);
+                context.SaveChanges();
+
+
+                var specialrollsItems = new List<MenuItems>
+                {
+                  new MenuItems
+                  {
+                    Emertimi = "Zen Roll",
+                        Pershkrimi = "Fresh sushi roll with a balanced mix of fish and vegetables.",
+                        Cmimi = 13.80m,
+                        Foto = "sushico/zenroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Fish,Soy,Gluten,Shellfish,Eggs,Sesame,Mustard,Nuts,Milk",
+                        Kalori = 550,
+                        CategoryId = specialrolls.Id
+                  },
+                  new MenuItems
+                  {
+                    Emertimi = "Super Salmon Roll",
+                        Pershkrimi = "Salmon sushi roll with rich flavor and fresh ingredients.",
+                        Cmimi = 12.60m,
+                        Foto = "sushico/superroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Fish,Soy,Gluten,Shellfish,Eggs,Sesame,Mustard,Nuts,Milk",
+                        Kalori = 550,
+                        CategoryId = specialrolls.Id
+                  },
+                  new MenuItems
+                  {
+                    Emertimi = "Ebi Salmon Roll",
+                        Pershkrimi = "Shrimp and salmon rolled with rice and seaweed.",
+                        Cmimi = 9.70m,
+                        Foto = "sushico/ebispecial.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Eggs,Gluten",
+                        Kalori = 400,
+                        CategoryId = specialrolls.Id
+                  },
+                  new MenuItems
+                  {
+                    Emertimi = "Veggie Roll",
+                        Pershkrimi = "Fresh vegetables rolled with rice and seaweed.",
+                        Cmimi = 8.50m,
+                        Foto = "sushico/ebispecial.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy",
+                        Kalori = 200,
+                        CategoryId = specialrolls.Id
+                  },
+                  new MenuItems
+                  {
+                    Emertimi = "Zen Dragon Roll",
+                        Pershkrimi = "Sushi roll with eel, avocado, and cucumber, topped with sweet sauce.",
+                        Cmimi = 12.60m,
+                        Foto = "sushico/dragon.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy",
+                        Kalori = 200,
+                        CategoryId = specialrolls.Id
+                  },
+                  new MenuItems
+                  {
+                    Emertimi = "Quinoa Avocado Roll",
+                        Pershkrimi = "Sushi roll with quinoa and fresh avocado.",
+                        Cmimi = 6.60m,
+                        Foto = "sushico/dragon.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = specialrolls.Id
+                  },
+                  new MenuItems
+                  {
+                    Emertimi = "Fire Salmon Roll",
+                        Pershkrimi = "Spicy salmon roll with rice and seaweed.",
+                        Cmimi = 12.60m,
+                        Foto = "sushico/firesalmon.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Eggs",
+                        Kalori = 300,
+                        CategoryId = specialrolls.Id
+                  }
+                };
+                context.MenuItems.AddRange(specialrollsItems);
+                context.SaveChanges();
+
+                var cookedrollsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Salmon Aburi Roll",
+                        Pershkrimi = "Partially seared salmon roll with rice and seaweed.",
+                        Cmimi = 11.50m,
+                        Foto = "sushico/aburi.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Eggs",
+                        Kalori = 300,
+                        CategoryId = cookedrolls.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Chicken Teriyaki Roll",
+                        Pershkrimi = "Chicken teriyaki with rice and seaweed.",
+                        Cmimi = 10.90m,
+                        Foto = "sushico/teriyaki.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Wheat,Soy,Gluten,Fish",
+                        Kalori = 400,
+                        CategoryId = cookedrolls.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Tempura Sake Maki Roll",
+                        Pershkrimi = "Salmon tempura rolled with rice and seaweed, crispy on the outside.",
+                        Cmimi = 11.60m,
+                        Foto = "sushico/makiroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Eggs",
+                        Kalori = 350,
+                        CategoryId = cookedrolls.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Crazy Philly Roll",
+                        Pershkrimi = "Philadelphia-style roll with salmon, cream cheese, and cucumber.",
+                        Cmimi = 12.60m,
+                        Foto = "sushico/phillyroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy",
+                        Kalori = 350,
+                        CategoryId = cookedrolls.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Yuzu Special Roll",
+                        Pershkrimi = "Sushi roll with a citrusy yuzu sauce, fish, and fresh vegetables.",
+                        Cmimi = 11.50m,
+                        Foto = "sushico/yuzu.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy",
+                        Kalori = 350,
+                        CategoryId = cookedrolls.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Fish & Chips Roll",
+                        Pershkrimi = "Crispy fried fish with rice and seaweed, inspired by classic fish & chips.",
+                        Cmimi = 11.50m,
+                        Foto = "sushico/fishroll.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Eggs",
+                        Kalori = 350,
+                        CategoryId = cookedrolls.Id
+                    }
+                };
+                context.MenuItems.AddRange(cookedrollsItems);
+                context.SaveChanges();
+
+                var beveragessItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Pepsi",
+                        Pershkrimi = "Cold Drink",
+                        Cmimi = 1.50m,
+                        Foto = "sushico/pepsi.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = beveragesS.Id },
+                    new MenuItems
+                    {
+                        Emertimi = "Red Bull",
+                        Pershkrimi = "Cold Drink",
+                        Cmimi = 4.00m,
+                        Foto = "sushico/redbull.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = beveragesS.Id },
+                    new MenuItems
+                    {
+                        Emertimi = "Rugove Water",
+                        Pershkrimi = "Cold Drink",
+                        Cmimi = 1.30m,
+                        Foto = "sushico/uje.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = beveragesS.Id },
+                    new MenuItems
+                    {
+                        Emertimi = "Santal Apple Juice",
+                        Pershkrimi = "Cold Drink",
+                        Cmimi = 2.00m,
+                        Foto = "sushico/apple.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = beveragesS.Id }
+
+                };
+                context.MenuItems.AddRange(beveragessItems);
+                context.SaveChanges();
+
+                var extraItems = new List<MenuItems> { 
+                new MenuItems{
+                        Emertimi = "Spicy Mayo",
+                        Pershkrimi = "Extra Spicy Mayo Sauce",
+                        Cmimi = 0.60m,
+                        Foto = "sushico/spicy.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 150,
+                        CategoryId = extra.Id
+                     },
+                new MenuItems{
+                        Emertimi = "Sriracha",
+                        Pershkrimi = "Extra Sriracha Sauce",
+                        Cmimi = 0.60m,
+                        Foto = "sushico/sriracha.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 150,
+                        CategoryId = extra.Id
+                     },
+                new MenuItems{
+                        Emertimi = "Ginger",
+                        Pershkrimi = "Ginger",
+                        Cmimi = 0.60m,
+                        Foto = "sushico/ginger.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 150,
+                        CategoryId = extra.Id
+                     }
+
+                };
+                context.MenuItems.AddRange(extraItems);
+                context.SaveChanges();
+
+                var alcoholItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Peja",
+                        Pershkrimi = "Peja",
+                        Cmimi = 2.50m,
+                        Foto = "sushico/peja.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 150,
+                        CategoryId = alcohol.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Asahi Beer",
+                        Pershkrimi = "Crisp and refreshing Japanese beer.",
+                        Cmimi = 4.50m,
+                        Foto = "sushico/asahi.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 150,
+                        CategoryId = alcohol.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Corona",
+                        Pershkrimi = "Corona Beer",
+                        Cmimi = 6.00m,
+                        Foto = "sushico/corona.jpg",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 150,
+                        CategoryId = alcohol.Id
+                     }
+                 };
+
+                context.MenuItems.AddRange(alcoholItems);
+                context.SaveChanges();
             }
-        } } }
+        }
+    }
+}
