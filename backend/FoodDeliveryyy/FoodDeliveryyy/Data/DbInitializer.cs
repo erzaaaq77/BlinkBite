@@ -105,6 +105,9 @@ public static class DbInitializer
 
         var seedRestaurants = new Restaurant[]
         {
+            new Restaurant { Emertimi="SushiCo", Pershkrimi="SuchiCo – Fresh sushi...", Telefoni="+383 49 000 000", Email="info@sushicokosova.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=merchantUser.Id, Kategori="Sushi" },
+            new Restaurant { Emertimi="Burger King", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=merchantUser.Id, Kategori="Fast Food" },
+
             new Restaurant { Emertimi = "Pasta Fasta", Pershkrimi = "Delicious pasta", Telefoni = "+383 49 111 000", Email = "info@pastafasta.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Italian" },
             new Restaurant { Emertimi = "Proper Pizza", Pershkrimi = "Fresh pizza", Telefoni = "+383 49 000 100", Email = "info@properpizaaks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Pizza" },
             new Restaurant { Emertimi = "KFC", Pershkrimi = "Fameous fastfood", Telefoni = "+383 49 222 000", Email = "info@kfc-ks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
@@ -152,7 +155,7 @@ public static class DbInitializer
                             IsMain = true
                         });
                     }
-                    else if (restaurant.Emertimi == "BurgerKing")
+                    else if (restaurant.Emertimi == "Burger King")
                     {
                         addresses.Add(new RestaurantAddress
                         {
