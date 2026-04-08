@@ -3451,6 +3451,490 @@ public static class DbInitializer
 
             }
 
+            var categoriesProperPizza = new List<MenuCategory>();
+            var properpizza = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Propper Pizza");
+
+            if(properpizza != null)
+            {
+                var pizza = new MenuCategory
+                {
+                    Emertimi = "Pizza",
+                    Pershkrimi = "A classic Italian dish with baked dough, tomato sauce, cheese, and toppings.",
+                    Renditja = 1,
+                    RestaurantId = properpizza.Id
+                };
+                var sweetpizza = new MenuCategory
+                {
+                    Emertimi = " Sweet Pizza",
+                    Pershkrimi = "A dessert-style pizza topped with sweet ingredients like chocolate, fruits, and cream.",
+                    Renditja = 2,
+                    RestaurantId = properpizza.Id
+                };
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Pizza",
+                    Pershkrimi = "Drinks",
+                    Renditja = 3,
+                    RestaurantId = properpizza.Id
+                };
+
+                categoriesProperPizza.AddRange(new[] {pizza,sweetpizza, drinks });
+                context.MenuCategories.AddRange(categoriesProperPizza);
+                context.SaveChanges();
+
+                var pizzaItems = new List<MenuItems>{
+                    new MenuItems {
+                         Emertimi = "Vegetarian Pizza",
+                        Pershkrimi = "A delicious pizza topped with fresh vegetables, tomato sauce, and melted cheese on a crispy crust.",
+                        Cmimi = 3.40m,
+                        Foto = "properpizza/vegan1.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 1800,
+                        CategoryId = pizza.Id
+
+                    },
+                    new MenuItems {
+                         Emertimi = "Crudo Rucola Pizza",
+                        Pershkrimi = "A gourmet pizza topped with tomato sauce, mozzarella, prosciutto crudo, fresh arugula, and shaved parmesan.",
+                        Cmimi = 3.90m,
+                        Foto = "properpizza/rucola1.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 2000,
+                        CategoryId = pizza.Id
+
+                    },
+                    new MenuItems {
+                         Emertimi = "Pizza Margharita",
+                        Pershkrimi = "A classic pizza with tomato sauce, fresh mozzarella, and basil.",
+                        Cmimi = 3.40m,
+                        Foto = "properpizza/margarita.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 1600,
+                        CategoryId = pizza.Id
+
+                    },
+                    new MenuItems {
+                         Emertimi = "Pizza Funghi",
+                        Pershkrimi = "A savory pizza topped with tomato sauce, mozzarella, and fresh mushrooms.",
+                        Cmimi = 3.40m,
+                        Foto = "properpizza/fungi.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 1900,
+                        CategoryId = pizza.Id
+
+                    },
+                    new MenuItems {
+                         Emertimi = "Proper Pizza",
+                        Pershkrimi = "A hearty pizza loaded with tomato sauce, mozzarella, and a rich mix of premium toppings.",
+                        Cmimi = 3.40m,
+                        Foto = "properpizza/proper.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 2400,
+                        CategoryId = pizza.Id
+
+                    },
+                    new MenuItems {
+                         Emertimi = "Pizza Prosciutto",
+                        Pershkrimi = "A classic pizza topped with tomato sauce, mozzarella, and savory prosciutto.",
+                        Cmimi = 3.40m,
+                        Foto = "properpizza/proshute.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 2200,
+                        CategoryId = pizza.Id
+
+                    },
+                    new MenuItems {
+                         Emertimi = "Pizza Tuna",
+                        Pershkrimi = "A flavorful pizza topped with tomato sauce, mozzarella, and tuna, often finished with onions or herbs.",
+                        Cmimi = 4.00m,
+                        Foto = "properpizza/tuna.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 1850,
+                        CategoryId = pizza.Id
+
+                    },
+                
+                    new MenuItems {
+                         Emertimi = "Pizza Oriental",
+                        Pershkrimi = "A zesty pizza topped with tomato sauce, mozzarella, chicken or beef, bell peppers, onions, and a blend of oriental spices.",
+                        Cmimi = 3.40m,
+                        Foto = "properpizza/oriental.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 2500,
+                        CategoryId = pizza.Id
+
+                    },
+                
+                    new MenuItems {
+                         Emertimi = "Pizza 4 Cheeses",
+                        Pershkrimi = "A rich and creamy pizza topped with a blend of four cheeses—mozzarella, gorgonzola, parmesan, and fontina—on a golden crust.",
+                        Cmimi = 3.90m,
+                        Foto = "properpizza/cheese.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 2600,
+                        CategoryId = pizza.Id
+
+                    }
+                };
+                context.MenuItems.AddRange(pizzaItems);
+                context.SaveChanges();
+
+                var sweetPizzaItems = new List<MenuItems> { 
+                new MenuItems
+                {
+                         Emertimi = "Pizza Nutella",
+                        Pershkrimi = "A sweet dessert pizza with a crispy crust, generously spread with Nutella and optionally topped with fruits or powdered sugar.",
+                        Cmimi = 4.00m,
+                        Foto = "properpizza/nutella.webp",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk",
+                        Kalori = 2800,
+                        CategoryId = sweetpizza.Id
+                }
+                
+                };
+                context.MenuItems.AddRange(sweetPizzaItems);
+                context.SaveChanges();
+
+                var drinkItems = new List<MenuItems> { 
+                new MenuItems
+                {
+                        Emertimi = "Coca Cola",
+                        Pershkrimi = "Coca Cola",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/CocaCola.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 150,
+                        CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                        Emertimi = "Water",
+                        Pershkrimi = "Water",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/Water.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                        Emertimi = "Fanta",
+                        Pershkrimi = "Fanta",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/FantaOrange.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = drinks.Id
+                }
+                
+                };
+                context.MenuItems.AddRange(drinkItems);
+                context.SaveChanges();
+            }
+
+
+            var categoriesKFC = new List<MenuCategory>();
+            var kfc = context.Restaurants.FirstOrDefault(r => r.Emertimi == "KFC");
+
+            if(kfc != null)
+            {
+                var burgerandwrap= new MenuCategory
+                {
+                    Emertimi = "Burger and Wrap",
+                    Pershkrimi = "A delicious selection of burgers and wraps, featuring crispy chicken, fresh vegetables, and flavorful sauces, all served on a soft bun or wrapped in a warm tortilla.",
+                    Renditja = 1,
+                    RestaurantId = kfc.Id
+                };
+                var buckets= new MenuCategory
+                {
+                    Emertimi = "Buckets & Pieces",
+                    Pershkrimi = "A shareable meal featuring a bucket of crispy, golden pieces of chicken, perfect for enjoying with friends or family.",
+                    Renditja = 2,
+                    RestaurantId = kfc.Id
+                };
+                var sidesdrinks= new MenuCategory
+                {
+                    Emertimi = "Sides & Beverages",
+                    Pershkrimi = "Perfect companions for your meal – from tasty sides to refreshing beverages.",
+                    Renditja = 3,
+                    RestaurantId = kfc.Id
+                };
+
+                categoriesKFC.AddRange(new[] { burgerandwrap, buckets, sidesdrinks });
+                context.MenuCategories.AddRange(categoriesKFC);
+                context.SaveChanges();
+
+                var burgerandwrapItems = new List<MenuItems>
+                { 
+                new MenuItems{
+                        Emertimi = "Cheese Burger",
+                        Pershkrimi = "A juicy beef patty topped with melted cheese, fresh lettuce, tomato, onions, and a soft bun.",
+                        Cmimi = 2.29m,
+                        Foto = "kfc/cheese.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 600,
+                        CategoryId = burgerandwrap.Id
+                },
+                new MenuItems{
+                        Emertimi = "Original Burger",
+                        Pershkrimi = "A classic burger with a savory beef patty, fresh lettuce, tomato, onions, and a soft bun.",
+                        Cmimi = 2.29m,
+                        Foto = "kfc/original.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 450,
+                        CategoryId = burgerandwrap.Id
+                },
+                new MenuItems{
+                        Emertimi = "Twister Wrap",
+                        Pershkrimi = "A soft tortilla wrap filled with seasoned chicken, fresh vegetables, and a creamy sauce, rolled up for a convenient, flavorful meal.",
+                        Cmimi = 3.99m,
+                        Foto = "kfc/twister.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 400,
+                        CategoryId = burgerandwrap.Id
+                },
+                new MenuItems{
+                        Emertimi = "Tower Burger",
+                        Pershkrimi = "A towering burger stacked with multiple beef patties, cheese, fresh vegetables, and sauces, served on a soft bun.",
+                        Cmimi = 4.69m,
+                        Foto = "kfc/tower.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 800,
+                        CategoryId = burgerandwrap.Id
+                },
+                new MenuItems{
+                        Emertimi = "Boxmaster",
+                        Pershkrimi = "A hearty meal featuring a combination of burger, fries, and chicken pieces, all served together in one convenient box.",
+                        Cmimi = 4.69m,
+                        Foto = "kfc/boxmaster.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 1000,
+                        CategoryId = burgerandwrap.Id
+                }
+
+                };
+                context.MenuItems.AddRange(burgerandwrapItems);
+                context.SaveChanges();
+
+                var bucketsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "2 Hot Wings",
+                        Pershkrimi = "Two crispy and spicy chicken wings, perfect as a snack or appetizer.",
+                        Cmimi = 1.99m,
+                        Foto = "kfc/2hot.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 160,
+                        CategoryId = buckets.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "5 Hot Wings",
+                        Pershkrimi = "Five crispy and spicy chicken wings, perfect as a snack or shareable appetizer.",
+                        Cmimi = 3.99m,
+                        Foto = "kfc/5hot.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 500,
+                        CategoryId = buckets.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "8 Hot Wings",
+                        Pershkrimi = "Eight crispy and spicy chicken wings, perfect for sharing or enjoying as a hearty snack.",
+                        Cmimi = 5.99m,
+                        Foto = "kfc/8hot.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 640,
+                        CategoryId = buckets.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "12 Hot Wings",
+                        Pershkrimi = "Twelve crispy and spicy chicken wings, ideal for sharing or a filling snack.",
+                        Cmimi = 8.99m,
+                        Foto = "kfc/12hot.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 1000,
+                        CategoryId = buckets.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "18 Hot Wings",
+                        Pershkrimi = "Eighteen crispy and spicy chicken wings, perfect for sharing with friends or as a hearty snack.",
+                        Cmimi = 12.59m,
+                        Foto = "kfc/18hot.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 1440,
+                        CategoryId = buckets.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "3 Crispy Strips",
+                        Pershkrimi = "Three golden, crispy chicken strips, seasoned and fried to perfection, perfect as a snack or side.",
+                        Cmimi = 3.69m,
+                        Foto = "kfc/3crispy.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 300,
+                        CategoryId = buckets.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "5 Crispy Strips",
+                        Pershkrimi = "Five golden, crispy chicken strips, seasoned and fried to perfection, perfect as a snack or side.",
+                        Cmimi = 5.59m,
+                        Foto = "kfc/5crispy.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 500,
+                        CategoryId = buckets.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "8 Crispy Strips",
+                        Pershkrimi = "Eight golden, crispy chicken strips, seasoned and fried to perfection, ideal for sharing or a hearty snack.",
+                        Cmimi = 7.99m,
+                        Foto = "kfc/8crispy.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 800,
+                        CategoryId = buckets.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "12 Crispy Strips",
+                        Pershkrimi = "Twelve golden, crispy chicken strips, perfectly seasoned and fried, ideal for sharing or a filling snack.",
+                        Cmimi = 11.49m,
+                        Foto = "kfc/12crispy.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 1200,
+                        CategoryId = buckets.Id
+                     }
+                 };
+                context.MenuItems.AddRange(bucketsItems);
+                context.SaveChanges();
+
+                var sidesdrinksItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Chicken Salad",
+                        Pershkrimi = "A fresh salad with tender chicken pieces, mixed greens, tomatoes, cucumbers, and a light dressing.",
+                        Cmimi = 4.49m,
+                        Foto = "kfc/salad.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs,Milk,Soy",
+                        Kalori = 250,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Fries",
+                        Pershkrimi = "Crispy golden fries, lightly salted and perfect as a side or snack.",
+                        Cmimi = 1.39m,
+                        Foto = "kfc/fries.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 300,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "BBQ Sauce",
+                        Pershkrimi = "A rich and tangy tomato-based BBQ sauce, perfect for dipping or adding flavor to your meals.",
+                        Cmimi = 1.39m,
+                        Foto = "kfc/bbq.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 50,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Don Garlos",
+                        Pershkrimi = "A bold and spicy sauce with a unique blend of herbs and spices, perfect for dipping or enhancing your favorite dishes.",
+                        Cmimi = 1.39m,
+                        Foto = "kfc/dongarlos.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 60,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Corn",
+                        Pershkrimi = "Sweet and tender corn, steamed or boiled, perfect as a side or snack.",
+                        Cmimi = 0.99m,
+                        Foto = "kfc/dongarlos.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 80,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Coca Cola",
+                        Pershkrimi = "Cola Cola",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/CocaCola.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Fanta Orange",
+                        Pershkrimi = "Fanta Orange",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/FantaOrange.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = sidesdrinks.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Water",
+                        Pershkrimi = "Water",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/Water.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = sidesdrinks.Id
+                     },
+                
+                
+                };
+            }
+
+
 
 
         }
