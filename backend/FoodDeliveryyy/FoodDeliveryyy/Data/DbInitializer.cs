@@ -152,10 +152,13 @@ public static class DbInitializer
                             Adresa = "Rr.Luan Hardinaj, Pallati i Rinisë",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.661746791222185,
+                            Longitude = 21.158287154546105
                         });
                     }
-                    else if (restaurant.Emertimi == "Burger King")
+                    else if (restaurant.Emertimi == "BurgerKing")
                     {
                         addresses.Add(new RestaurantAddress
                         {
@@ -163,7 +166,10 @@ public static class DbInitializer
                             Adresa = "10000 Xhorxh Bush",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.659109100741,
+                            Longitude = 21.16076295045968
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -172,7 +178,10 @@ public static class DbInitializer
                             Adresa = "Rr. Ahmet Krasniqi",
                             Qyteti = "Prishtinë",
                             Zona = "Arbëri",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.65789276428699,
+                            Longitude = 21.137545805949017
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -181,7 +190,11 @@ public static class DbInitializer
                             Adresa = "Royal Mall, Rruga B",
                             Qyteti = "Prishtinë",
                             Zona = "Bregu i Diellit",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.65398360322043,
+                            Longitude = 21.17741720185093
+
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -190,7 +203,10 @@ public static class DbInitializer
                             Adresa = "Rr Ukshin Hoti",
                             Qyteti = "Prishtinë",
                             Zona = "Pejton",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.658959200309425,
+                            Longitude = 21.153938746030168
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -199,7 +215,10 @@ public static class DbInitializer
                             Adresa = "Veternik",
                             Qyteti = "Prishtinë",
                             Zona = "Veternik",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.63158479775115,
+                            Longitude = 21.147336142328303
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -208,7 +227,10 @@ public static class DbInitializer
                             Adresa = " Albi Mall,Zona e Re Industriale",
                             Qyteti = "Prishtinë",
                             Zona = "Veternik",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.49437779850004,
+                            Longitude = 21.49905185590765
                         });
 
                     }
@@ -221,7 +243,10 @@ public static class DbInitializer
                             Adresa = "Rr Hajdar Dushi, nr 12",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.66296333180196,
+                            Longitude = 21.16216657486602
                         });
 
                     }
@@ -234,7 +259,10 @@ public static class DbInitializer
                             Adresa = "Rrethi i Çagllavicës",
                             Qyteti = "Prishtinë",
                             Zona = "Çagllavicë",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.61653150647903,
+                            Longitude = 21.143237890140693
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -243,7 +271,10 @@ public static class DbInitializer
                             Adresa = "Rr Dervish Hima",
                             Qyteti = "Prishtinë",
                             Zona = "Emshir",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = false,
+                            Latitude = 42.64307810037658,
+                            Longitude = 21.1537448423283
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -252,7 +283,10 @@ public static class DbInitializer
                             Adresa = "Rr Robert Doll",
                             Qyteti = "Prishtinë",
                             Zona = "Pejton",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.658414864338965,
+                            Longitude = 21.15422995843568
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -261,7 +295,10 @@ public static class DbInitializer
                             Adresa = "Rr Rexhep Luci",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.66564959695687,
+                            Longitude = 21.16275784811355
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -270,7 +307,10 @@ public static class DbInitializer
                             Adresa = "Rr Hyzri Talla",
                             Qyteti = "Prishtinë",
                             Zona = "Bregu i Diellit",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.65083595491357,
+                            Longitude = 21.17363691301479
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -279,7 +319,10 @@ public static class DbInitializer
                             Adresa = "Rr Haxhi Zeka",
                             Qyteti = "Prishtinë",
                             Zona = "Kolovicë",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.68119298858435,
+                            Longitude = 21.1730895752945
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -288,7 +331,10 @@ public static class DbInitializer
                             Adresa = "Rr Ferid Curri",
                             Qyteti = "Prishtinë",
                             Zona = "Arbëri",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.66095587439803,
+                            Longitude = 21.141339771164148
                         });
                     }
 
@@ -299,8 +345,11 @@ public static class DbInitializer
                             RestaurantId = restaurant.Id,
                             Adresa = "Kompleksi ish-Ramiz Sadiku",
                             Qyteti = "Prishtinë",
-                            Zona = "Qendër",
-                            IsMain = true
+                            Zona = "Pejton",
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.65896126992145,
+                            Longitude = 21.15304541164153
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -309,7 +358,10 @@ public static class DbInitializer
                             Adresa = "Arbëri",
                             Qyteti = "Prishtinë",
                             Zona = "Arbëri",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.65798360243033,
+                            Longitude = 21.137315769313222
                         });
                         addresses.Add(new RestaurantAddress
                         {
@@ -317,7 +369,10 @@ public static class DbInitializer
                             Adresa = "Rruga B",
                             Qyteti = "Prishtinë",
                             Zona = "Bregu i Diellit",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.65473091732552,
+                            Longitude = 21.176711840433374
                         });
                         addresses.Add(new RestaurantAddress
                         {
@@ -325,7 +380,10 @@ public static class DbInitializer
                             Adresa = "Qendra Tregtare Albi Mall",
                             Qyteti = "Prishtinë",
                             Zona = "Veternik",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.49437779850004,
+                            Longitude = 21.49905185590765
                         });
                         addresses.Add(new RestaurantAddress
                         {
@@ -333,7 +391,10 @@ public static class DbInitializer
                             Adresa = "Veternik",
                             Qyteti = "Prishtinë",
                             Zona = "Veternik",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.63143479299327,
+                            Longitude = 21.147303952369974
                         });
                         addresses.Add(new RestaurantAddress
                         {
@@ -341,7 +402,11 @@ public static class DbInitializer
                             Adresa = "Lagja Marigona",
                             Qyteti = "Prishtinë",
                             Zona = "Çagllavicë",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.62574929545231,
+                            Longitude = 21.08312669701782
+
                         });
                         addresses.Add(new RestaurantAddress
                         {
@@ -349,7 +414,11 @@ public static class DbInitializer
                             Adresa = "Prishtina Mall, M2 (Prishtinë-Ferizaj)",
                             Qyteti = "Prishtinë",
                             Zona = "Çagllavicë",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = true,
+                            Latitude = 42.564671220016166,
+                            Longitude = 21.133386684904043
+
                         });
                     }
 
@@ -361,7 +430,10 @@ public static class DbInitializer
                             Adresa = "Prime Residence, Tirana",
                             Qyteti = "Prishtinë",
                             Zona = "Lakrishtë",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.65607750726741,
+                            Longitude = 21.151074513492457
                         });
                     }
 
@@ -373,7 +445,10 @@ public static class DbInitializer
                             Adresa = "Sheshi Xhorxh Bush",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.657348936064004,
+                            Longitude = 21.160636950520498
                         });
                     }
 
@@ -385,7 +460,10 @@ public static class DbInitializer
                             Adresa = "Albi Mall, Zona e re Industriale",
                             Qyteti = "Prishtinë",
                             Zona = "Veternik",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.49437779850004,
+                            Longitude = 21.49905185590765
                         });
 
                     }
@@ -397,7 +475,10 @@ public static class DbInitializer
                             Adresa = "Prishtina Mall, M2 (Prishtinë-Ferizaj)",
                             Qyteti = "Prishtinë",
                             Zona = "Çagllavicë",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.564671220016166,
+                            Longitude = 21.133386684904043
                         });
                     }
 
@@ -409,7 +490,10 @@ public static class DbInitializer
                             Adresa = "Santea",
                             Qyteti = "Prishtinë",
                             Zona = "Bill Clinton",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.65873016747044,
+                            Longitude = 21.16484176685335
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -418,7 +502,10 @@ public static class DbInitializer
                             Adresa = "m9 Nënë Tereza",
                             Qyteti = "Prishtinë",
                             Zona = "M9 Fushë Kosovë",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = false,
+                            Latitude = 42.641767568275036,
+                            Longitude = 21.104080228199194
                         });
                     }
                     else if (restaurant.Emertimi == "Saray Sweets")
@@ -429,7 +516,10 @@ public static class DbInitializer
                             Adresa = "Rr Agim Ramadani",
                             Qyteti = "Prishtinë",
                             Zona = "Bulevardi Nënë Tereza",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.664535982621516,
+                            Longitude = 21.165257275050763
                         });
                     }
                     else if (restaurant.Emertimi == "Capvin 13")
@@ -440,7 +530,10 @@ public static class DbInitializer
                             Adresa = "Rr Hyzri Talla",
                             Qyteti = "Prishtinë",
                             Zona = "Bregu i Diellit",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.65118040887382,
+                            Longitude = 21.175045729087945
                         });
 
                     }
@@ -453,7 +546,10 @@ public static class DbInitializer
                             Adresa = "Bashkim Fehmiu 47",
                             Qyteti = "Prishtinë",
                             Zona = "Lakrishtë",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.657902432970126,
+                            Longitude = 21.148112923535553
                         });
                     }
                     else if (restaurant.Emertimi == "Mulliri")
@@ -464,9 +560,10 @@ public static class DbInitializer
                             Adresa = "Rr  Luan Haradinaj",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
-
-
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.702782669836346,
+                            Longitude = 21.179737619387176
 
                         });
                     }
@@ -480,12 +577,15 @@ public static class DbInitializer
                             Adresa = "Rruga Vicianum",
                             Qyteti = "Prishtinë",
                             Zona = "Arbëri",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.66188248266638,
+                            Longitude = 21.15364637875169
                         });
 
                     }
 
-                    else if (restaurant.Emertimi == "Smach Burger CO")
+                    else if (restaurant.Emertimi == "Smash Burger CO")
                     {
                         addresses.Add(new RestaurantAddress
 
@@ -494,7 +594,10 @@ public static class DbInitializer
                             Adresa = "Ramiz Sadiku",
                             Qyteti = "Prishtinë",
                             Zona = "Pejton",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.65771040379635,
+                            Longitude = 21.151608596550705
                         });
 
                     }
@@ -507,7 +610,10 @@ public static class DbInitializer
                             Adresa = "Rruga Muharrem Fejza",
                             Qyteti = "Prishtinë",
                             Zona = "Bregu i Diellit",
-                            IsMain = false
+                            IsMain = false,
+                            IsActive = false,
+                            Latitude = 42.64612983216337,
+                            Longitude = 21.17528867687603
                         });
 
                         addresses.Add(new RestaurantAddress
@@ -517,7 +623,10 @@ public static class DbInitializer
                             Adresa = "Rr Nurije Zeka",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.66145834096824,
+                            Longitude = 21.16089913030993
                         });
 
                     }
@@ -530,7 +639,10 @@ public static class DbInitializer
                             Adresa = "Rruga Hajdar Dushi",
                             Qyteti = "Prishtinë",
                             Zona = "Qafa",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.663282501508405,
+                            Longitude = 21.161554834572957
                         });
                     }
 
@@ -543,19 +655,23 @@ public static class DbInitializer
                             Adresa = "Albi Mall, Veternik",
                             Qyteti = "Prishtinë",
                             Zona = "Veternik",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.49437779850004,
+                            Longitude = 21.49905185590765
                         });
-                    }
 
-                    else if (restaurant.Emertimi == "Frix")
-                    {
                         addresses.Add(new RestaurantAddress
                         {
                             RestaurantId = restaurant.Id,
                             Adresa = "Prishtina Mall, Zona Industriale",
                             Qyteti = "Prishtinë",
                             Zona = "Çagllavicë",
-                            IsMain = true
+                            IsMain = true,
+                            IsActive = true,
+                            Latitude = 42.564671220016166,
+                            Longitude = 21.133386684904043
+
                         });
                     }
 
