@@ -105,8 +105,8 @@ public static class DbInitializer
 
         var seedRestaurants = new Restaurant[]
         {
-            new Restaurant { Emertimi="SushiCo", Pershkrimi="SuchiCo – Fresh sushi...", Telefoni="+383 49 000 000", Email="info@sushicokosova.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=merchantUser.Id, Kategori="Sushi" },
-            new Restaurant { Emertimi="Burger King", Pershkrimi="Flame-grilled burgers...", Telefoni="+383 49 000 000", Email="info@burgerking.com", Logo="", OrariHapjes=new TimeOnly(10,0), OrariMbylljes=new TimeOnly(0,0), Rating=4.5m, Statusi=RestaurantStatus.Active, UserId=merchantUser.Id, Kategori="Fast Food" },
+            new Restaurant { Emertimi = "SushiCo", Pershkrimi = "SuchiCo – Fresh sushi...", Telefoni = "+383 49 000 000", Email = "info@sushicokosova.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Sushi" },
+            new Restaurant { Emertimi = "Burger King", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@burgerking.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
 
             new Restaurant { Emertimi = "Pasta Fasta", Pershkrimi = "Delicious pasta", Telefoni = "+383 49 111 000", Email = "info@pastafasta.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Italian" },
             new Restaurant { Emertimi = "Proper Pizza", Pershkrimi = "Fresh pizza", Telefoni = "+383 49 000 100", Email = "info@properpizaaks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Pizza" },
@@ -980,7 +980,7 @@ public static class DbInitializer
                         CategoryId = salads.Id
                     },
 
-                     new MenuItems
+                    new MenuItems
                     {
                         Emertimi = "Mushroom Veggie Burger",
                         Pershkrimi = "Veggie patty with mushrooms and fresh toppings.",
@@ -1021,16 +1021,16 @@ public static class DbInitializer
                         CategoryId = sides.Id
                     },
                     new MenuItems
-                        {
-                            Emertimi = "French Fries",
-                            Pershkrimi = "Crispy golden fries.",
-                            Cmimi = 2.50m,
-                            Foto = "menuitems/frenchfries.jpg",
-                            Disponueshme = true,
-                            Alergjene = "Gluten",
-                            Kalori = 300,
-                            CategoryId = sides.Id
-                        },
+                    {
+                        Emertimi = "French Fries",
+                        Pershkrimi = "Crispy golden fries.",
+                        Cmimi = 2.50m,
+                        Foto = "menuitems/frenchfries.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 300,
+                        CategoryId = sides.Id
+                    },
                     new MenuItems
                     {
                         Emertimi = "Mozzarella Sticks",
@@ -1042,17 +1042,17 @@ public static class DbInitializer
                         Kalori = 400,
                         CategoryId = sides.Id
                     },
-                        new MenuItems
-                        {
-                            Emertimi = "Cheese Fries",
-                            Pershkrimi = "Fries topped with melted cheese.",
-                            Cmimi = 3.50m,
-                            Foto = "menuitems/cheesefries.jpg",
-                            Disponueshme = true,
-                            Alergjene = "Gluten, Dairy, Eggs",
-                            Kalori = 450,
-                            CategoryId = sides.Id
-                        }
+                    new MenuItems
+                    {
+                        Emertimi = "Cheese Fries",
+                        Pershkrimi = "Fries topped with melted cheese.",
+                        Cmimi = 3.50m,
+                        Foto = "menuitems/cheesefries.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Dairy, Eggs",
+                        Kalori = 450,
+                        CategoryId = sides.Id
+                    }
                 };
                 context.MenuItems.AddRange(sidesItems);
                 context.SaveChanges();
@@ -1062,7 +1062,7 @@ public static class DbInitializer
                     new MenuItems
                     {
                         Emertimi = "HERSHEY’S Sundae Pie",
-                        Pershkrimi= "Chocolate sundae pie with HERSHEY’S® topping",
+                        Pershkrimi = "Chocolate sundae pie with HERSHEY’S® topping",
                         Cmimi = 3.00m,
                         Foto = "menuitems/sundae.jpg",
                         Disponueshme = true,
@@ -1073,7 +1073,7 @@ public static class DbInitializer
                     new MenuItems
                     {
                         Emertimi = "Vanilla Soft Serve",
-                        Pershkrimi ="Vanilla soft-serve ice cream.",
+                        Pershkrimi = "Vanilla soft-serve ice cream.",
                         Cmimi = 2.50m,
                         Foto = "menuitems/vanillaicecream.jpg",
                         Disponueshme = true,
@@ -1081,10 +1081,10 @@ public static class DbInitializer
                         Kalori = 250,
                         CategoryId = desserts.Id
                     },
-                     new MenuItems
+                    new MenuItems
                     {
                         Emertimi = "Affogato Sundae",
-                        Pershkrimi ="Soft-serve ice cream with espresso and chocolate topping",
+                        Pershkrimi = "Soft-serve ice cream with espresso and chocolate topping",
                         Cmimi = 3.00m,
                         Foto = "menuitems/affogato.png",
                         Disponueshme = true,
@@ -1111,7 +1111,7 @@ public static class DbInitializer
                         CategoryId = beverages.Id
                     },
 
-                     new MenuItems
+                    new MenuItems
                     {
                         Emertimi = "Water",
                         Pershkrimi = "Water",
@@ -1286,86 +1286,86 @@ public static class DbInitializer
 
                 var appetizerItems = new List<MenuItems>
                 {
-                   new MenuItems{
-                   Emertimi = "Edamame with Parmesan",
-                   Pershkrimi = "Steamed edamame tossed with Parmesan cheese and a hint of garlic.",
-                   Cmimi=5.30m,
-                   Foto="sushico/edamame.jpg",
-                   Disponueshme = true,
-                   Alergjene="Soy, Dairy",
-                   Kalori=200,
-                   CategoryId= appetizer.Id
-                   },
-                   new MenuItems{
-                   Emertimi = "Chicken Katsu Finger",
-                   Pershkrimi = "Crispy Japanese-style chicken fingers.",
-                   Cmimi=6.80m,
-                   Foto="sushico/katsu.jpg",
-                   Disponueshme = true,
-                   Alergjene="Gluten,Eggs,Soy, Dairy",
-                   Kalori=420,
-                   CategoryId= appetizer.Id
-                   },
-                    new MenuItems{
-                   Emertimi = " Veal Tataki with Truffle",
-                   Pershkrimi = "Lightly seared veal slices served with aromatic truffle sauce.",
-                   Cmimi=11.80m,
-                   Foto="sushico/tataki.jpg",
-                   Disponueshme = true,
-                   Alergjene="Gluten,Eggs,Soy, Dairy",
-                   Kalori=350,
-                   CategoryId= appetizer.Id
-                   },
-                   new MenuItems{
-                   Emertimi = " Japanese Potato",
-                   Pershkrimi = "Crunchy potatoes with a delicate umami flavor.",
-                   Cmimi=5.70m,
-                   Foto="sushico/japanesepotato.jpg",
-                   Disponueshme = true,
-                   Alergjene="Gluten,Soy, Dairy",
-                   Kalori=300,
-                   CategoryId= appetizer.Id
-                   },
-                   new MenuItems{
-                   Emertimi = "Shrimp Bomb",
-                   Pershkrimi = "Crispy shrimp tossed in a creamy spicy sauce",
-                   Cmimi=8.20m,
-                   Foto="sushico/shrimpbomb.jpg",
-                   Disponueshme = true,
-                   Alergjene="Shellfish,Eggs,Gluten,Soy",
-                   Kalori=400,
-                   CategoryId= appetizer.Id
-                   },
-                    new MenuItems{
-                   Emertimi = "Salmon Carpaccio",
-                   Pershkrimi = "Crispy shrimp tossed in a creamy spicy sauce",
-                   Cmimi=8.20m,
-                   Foto="sushico/carpaccio.jpg",
-                   Disponueshme = true,
-                   Alergjene="Gluten,Soy,Dairy",
-                   Kalori=250,
-                   CategoryId= appetizer.Id
-                   },
-                     new MenuItems{
-                   Emertimi = "Tempura Mix",
-                   Pershkrimi = "Crispy shrimp and seasonal vegetables in light tempura batter, served with dipping sauce.",
-                   Cmimi=14.50m,
-                   Foto="sushico/tempura.jpg",
-                   Disponueshme = true,
-                   Alergjene="Soy,Fish",
-                   Kalori=400,
-                   CategoryId= appetizer.Id
-                   },
-                       new MenuItems{
-                   Emertimi = "Salmon Tataki",
-                   Pershkrimi = "Crispy shrimp and seasonal vegetables in light tempura batter, served with dipping sauce.",
-                   Cmimi=9.10m,
-                   Foto="sushico/salmontataki.jpg",
-                   Disponueshme = true,
-                   Alergjene="Soy,Fish,Sesame,Gluten",
-                   Kalori=300,
-                   CategoryId= appetizer.Id
-                   }
+                    new MenuItems {
+                        Emertimi = "Edamame with Parmesan",
+                        Pershkrimi = "Steamed edamame tossed with Parmesan cheese and a hint of garlic.",
+                        Cmimi = 5.30m,
+                        Foto = "sushico/edamame.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Dairy",
+                        Kalori = 200,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = "Chicken Katsu Finger",
+                        Pershkrimi = "Crispy Japanese-style chicken fingers.",
+                        Cmimi = 6.80m,
+                        Foto = "sushico/katsu.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Eggs,Soy, Dairy",
+                        Kalori = 420,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = " Veal Tataki with Truffle",
+                        Pershkrimi = "Lightly seared veal slices served with aromatic truffle sauce.",
+                        Cmimi = 11.80m,
+                        Foto = "sushico/tataki.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Eggs,Soy, Dairy",
+                        Kalori = 350,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = " Japanese Potato",
+                        Pershkrimi = "Crunchy potatoes with a delicate umami flavor.",
+                        Cmimi = 5.70m,
+                        Foto = "sushico/japanesepotato.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Soy, Dairy",
+                        Kalori = 300,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = "Shrimp Bomb",
+                        Pershkrimi = "Crispy shrimp tossed in a creamy spicy sauce",
+                        Cmimi = 8.20m,
+                        Foto = "sushico/shrimpbomb.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Shellfish,Eggs,Gluten,Soy",
+                        Kalori = 400,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = "Salmon Carpaccio",
+                        Pershkrimi = "Crispy shrimp tossed in a creamy spicy sauce",
+                        Cmimi = 8.20m,
+                        Foto = "sushico/carpaccio.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Soy,Dairy",
+                        Kalori = 250,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = "Tempura Mix",
+                        Pershkrimi = "Crispy shrimp and seasonal vegetables in light tempura batter, served with dipping sauce.",
+                        Cmimi = 14.50m,
+                        Foto = "sushico/tempura.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Fish",
+                        Kalori = 400,
+                        CategoryId = appetizer.Id
+                    },
+                    new MenuItems {
+                        Emertimi = "Salmon Tataki",
+                        Pershkrimi = "Crispy shrimp and seasonal vegetables in light tempura batter, served with dipping sauce.",
+                        Cmimi = 9.10m,
+                        Foto = "sushico/salmontataki.jpg",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Fish,Sesame,Gluten",
+                        Kalori = 300,
+                        CategoryId = appetizer.Id
+                    }
                 };
                 context.MenuItems.AddRange(appetizerItems);
                 context.SaveChanges();
@@ -1405,7 +1405,7 @@ public static class DbInitializer
                         Kalori = 80,
                         CategoryId = soup.Id
                     },
-                     new MenuItems
+                    new MenuItems
                     {
                         Emertimi = "Sea Food Soup",
                         Pershkrimi = "A hearty broth with a mix of fresh seafood, vegetables, and aromatic herbs.",
@@ -1466,7 +1466,7 @@ public static class DbInitializer
                         Kalori = 190,
                         CategoryId = dimsum.Id
                     },
-                      new MenuItems
+                    new MenuItems
                     {
                         Emertimi = "Steamed Beef Dumplings",
                         Pershkrimi = "Tender beef dumplings steamed to perfection, served with a savory dipping sauce.",
@@ -1477,7 +1477,7 @@ public static class DbInitializer
                         Kalori = 250,
                         CategoryId = dimsum.Id
                     },
-                      new MenuItems
+                    new MenuItems
                     {
                         Emertimi = "Chicken Bun",
                         Pershkrimi = "Soft steamed bun filled with tender, seasoned chicken.",
@@ -1555,18 +1555,18 @@ public static class DbInitializer
                         Alergjene = "Soy,Fish,Nuts",
                         Kalori = 300,
                         CategoryId = saladS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Spicy Cabbage Salad",
                         Pershkrimi = "Crunchy cabbage tossed in a zesty, spicy dressing for a bold and refreshing flavor.",
-                        Cmimi =3.30m,
+                        Cmimi = 3.30m,
                         Foto = "sushico/cabagge.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy, Sesame",
                         Kalori = 120,
                         CategoryId = saladS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Seafood Salad",
@@ -1577,7 +1577,7 @@ public static class DbInitializer
                         Alergjene = "Soy, Gluten,Mollusks,Fish,Crustaceans",
                         Kalori = 250,
                         CategoryId = saladS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Sashimi Salad",
@@ -1588,7 +1588,7 @@ public static class DbInitializer
                         Alergjene = "Soy, Gluten,Fish,Sesame",
                         Kalori = 250,
                         CategoryId = saladS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Japanese-Style Kani Salad",
@@ -1599,7 +1599,7 @@ public static class DbInitializer
                         Alergjene = "Eggs,Soy,Crustaceans",
                         Kalori = 320,
                         CategoryId = saladS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Kani & Cucumber Salad",
@@ -1610,8 +1610,8 @@ public static class DbInitializer
                         Alergjene = "Sesame,Soy,Eggs,Crustaceans",
                         Kalori = 150,
                         CategoryId = saladS.Id
-                     }
-                 };
+                    }
+                };
                 context.MenuItems.AddRange(saladItems);
                 context.SaveChanges();
 
@@ -1627,7 +1627,7 @@ public static class DbInitializer
                         Alergjene = "Soy, Gluten, Eggs,Sesame",
                         Kalori = 600,
                         CategoryId = chickenS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Korean-Style Chicken Bulgogi",
@@ -1638,7 +1638,7 @@ public static class DbInitializer
                         Alergjene = "Soy, Gluten, Eggs,Sesame",
                         Kalori = 450,
                         CategoryId = chickenS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Chicken with Vegetables",
@@ -1649,7 +1649,7 @@ public static class DbInitializer
                         Alergjene = "Gluten, Soy, Eggs",
                         Kalori = 400,
                         CategoryId = chickenS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Chicken with Red Curry",
@@ -1660,7 +1660,7 @@ public static class DbInitializer
                         Alergjene = "Gluten,Fish,Nuts",
                         Kalori = 450,
                         CategoryId = chickenS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Sweet & Sour Chicken",
@@ -1671,7 +1671,7 @@ public static class DbInitializer
                         Alergjene = "Gluten,Eggs,Soy,Sesame",
                         Kalori = 600,
                         CategoryId = chickenS.Id
-                     },
+                    },
                     new MenuItems
                     {
                         Emertimi = "Chicken Manchurian",
@@ -1682,15 +1682,15 @@ public static class DbInitializer
                         Alergjene = "Gluten,Eggs,Soy,Sesame",
                         Kalori = 600,
                         CategoryId = chickenS.Id
-                     }
-                 };
+                    }
+                };
                 context.MenuItems.AddRange(chickenItems);
                 context.SaveChanges();
 
                 var beefItems = new List<MenuItems>
                 {
-                    new MenuItems{
-                       Emertimi = "Beef with Crispy Eggplant",
+                    new MenuItems {
+                        Emertimi = "Beef with Crispy Eggplant",
                         Pershkrimi = "Tender beef stir-fried with crispy eggplant in a savory, slightly sweet sauce.",
                         Cmimi = 12.60m,
                         Foto = "sushico/eggplantbeef.jpg",
@@ -1699,8 +1699,8 @@ public static class DbInitializer
                         Kalori = 600,
                         CategoryId = beefS.Id
                     },
-                    new MenuItems{
-                       Emertimi = "Korean-Style Beef Bulgogi",
+                    new MenuItems {
+                        Emertimi = "Korean-Style Beef Bulgogi",
                         Pershkrimi = "Tender beef marinated in a sweet and savory Korean sauce, grilled and served with vegetables",
                         Cmimi = 11.50m,
                         Foto = "sushico/beefbulgogi.jpg",
@@ -1709,8 +1709,8 @@ public static class DbInitializer
                         Kalori = 600,
                         CategoryId = beefS.Id
                     },
-                    new MenuItems{
-                       Emertimi = "Beef with Green Peppers",
+                    new MenuItems {
+                        Emertimi = "Beef with Green Peppers",
                         Pershkrimi = "Tender beef stir-fried with fresh green peppers in a savory sauce.",
                         Cmimi = 11.60m,
                         Foto = "sushico/beefgreen.jpg",
@@ -1719,8 +1719,8 @@ public static class DbInitializer
                         Kalori = 500,
                         CategoryId = beefS.Id
                     },
-                    new MenuItems{
-                       Emertimi = "Spicy Beef with Mushrooms",
+                    new MenuItems {
+                        Emertimi = "Spicy Beef with Mushrooms",
                         Pershkrimi = "Tender beef stir-fried with mushrooms and spicy seasonings for a bold, flavorful dish.",
                         Cmimi = 12.10m,
                         Foto = "sushico/mushroombeeg.jpg",
@@ -1729,8 +1729,8 @@ public static class DbInitializer
                         Kalori = 500,
                         CategoryId = beefS.Id
                     },
-                    new MenuItems{
-                       Emertimi = "Thai-Style Beef with Chili & Basil",
+                    new MenuItems {
+                        Emertimi = "Thai-Style Beef with Chili & Basil",
                         Pershkrimi = "Tender beef stir-fried with fresh chili and aromatic basil in a savory Thai sauce.",
                         Cmimi = 12.60m,
                         Foto = "sushico/thaibeef.jpg",
@@ -1739,8 +1739,8 @@ public static class DbInitializer
                         Kalori = 500,
                         CategoryId = beefS.Id
                     },
-                     new MenuItems{
-                       Emertimi = "Beef with Black Garlic",
+                    new MenuItems {
+                        Emertimi = "Beef with Black Garlic",
                         Pershkrimi = "Tender beef cooked with rich, aromatic black garlic in a savory sauce.",
                         Cmimi = 12.10m,
                         Foto = "sushico/beefgarlic.jpg",
@@ -1819,7 +1819,7 @@ public static class DbInitializer
                 {
                     new MenuItems
                     {
-                    Emertimi = "Udon with Shrimp & Black Garlic",
+                        Emertimi = "Udon with Shrimp & Black Garlic",
                         Pershkrimi = "Thick udon noodles stir-fried with shrimp and rich black garlic in a savory sauce",
                         Cmimi = 11.50m,
                         Foto = "sushico/shrimpgarlic.jpg",
@@ -1830,7 +1830,7 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Udon with Chicken & Black Garlic",
+                        Emertimi = "Udon with Chicken & Black Garlic",
                         Pershkrimi = "Thick udon noodles stir-fried with tender chicken and rich black garlic in a savory sauce.",
                         Cmimi = 11.50m,
                         Foto = "sushico/shrimpgarlic.jpg",
@@ -1841,7 +1841,7 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Plain Noodles",
+                        Emertimi = "Plain Noodles",
                         Pershkrimi = "Simple stir-fried noodles with a light savory flavor.",
                         Cmimi = 5.50m,
                         Foto = "sushico/plainnoodles.jpg",
@@ -1852,7 +1852,7 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Korean-Style Chicken Bulgogi Udon",
+                        Emertimi = "Korean-Style Chicken Bulgogi Udon",
                         Pershkrimi = "Thick udon noodles stir-fried with tender chicken in a sweet and savory Korean bulgogi sauce",
                         Cmimi = 9.10m,
                         Foto = "sushico/chickenudon.jpg",
@@ -1863,7 +1863,7 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Korean-Style Beef Bulgogi Udon",
+                        Emertimi = "Korean-Style Beef Bulgogi Udon",
                         Pershkrimi = "Thick udon noodles stir-fried with tender beef in a sweet and savory Korean bulgogi sauce.",
                         Cmimi = 10.40m,
                         Foto = "sushico/beefudon.jpg",
@@ -1874,7 +1874,7 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Vegetable Noodles",
+                        Emertimi = "Vegetable Noodles",
                         Pershkrimi = "Stir-fried noodles with fresh seasonal vegetables in a light savory sauce.",
                         Cmimi = 10.40m,
                         Foto = "sushico/vegetablenoodle.jpg",
@@ -1885,7 +1885,7 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Chicken Noodles",
+                        Emertimi = "Chicken Noodles",
                         Pershkrimi = "Stir-fried noodles with tender chicken and fresh vegetables in a savory sauce.",
                         Cmimi = 10.40m,
                         Foto = "sushico/chickennoodle.jpg",
@@ -1896,9 +1896,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Beef Noodles",
+                        Emertimi = "Beef Noodles",
                         Pershkrimi = "Stir-fried noodles with tender beef and fresh vegetables in a savory sauce.",
-                        Cmimi =9.20m,
+                        Cmimi = 9.20m,
                         Foto = "sushico/beefnoodle.jpg",
                         Disponueshme = true,
                         Alergjene = "Sesame,Soy,Gluten",
@@ -1907,9 +1907,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Thai-Style Chicken Noodles",
+                        Emertimi = "Thai-Style Chicken Noodles",
                         Pershkrimi = "Stir-fried noodles with tender chicken, vegetables, and aromatic Thai spices.",
-                        Cmimi =10.30m,
+                        Cmimi = 10.30m,
                         Foto = "sushico/thaichicken.jpg",
                         Disponueshme = true,
                         Alergjene = "Sesame,Soy,Gluten",
@@ -1918,9 +1918,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Thai-Style Beef Noodles",
+                        Emertimi = "Thai-Style Beef Noodles",
                         Pershkrimi = "Stir-fried noodles with tender beef, vegetables, and aromatic Thai spices",
-                        Cmimi =11.50m,
+                        Cmimi = 11.50m,
                         Foto = "sushico/beefthai.jpg",
                         Disponueshme = true,
                         Alergjene = "Sesame,Soy,Gluten",
@@ -1929,9 +1929,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                    Emertimi = "Thai-Style Shrimp Noodles",
+                        Emertimi = "Thai-Style Shrimp Noodles",
                         Pershkrimi = "Stir-fried noodles with succulent shrimp, vegetables, and aromatic Thai spices.",
-                        Cmimi =12.60m,
+                        Cmimi = 12.60m,
                         Foto = "sushico/shrimpthai.jpg",
                         Disponueshme = true,
                         Alergjene = "Sesame,Soy,Gluten,Fish",
@@ -1944,61 +1944,61 @@ public static class DbInitializer
 
                 var riceItems = new List<MenuItems>
                 {
-                new MenuItems
+                    new MenuItems
                     {
-                    Emertimi = "Steamed Rice",
+                        Emertimi = "Steamed Rice",
                         Pershkrimi = "Fluffy, perfectly steamed white rice – a simple and versatile side.",
-                        Cmimi =2.50m,
+                        Cmimi = 2.50m,
                         Foto = "sushico/rice.jpg",
                         Disponueshme = true,
                         Alergjene = "None",
                         Kalori = 200,
                         CategoryId = rice.Id
-                   },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "Vegetable Rice",
+                        Emertimi = "Vegetable Rice",
                         Pershkrimi = "Fluffy steamed rice stir-fried with fresh seasonal vegetables.",
-                        Cmimi =5.50m,
+                        Cmimi = 5.50m,
                         Foto = "sushico/vegetablerice.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten",
                         Kalori = 300,
                         CategoryId = rice.Id
-                   },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "Curry Beef Rice",
+                        Emertimi = "Curry Beef Rice",
                         Pershkrimi = "Steamed rice served with tender beef cooked in a flavorful curry sauce.",
-                        Cmimi =7.50m,
+                        Cmimi = 7.50m,
                         Foto = "sushico/curryrice.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Sesame",
                         Kalori = 500,
                         CategoryId = rice.Id
-                   },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "Thai-Style Pineapple Rice",
+                        Emertimi = "Thai-Style Pineapple Rice",
                         Pershkrimi = "Fragrant Thai-style fried rice with pineapple, vegetables, and a touch of spices.",
-                        Cmimi =7.20m,
+                        Cmimi = 7.20m,
                         Foto = "sushico/thaiananas.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Eggs",
                         Kalori = 550,
                         CategoryId = rice.Id
-                   },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "Shrimp Rice",
+                        Emertimi = "Shrimp Rice",
                         Pershkrimi = "Steamed or fried rice served with succulent shrimp and fresh vegetables.",
-                        Cmimi =8.50m,
+                        Cmimi = 8.50m,
                         Foto = "sushico/shrimprice.jpg",
                         Disponueshme = true,
                         Alergjene = "Crustaceans,Soy,Gluten,Eggs",
                         Kalori = 550,
                         CategoryId = rice.Id
-                   }
+                    }
                 };
                 context.MenuItems.AddRange(riceItems);
                 context.SaveChanges();
@@ -2006,39 +2006,39 @@ public static class DbInitializer
                 var donburiItems = new List<MenuItems>
                 {
 
-                new MenuItems
-                {
-                     Emertimi = "Unagi Donburi",
+                    new MenuItems
+                    {
+                        Emertimi = "Unagi Donburi",
                         Pershkrimi = "Grilled eel glazed in sweet soy sauce, served over steamed rice.",
-                        Cmimi =12.70m,
+                        Cmimi = 12.70m,
                         Foto = "sushico/unagidonburi.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Fish",
                         Kalori = 650,
                         CategoryId = donburi.Id
-                },
-                new MenuItems
-                {
-                     Emertimi = "Duck Donburi",
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Duck Donburi",
                         Pershkrimi = "Sliced duck served over steamed rice with savory sauce.",
-                        Cmimi =12.70m,
+                        Cmimi = 12.70m,
                         Foto = "sushico/duckdonburi.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten",
                         Kalori = 700,
                         CategoryId = donburi.Id
-                },
-                new MenuItems
-                {
-                     Emertimi = "Salmon Donburi",
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Salmon Donburi",
                         Pershkrimi = "Sliced duck served over steamed rice with savory sauce.",
-                        Cmimi =12.10m,
+                        Cmimi = 12.10m,
                         Foto = "sushico/salmondonburi.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten.Fish",
                         Kalori = 700,
                         CategoryId = donburi.Id
-                }
+                    }
 
                 };
                 context.MenuItems.AddRange(donburiItems);
@@ -2046,7 +2046,7 @@ public static class DbInitializer
 
                 var sushirollItems = new List<MenuItems>
                 {
-                    new MenuItems{
+                    new MenuItems {
                         Emertimi = "Quinoa California Roll",
                         Pershkrimi = "Sushi roll with quinoa, crab, avocado, and cucumber.",
                         Cmimi = 8.50m,
@@ -2055,8 +2055,8 @@ public static class DbInitializer
                         Alergjene = "Crustaceans,Soy,Gluten,Eggs",
                         Kalori = 250,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Maguro Roll",
                         Pershkrimi = "Sushi roll with quinoa, crab, avocado, and cucumber.",
                         Cmimi = 6.60m,
@@ -2065,8 +2065,8 @@ public static class DbInitializer
                         Alergjene = "Soy,Gluten,Fish",
                         Kalori = 250,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Tofu Takuan Roll",
                         Pershkrimi = "Tofu and pickled radish wrapped with rice and seaweed.",
                         Cmimi = 6.60m,
@@ -2075,8 +2075,8 @@ public static class DbInitializer
                         Alergjene = "Soy,Gluten",
                         Kalori = 250,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Ebi Roll",
                         Pershkrimi = "Shrimp with rice and seaweed, often with avocado or cucumber.",
                         Cmimi = 6.60m,
@@ -2085,8 +2085,8 @@ public static class DbInitializer
                         Alergjene = "Soy,Gluten,Shellfish,Eggs",
                         Kalori = 250,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Kani Roll",
                         Pershkrimi = "Crab stick with rice and seaweed, often with avocado or cucumber.",
                         Cmimi = 6.10m,
@@ -2095,8 +2095,8 @@ public static class DbInitializer
                         Alergjene = "Soy,Gluten,Shellfish,Eggs",
                         Kalori = 250,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Sake Roll",
                         Pershkrimi = "Fresh salmon rolled with rice and seaweed.",
                         Cmimi = 6.60m,
@@ -2105,8 +2105,8 @@ public static class DbInitializer
                         Alergjene = "Soy,Gluten,Shellfish,Eggs",
                         Kalori = 250,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Unagi Roll",
                         Pershkrimi = "Grilled eel with rice and seaweed, glazed in sweet soy sauce.",
                         Cmimi = 6.60m,
@@ -2115,27 +2115,27 @@ public static class DbInitializer
                         Alergjene = "Soy,Gluten,Fish",
                         Kalori = 350,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Saba Roll",
                         Pershkrimi = "Marinated mackerel rolled with rice and seaweed.",
-                        Cmimi =5.50m,
+                        Cmimi = 5.50m,
                         Foto = "sushico/unagiroll.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Fish",
                         Kalori = 350,
                         CategoryId = sushirolls.Id
-                     },
-                    new MenuItems{
+                    },
+                    new MenuItems {
                         Emertimi = "Avocado Sake Roll",
                         Pershkrimi = "Fresh salmon and avocado rolled with rice and seaweed.",
-                        Cmimi =7.90m,
+                        Cmimi = 7.90m,
                         Foto = "sushico/avocadoroll.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Fish",
                         Kalori = 350,
                         CategoryId = sushirolls.Id
-                     }
+                    }
                 };
                 context.MenuItems.AddRange(sushirollItems);
                 context.SaveChanges();
@@ -2144,9 +2144,9 @@ public static class DbInitializer
                 {
                     new MenuItems
                     {
-                      Emertimi = "Salmon poke bowl",
+                        Emertimi = "Salmon poke bowl",
                         Pershkrimi = "Cubed fresh salmon over rice with vegetables and sesame dressing.",
-                        Cmimi =12.70m,
+                        Cmimi = 12.70m,
                         Foto = "sushico/salmonbowl.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Sesame,Fish",
@@ -2155,9 +2155,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Tamago (N)",
+                        Emertimi = "Tamago (N)",
                         Pershkrimi = "Sweet Japanese omelette rolled with rice and seaweed.",
-                        Cmimi =12.70m,
+                        Cmimi = 12.70m,
                         Foto = "sushico/tamago.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Eggs",
@@ -2166,9 +2166,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Ikura (N)",
+                        Emertimi = "Ikura (N)",
                         Pershkrimi = "Salmon roe served over rice or as sushi topping.",
-                        Cmimi =5.50m,
+                        Cmimi = 5.50m,
                         Foto = "sushico/ikura.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Fish",
@@ -2177,9 +2177,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Saba (N)",
+                        Emertimi = "Saba (N)",
                         Pershkrimi = "Marinated mackerel served over sushi rice.",
-                        Cmimi =1.70m,
+                        Cmimi = 1.70m,
                         Foto = "sushico/ikura.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Gluten,Fish",
@@ -2188,9 +2188,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Salmon & Maguro Poke Bowl",
+                        Emertimi = "Salmon & Maguro Poke Bowl",
                         Pershkrimi = "Fresh salmon and tuna cubes over rice with vegetables and sesame dressing.",
-                        Cmimi =12.70m,
+                        Cmimi = 12.70m,
                         Foto = "sushico/salmonmaguro.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Sesame,Fish",
@@ -2199,9 +2199,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Maguro (N)",
+                        Emertimi = "Maguro (N)",
                         Pershkrimi = "Fresh salmon and tuna cubes over rice with vegetables and sesame dressing.",
-                        Cmimi =2.80m,
+                        Cmimi = 2.80m,
                         Foto = "sushico/maguro.jpg",
                         Disponueshme = true,
                         Alergjene = "Soy,Sesame,Fish",
@@ -2210,9 +2210,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Ebi Tempura (N)",
+                        Emertimi = "Ebi Tempura (N)",
                         Pershkrimi = "Deep-fried battered shrimp served with dipping sauce.",
-                        Cmimi =3.30m,
+                        Cmimi = 3.30m,
                         Foto = "sushico/ebitempura.jpg",
                         Disponueshme = true,
                         Alergjene = "Shellfish,Wheat,Soy,Gluten,Fish",
@@ -2221,9 +2221,9 @@ public static class DbInitializer
                     },
                     new MenuItems
                     {
-                      Emertimi = "Nigiri Mix 9 pcs",
+                        Emertimi = "Nigiri Mix 9 pcs",
                         Pershkrimi = "Assorted nigiri sushi with a variety of fresh fish over rice.",
-                        Cmimi =19.50m,
+                        Cmimi = 19.50m,
                         Foto = "sushico/nigirimix.jpg",
                         Disponueshme = true,
                         Alergjene = "Shellfish,Fish,Soy,Gluten",
@@ -2234,15 +2234,15 @@ public static class DbInitializer
                 };
 
                 context.MenuItems.AddRange(nigiriItems);
-                context .SaveChanges();
+                context.SaveChanges();
 
 
                 var setmenuItems = new List<MenuItems>
                 {
 
-                new MenuItems
+                    new MenuItems
                     {
-                    Emertimi = "Ebi Love (15pcs)",
+                        Emertimi = "Ebi Love (15pcs)",
                         Pershkrimi = "Shrimp sushi and rolls assortment, 15 pieces.",
                         Cmimi = 19.90m,
                         Foto = "sushico/ebilove.jpg",
@@ -2250,10 +2250,10 @@ public static class DbInitializer
                         Alergjene = "Shellfish,Eggs,Soy,Gluten",
                         Kalori = 800,
                         CategoryId = setmenu.Id
-                     },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "Warm Nigiri Plate",
+                        Emertimi = "Warm Nigiri Plate",
                         Pershkrimi = "Assorted nigiri sushi served slightly warm.",
                         Cmimi = 9.90m,
                         Foto = "sushico/warmnigiri.jpg",
@@ -2261,10 +2261,10 @@ public static class DbInitializer
                         Alergjene = "Shellfish,Eggs,Soy,Gluten,Fish",
                         Kalori = 450,
                         CategoryId = setmenu.Id
-                     },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "Sushi Queen",
+                        Emertimi = "Sushi Queen",
                         Pershkrimi = "Assorted premium sushi rolls and nigiri selection..",
                         Cmimi = 22.20m,
                         Foto = "sushico/sushiqueen.jpg",
@@ -2272,10 +2272,10 @@ public static class DbInitializer
                         Alergjene = "Shellfish,Eggs,Soy,Gluten,Fish",
                         Kalori = 750,
                         CategoryId = setmenu.Id
-                     },
-                new MenuItems
+                    },
+                    new MenuItems
                     {
-                    Emertimi = "California Dream",
+                        Emertimi = "California Dream",
                         Pershkrimi = "California-style sushi rolls with crab, avocado, and cucumber.",
                         Cmimi = 9.90m,
                         Foto = "sushico/californiadream.jpg",
@@ -2283,10 +2283,724 @@ public static class DbInitializer
                         Alergjene = "Shellfish,Eggs,Soy,Gluten",
                         Kalori = 350,
                         CategoryId = setmenu.Id
-                     }
+                    }
                 };
                 context.MenuItems.AddRange(setmenuItems);
                 context.SaveChanges();
+
+            }
+            var categoriesPastaFasta = new List<MenuCategory>();
+            var pastafasta = context.Restaurants.FirstOrDefault(r => r.Emertimi == "PastaFasta");
+
+            if (pastafasta != null)
+            {
+                var coldpasta = new MenuCategory
+                {
+                    Emertimi = "Cold Pasta",
+                    Pershkrimi = "Delicious cold pasta dishes perfect for a refreshing meal.",
+                    Renditja = 1,
+                    RestaurantId = pastafasta.Id
+                };
+                var warmpasta = new MenuCategory
+                {
+                    Emertimi = "Warm Pasta",
+                    Pershkrimi = "Warm pasta tossed in a delicious sauce with fresh ingredients.",
+                    Renditja = 2,
+                    RestaurantId = pastafasta.Id
+                };
+                var chipspasta = new MenuCategory
+                {
+                    Emertimi = "Pasta Chips",
+                    Pershkrimi = "Crispy baked pasta chips seasoned to perfection.",
+                    Renditja = 3,
+                    RestaurantId = pastafasta.Id
+                };
+                var extras = new MenuCategory
+                {
+                    Emertimi = "Extras",
+                    Pershkrimi = "Add extra ingredients and sides to enhance your dish.",
+                    Renditja = 4,
+                    RestaurantId = pastafasta.Id
+                };
+                var box = new MenuCategory
+                {
+                    Emertimi = "Surprise box",
+                    Pershkrimi = "You pick the box, we pick the flavor!",
+                    Renditja = 5,
+                    RestaurantId = pastafasta.Id
+                };
+
+                var drinkss = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "A variety of refreshing drinks to keep you cool and satisfied.",
+                    Renditja = 6,
+                    RestaurantId = pastafasta.Id
+                };
+
+                categoriesPastaFasta.AddRange(new[] { coldpasta, warmpasta, chipspasta, extras, box, drinkss });
+                context.MenuCategories.AddRange(categoriesPastaFasta);
+                context.SaveChanges();
+
+                var coldpastaItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Arugula",
+                        Pershkrimi = "Penne pasta tossed with fresh arugula, mozzarella, cherry tomatoes, and a light balsamic dressing.",
+                        Cmimi = 9.50m,
+                        Foto = "pastafasta/Arugula.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy",
+                        Kalori = 450,
+                        CategoryId = coldpasta.Id
+
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Cucudill",
+                        Pershkrimi = "Fresh penne pasta tossed with crisp cucumbers, red onions, and a light house salad dressing for a refreshing taste.",
+                        Cmimi = 8.90m,
+                        Foto = "pastafasta/Cucudill.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Mustard",
+                        Kalori = 360,
+                        CategoryId = coldpasta.Id
+
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Butterflies",
+                        Pershkrimi = "Penne pasta mixed with pesto, fresh spinach, red beans, cucumbers, red onions, and a light salad dressing.",
+                        Cmimi = 9.70m,
+                        Foto = "pastafasta/Butterflies.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Nuts",
+                        Kalori = 480,
+                        CategoryId = coldpasta.Id
+
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Sprinkled Tuna",
+                        Pershkrimi = "Penne pasta mixed with tuna, boiled eggs, fresh vegetables, and a light salad dressing.",
+                        Cmimi =  10.50m,
+                        Foto = "pastafasta/SprinkledTuna.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Egg,Fish",
+                        Kalori = 520,
+                        CategoryId = coldpasta.Id
+
+                    },
+                      new MenuItems
+                    {
+                        Emertimi = "Sweety",
+                        Pershkrimi = "Penne pasta mixed with pineapple, carrots, turkey, and a light salad dressing.",
+                        Cmimi =  10.20m,
+                        Foto = "pastafasta/Sweety.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 490,
+                        CategoryId = coldpasta.Id
+
+                    },
+                        new MenuItems
+                    {
+                        Emertimi = "Bleta",
+                        Pershkrimi = "Penne pasta mixed with honey, cinnamon, cheese, arugula, and walnuts for a sweet and savory flavor.",
+                        Cmimi =  10.80m,
+                        Foto = "pastafasta/Bleta.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy,Nuts",
+                        Kalori = 540,
+                        CategoryId = coldpasta.Id
+
+                    },
+                        new MenuItems
+                    {
+                        Emertimi = "Iron Mac",
+                        Pershkrimi = "Penne pasta mixed with asparagus, green beans, arugula, and a light salad dressing.",
+                        Cmimi =  9.90m,
+                        Foto = "pastafasta/IronMac.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 400,
+                        CategoryId = coldpasta.Id
+
+                    },
+                          new MenuItems
+                    {
+                        Emertimi = "Kësulkuqja",
+                        Pershkrimi = "Penne pasta mixed with strawberries, radish, red onions, and a light salad dressing.",
+                        Cmimi =  9.60m,
+                        Foto = "pastafasta/Kesulkuqja.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 370,
+                        CategoryId = coldpasta.Id
+
+                    },
+
+                };
+                context.MenuItems.AddRange(coldpastaItems);
+                context.SaveChanges();
+
+
+                var warmpastaItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Bolognese",
+                        Pershkrimi = "Classic Italian pasta dish with a rich and hearty meat sauce made from ground beef, tomatoes, onions, garlic, and herbs.",
+                        Cmimi = 11.50m,
+                        Foto = "pastafasta/Bolognese.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 600,
+                        CategoryId = warmpasta.Id
+
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Quattro Formaggi",
+                        Pershkrimi = "A rich and creamy blend of four cheeses melted over perfectly cooked pasta, creating a deliciously cheesy experience.",
+                        Cmimi = 9.50m,
+                        Foto = "pastafasta/QuattroFormaggi.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 550,
+                        CategoryId = warmpasta.Id
+
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Chicken Pesto & Broccoli",
+                        Pershkrimi = "Tender chicken and fresh broccoli tossed with penne in a creamy pesto sauce.",
+                        Cmimi = 7.50m,
+                        Foto = "pastafasta/Pesto.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 400,
+                        CategoryId = warmpasta.Id
+
+                    },
+                      new MenuItems
+                    {
+                        Emertimi = "Arrabiata",
+                        Pershkrimi = "Penne pasta tossed in a spicy tomato and garlic sauce, delivering a bold and flavorful kick.",
+                        Cmimi = 5.50m,
+                        Foto = "pastafasta/Arrabiata.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy,Mustard",
+                        Kalori = 490,
+                        CategoryId = warmpasta.Id
+
+                    },
+                      new MenuItems
+                    {
+                        Emertimi = "Beef & Mushrooms",
+                        Pershkrimi = "Pasta tossed with tender beef slices and sautéed mushrooms in a savory sauce for a hearty and satisfying meal.",
+                        Cmimi = 4.50m,
+                        Foto = "pastafasta/Mushrooms.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy",
+                        Kalori = 400,
+                        CategoryId = warmpasta.Id
+
+                    },
+                      new MenuItems
+                    {
+                        Emertimi = "Pizza Sauce",
+                        Pershkrimi = "A rich and tangy tomato-based sauce, seasoned with herbs and spices, perfect for spreading over your pizza.",
+                        Cmimi = 4.20m,
+                        Foto = "pastafasta/PizzaSauce.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 450,
+                        CategoryId = warmpasta.Id
+
+                    },
+                       new MenuItems
+                    {
+                        Emertimi = "Chicken Curry",
+                        Pershkrimi = "Tender chicken pieces cooked in a flavorful curry sauce with aromatic spices, served over your choice of pasta or rice.",
+                        Cmimi = 3.20m,
+                        Foto = "pastafasta/ChickenCurry.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy",
+                        Kalori = 300,
+                        CategoryId = warmpasta.Id
+
+                    },
+                      new MenuItems
+                    {
+                        Emertimi = "Napoli",
+                        Pershkrimi = "Classic tomato sauce with garlic and herbs, served over pasta or as a base for your favorite pizza.",
+                        Cmimi = 3.80m,
+                        Foto = "pastafasta/Napoli.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 600,
+                        CategoryId = warmpasta.Id
+
+                    },
+                       new MenuItems
+                    {
+                        Emertimi = "Veggie Tuna",
+                        Pershkrimi = "A refreshing mix of tuna, fresh vegetables, and a light salad dressing, perfect for a healthy meal.",
+                        Cmimi = 3.80m,
+                        Foto = "pastafasta/VeggieTuna.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Egg,Fish",
+                        Kalori = 500,
+                        CategoryId = warmpasta.Id
+
+                    },
+                        new MenuItems
+                    {
+                        Emertimi = "Mac'n'cheese",
+                        Pershkrimi = "Creamy macaroni pasta baked with a rich blend of cheeses for a comforting and cheesy delight.",
+                        Cmimi = 4.80m,
+                        Foto = "pastafasta/MacnCheese.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy",
+                        Kalori = 520,
+                        CategoryId = warmpasta.Id
+
+                    },
+                           new MenuItems
+                    {
+                        Emertimi = "Lasagna Sauce",
+                        Pershkrimi = "A rich and savory tomato-based sauce, blended with herbs and spices, perfect for layering in lasagna.",
+                        Cmimi = 8.00m,
+                        Foto = "pastafasta/LasagnaSauce.png",
+                        Disponueshme = true,
+                        Alergjene = "Dairy",
+                        Kalori = 800,
+                        CategoryId = warmpasta.Id
+
+                    },
+                       new MenuItems
+                    {
+                        Emertimi = "Alfredo",
+                        Pershkrimi = "A creamy and rich sauce made with butter, cream, and Parmesan cheese, perfect for tossing with your favorite pasta.",
+                        Cmimi = 5.20m,
+                        Foto = "pastafasta/Alfredo.png",
+                        Disponueshme = true,
+                        Alergjene = "Dairy,Gluten",
+                        Kalori = 300,
+                        CategoryId = warmpasta.Id
+
+                    },
+                       new MenuItems
+                    {
+                        Emertimi = "Spinach Ricotta",
+                        Pershkrimi = "A creamy and flavorful combination of fresh spinach and ricotta cheese, perfect for tossing with pasta or layering in lasagna.",
+                        Cmimi = 4.20m,
+                        Foto = "pastafasta/SpinachRicotta.png",
+                        Disponueshme = true,
+                        Alergjene = "Dairy,Gluten",
+                        Kalori = 350,
+                        CategoryId = warmpasta.Id
+
+                    },
+                       new MenuItems
+                    {
+                        Emertimi = "Aglio e Olio",
+                        Pershkrimi = "A creamy and flavorful combination of fresh spinach and ricotta cheese, perfect for tossing with pasta or layering in lasagna.",
+                        Cmimi = 4.60m,
+                        Foto = "pastafasta/AglioeOlio.png",
+                        Disponueshme = true,
+                        Alergjene = "Dairy,Gluten",
+                        Kalori = 900,
+                        CategoryId = warmpasta.Id
+
+                    },
+                         new MenuItems
+                    {
+                        Emertimi = "Fantasea",
+                        Pershkrimi = "A refreshing mix of fresh vegetables and seafood, tossed in a light salad dressing for a vibrant and flavorful dish.",
+                        Cmimi = 7.20m,
+                        Foto = "pastafasta/Fantasea.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Fish",
+                        Kalori = 400,
+                        CategoryId = warmpasta.Id
+
+                    },
+                         new MenuItems
+                    {
+                        Emertimi = "Carbonara",
+                        Pershkrimi = "Creamy pasta made with eggs, Parmesan cheese, pancetta, and black pepper for a rich and classic Italian flavor.",
+                        Cmimi = 6.20m,
+                        Foto = "pastafasta/Carbonara.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy,Egg",
+                        Kalori = 200,
+                        CategoryId = warmpasta.Id
+
+                    },
+
+
+                 };
+                context.MenuItems.AddRange(warmpastaItems);
+                context.SaveChanges();
+
+
+                var chipspastaItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Pasta Chips Garlic Sauce",
+                        Pershkrimi = "Crispy baked pasta chips served with a flavorful garlic sauce for dipping or drizzling.",
+                        Cmimi = 4.50m,
+                        Foto = "pastafasta/ClassicChips.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Dairy",
+                        Kalori = 300,
+                        CategoryId = chipspasta.Id
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Pasta Chips Chilly",
+                        Pershkrimi = "Crispy baked pasta chips tossed in a spicy chili seasoning for a bold and flavorful snack.",
+                        Cmimi = 5.20m,
+                        Foto = "pastafasta/PastaChipsChilly.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 350,
+                        CategoryId = chipspasta.Id
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Pasta Chips Ketchup & Basil",
+                        Pershkrimi = "Crispy baked pasta chips served with a tangy ketchup and fresh basil for a flavorful snack.",
+                        Cmimi = 5.80m,
+                        Foto = "pastafasta/PastaChipsKetchup&Basil.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 400,
+                        CategoryId = chipspasta.Id
+                    },
+                     
+                    };
+                context.MenuItems.AddRange(chipspastaItems);
+                context.SaveChanges();
+
+                var extrasItems = new List<MenuItems>
+                {
+                       new MenuItems
+                    {
+                        Emertimi = "Parmesan Cheese",
+                        Pershkrimi = "Grated Parmesan cheese, perfect for sprinkling over your pasta dishes to add a rich and savory flavor.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/ParmesanCheese.png",
+                        Disponueshme = true,
+                        Alergjene = "Dairy",
+                        Kalori = 100,
+                        CategoryId = extras.Id
+                     },
+                       new MenuItems
+                       {
+                        Emertimi = "Fara Mix",
+                        Pershkrimi = "A nutritious mix of fresh vegetables and assorted seeds, tossed in a light salad dressing for a healthy and crunchy dish.",
+                        Cmimi = 2.50m,
+                        Foto = "pastafasta/FaraMix.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Seeds",
+                        Kalori = 200,
+                        CategoryId = extras.Id
+                       },
+                       new MenuItems
+                       {
+                        Emertimi = "Olive",
+                        Pershkrimi = "A fresh pasta or salad dish featuring flavorful olives, tossed with vegetables and a light dressing.",
+                        Cmimi = 3.50m,
+                        Foto = "pastafasta/Olive.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 250,
+                        CategoryId = extras.Id
+                       },
+                        new MenuItems
+                       {
+                        Emertimi = "Parsley",
+                        Pershkrimi = "Fresh parsley added for a burst of flavor and a touch of green, enhancing the freshness of your dish.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/Parsley.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 50,
+                        CategoryId = extras.Id
+                       },
+                         new MenuItems
+                       {
+                        Emertimi = "Tomato",
+                        Pershkrimi = "Fresh, ripe tomatoes adding natural sweetness and juiciness, perfect for salads, pasta, and sauces.",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/Tomato.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = extras.Id
+                       },
+                           new MenuItems
+                       {
+                        Emertimi = "Broccoli",
+                        Pershkrimi = "Fresh broccoli florets, lightly steamed or raw, adding a healthy crunch and vibrant green color to your dish.",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/Broccoli.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = extras.Id
+                       },
+                           new MenuItems
+                       {
+                        Emertimi = "Garlic Oil",
+                        Pershkrimi = "Aromatic garlic infused oil, perfect for drizzling over pasta, bread, or salads to enhance flavor.",
+                        Cmimi = 2.00m,
+                        Foto = "pastafasta/GarlicOil.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = extras.Id
+                       },
+                 };
+
+                context.MenuItems.AddRange(extrasItems);
+                context.SaveChanges();
+
+                var   boxItems = new List<MenuItems>
+                {
+                       new MenuItems
+                    {
+                        Emertimi = "Surprise Box",
+                        Pershkrimi = "You pick the box, we pick the flavor! A delightful surprise of pasta dishes and flavors, curated by our chef for a unique dining experience.",
+                        Cmimi = 12.00m,
+                        Foto = "pastafasta/SurpriseBox.png",
+                        Disponueshme = true,
+                        Alergjene = "Varies",
+                        Kalori = 600,
+                        CategoryId = box.Id
+                     },
+                 };
+
+                context.MenuItems.AddRange(boxItems);
+                context.SaveChanges();
+
+
+                var drinkssItems =new List<MenuItems>
+                {
+                       new MenuItems
+                    {
+                        Emertimi = "Coca Cola",
+                        Pershkrimi = "Classic Coca-Cola, a refreshing soft drink with its signature sweet and fizzy taste.",
+                        Cmimi = 3.00m,
+                        Foto = "pastafasta/CocaCola.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 150,
+                        CategoryId = drinkss.Id
+                     },
+                         new MenuItems
+                    {
+                        Emertimi = "Coca Cola Zero",
+                        Pershkrimi = "Coca-Cola Zero, a refreshing soft drink with classic Coke taste but zero sugar and zero calories.",
+                        Cmimi = 3.00m,
+                        Foto = "pastafasta/CocaColaZero.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = drinkss.Id
+                     },
+                           new MenuItems
+                    {
+                        Emertimi = "Fanta Orange",
+                        Pershkrimi = "Fanta Orange, a refreshing and fizzy soft drink bursting with sweet and tangy orange flavor.",
+                        Cmimi = 2.00m,
+                        Foto = "pastafasta/FantaOrange.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 300,
+                        CategoryId = drinkss.Id
+                     },
+                          new MenuItems
+                    {
+                        Emertimi = "Fanta Tropikal",
+                        Pershkrimi = "Fanta Tropical, a refreshing fizzy drink with a sweet and exotic tropical fruit flavor.",
+                        Cmimi = 2.00m,
+                        Foto = "pastafasta/FantaTropikal.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 300,
+                        CategoryId = drinkss.Id
+                     },
+                         new MenuItems
+                    {
+                        Emertimi = "Schweppes Bitter Lemon",
+                        Pershkrimi = "Schweppes Bitter Lemon, a refreshing fizzy drink with a distinct bitter and zesty lemon flavor.",
+                        Cmimi = 2.50m,
+                        Foto = "pastafasta/SchweppesBitterLemon.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = drinkss.Id
+                     },
+                          new MenuItems
+                    {
+                        Emertimi = "Sprite",
+                        Pershkrimi = "Sprite, a crisp and refreshing lemon-lime flavored soft drink, perfect to quench your thirst.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/Sprite.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drinkss.Id
+                     },
+
+                          new MenuItems
+                    {
+                        Emertimi = "Water",
+                        Pershkrimi = "Fresh and pure drinking water, perfect for staying hydrated anytime.",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/Water.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = drinkss.Id
+                     },
+                          new MenuItems
+                    {
+                        Emertimi = "Sparkling Water",
+                        Pershkrimi = "Refreshing sparkling water with natural bubbles, perfect for staying hydrated with a fizzy twist.",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/SparklingWater.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = drinkss.Id
+                     },
+                           new MenuItems
+                    {
+                        Emertimi = "Red Bull",
+                        Pershkrimi = "Red Bull Energy Drink, a fizzy beverage packed with caffeine and vitamins to boost energy and alertness.",
+                        Cmimi = 3.00m,
+                        Foto = "pastafasta/RedBull.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drinkss.Id
+                     },
+                         new MenuItems
+                    {
+                        Emertimi = "Pasionada",
+                        Pershkrimi = "Pasionada, a refreshing tropical fruit juice with the vibrant taste of passion fruit and a hint of sweetness.",
+                        Cmimi = 3.00m,
+                        Foto = "pastafasta/Pasionada.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drinkss.Id
+                     },
+                           new MenuItems
+                    {
+                        Emertimi = "Malinada",
+                        Pershkrimi = "Pasionada, a refreshing tropical fruit juice with the vibrant taste of passion fruit and a hint of sweetness.",
+                        Cmimi = 4.00m,
+                        Foto = "pastafasta/Malinada.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drinkss.Id
+                     },
+
+
+
+                       new MenuItems
+                       {
+                        Emertimi = "Iced Tea",
+                        Pershkrimi = "Chilled iced tea brewed to perfection, offering a refreshing and flavorful beverage option to accompany your meal.",
+                        Cmimi = 2.50m,
+                        Foto = "pastafasta/IcedTea.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = drinkss.Id
+                       },
+                        new MenuItems
+                       {
+                        Emertimi = "Multivitamin Juice",
+                        Pershkrimi = "Multivitamin Juice, a refreshing blend of various fruit juices packed with essential vitamins for a healthy boost.",
+                        Cmimi = 2.50m,
+                        Foto = "pastafasta/MultivitaminJuice.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = drinkss.Id
+                       },
+
+                         new MenuItems
+                       {
+                        Emertimi = "Orange Juice",
+                        Pershkrimi = "Freshly squeezed orange juice, sweet and tangy, packed with vitamin C for a refreshing start to your day.",
+                        Cmimi = 2.50m,
+                        Foto = "pastafasta/OrangeJuice.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 100,
+                        CategoryId = drinkss.Id
+                       },
+                          new MenuItems
+                       {
+                        Emertimi = "Blueberry Juice",
+                        Pershkrimi = "Fresh blueberry juice, naturally sweet and rich in antioxidants, perfect for a refreshing and healthy drink.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/BlueberryJuice.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = drinkss.Id
+                       },
+                            new MenuItems
+                       {
+                        Emertimi = "Strawberry Juice",
+                        Pershkrimi = "Fresh strawberry juice, sweet and naturally fruity, perfect for a refreshing and healthy drink.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/StrawberryJuice.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = drinkss.Id
+                       },
+                             new MenuItems
+                       {
+                        Emertimi = "Cherry Juice",
+                        Pershkrimi = "Fresh cherry juice, naturally sweet and slightly tart, packed with rich cherry flavor for a refreshing drink.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/CherryJuice.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = drinkss.Id
+                       },
+                          new MenuItems
+                       {
+                        Emertimi = "Peach Juice",
+                        Pershkrimi = "Fresh peach juice, sweet and naturally fruity, offering a smooth and refreshing taste.",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/PeachJuice.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 200,
+                        CategoryId = drinkss.Id
+                       },
+
+                 };
+
+                context.MenuItems.AddRange(drinkssItems);
+                context.SaveChanges();
+
 
             }
         } } }
