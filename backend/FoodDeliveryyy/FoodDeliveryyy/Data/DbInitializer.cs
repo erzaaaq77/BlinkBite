@@ -5673,10 +5673,10 @@ public static class DbInitializer
                 context.MenuItems.AddRange(sidesItems);
                 context.SaveChanges();
 
-                var drinkItems = new List<MenuItems> 
-                { 
+                var drinkItems = new List<MenuItems>
+                {
                 new MenuItems
-                {        
+                {
                         Emertimi = "Coca Cola",
                         Pershkrimi = "Coca Cola",
                         Cmimi = 1.50m,
@@ -5688,7 +5688,7 @@ public static class DbInitializer
 
                  },
                 new MenuItems
-                {        
+                {
                         Emertimi = "Fanta Orange",
                         Pershkrimi = "Fanta Orange",
                         Cmimi = 1.50m,
@@ -5700,7 +5700,7 @@ public static class DbInitializer
 
                  },
                 new MenuItems
-                {        
+                {
                         Emertimi = "Water",
                         Pershkrimi = "Water",
                         Cmimi = 1.00m,
@@ -5712,7 +5712,7 @@ public static class DbInitializer
 
                  },
                 new MenuItems
-                {        
+                {
                         Emertimi = "Sprite",
                         Pershkrimi = "Sprite",
                         Cmimi = 1.50m,
@@ -5727,6 +5727,132 @@ public static class DbInitializer
                 };
                 context.MenuItems.AddRange(drinkItems);
                 context.SaveChanges();
+            }
+
+            var agusholli = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Agusholli");
+
+            if (agusholli != null)
+            {
+
+                var sweet = context.MenuCategories.FirstOrDefault(c => c.Emertimi == "Sweet" && c.RestaurantId == agusholli.Id);
+
+                if (sweet == null)
+                {
+                    sweet = new MenuCategory
+                    {
+                        Emertimi = "Sweet",
+                        Pershkrimi = "Indulge in our irresistible sweet treats, from decadent cakes to delightful pastries.",
+                        Renditja = 1,
+                        RestaurantId = agusholli.Id
+                    };
+
+                    context.MenuCategories.Add(sweet);
+                    context.SaveChanges();
+                }
+
+
+
+                var sweetItemsExist = context.MenuItems.Any(i => i.CategoryId == sweet.Id);
+
+
+                if (!sweetItemsExist)
+                {
+                    var sweetItems = new List<MenuItems>
+                    {
+
+                    new MenuItems
+                    {
+                        Emertimi = "Cremisimo",
+                        Pershkrimi = "A delicate soft dessert with layers of puff pastry, crunchy nuts, and creamy vanilla pudding.",
+                        Cmimi = 2.49m,
+                        Foto = "agusholli/1.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Nuts",
+                        Kalori = 350,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Red Velvet",
+                        Pershkrimi = "Moist red velvet cake layered with smooth cream cheese frosting.",
+                        Cmimi = 2.49m,
+                        Foto = "agusholli/2.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 400,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Kadaif",
+                        Pershkrimi = "Golden, crispy shredded pastry filled with nuts and drizzled with sweet syrup.",
+                        Cmimi = 2.00m,
+                        Foto = "agusholli/3.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Nuts",
+                        Kalori = 320,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Cheese Tropical",
+                        Pershkrimi = "Creamy cheese dessert topped with tropical fruits for a sweet and refreshing treat.",
+                        Cmimi = 2.50m,
+                        Foto = "agusholli/4.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 280,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Snikers",
+                        Pershkrimi = "Rich chocolate and caramel dessert layered with peanuts and creamy filling.",
+                        Cmimi = 2.50m,
+                        Foto = "agusholli/5.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 400,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Snikers",
+                        Pershkrimi = "Classic Italian dessert with layers of coffee-soaked ladyfingers, creamy mascarpone, and cocoa.",
+                        Cmimi = 2.50m,
+                        Foto = "agusholli/6.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 350,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Oreo",
+                        Pershkrimi = "Creamy dessert layered with crushed Oreo cookies and sweet filling.",
+                        Cmimi = 2.30m,
+                        Foto = "agusholli/7.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 350,
+                        CategoryId = sweet.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Lotus",
+                        Pershkrimi = "Creamy dessert layered with caramelized Lotus Biscoff cookies for a rich, sweet treat.",
+                        Cmimi = 2.50m,
+                        Foto = "agusholli/8.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 350,
+                        CategoryId = sweet.Id
+                    }
+
+                };
+                    context.MenuItems.AddRange(sweetItems);
+                    context.SaveChanges();
+                }
             }
         }
     }
