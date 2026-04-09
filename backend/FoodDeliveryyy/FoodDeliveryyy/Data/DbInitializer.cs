@@ -4560,11 +4560,11 @@ public static class DbInitializer
                 };
 
 
-                categoriesMyShawarma.AddRange(new[] { menuchicken, sauces, bread,plates,extras,drinks });
+                categoriesMyShawarma.AddRange(new[] { menuchicken, sauces, bread, plates, extras, drinks });
                 context.MenuCategories.AddRange(categoriesMyShawarma);
                 context.SaveChanges();
 
-                var menuchickenItems = new List<MenuItems> { 
+                var menuchickenItems = new List<MenuItems> {
                 new MenuItems
                    {
                     Emertimi = "M Döner Menu Chicken",
@@ -4587,7 +4587,7 @@ public static class DbInitializer
                     Kalori = 800,
                     CategoryId = menuchicken.Id
                 },
-                
+
                 new MenuItems
                    {
                     Emertimi = "Eggy Döner Menu Chicken",
@@ -4632,7 +4632,7 @@ public static class DbInitializer
                     Kalori = 1150,
                     CategoryId = menuchicken.Id
                 }
-               
+
                 };
                 context.MenuItems.AddRange(menuchickenItems);
                 context.SaveChanges();
@@ -4687,7 +4687,7 @@ public static class DbInitializer
                 context.MenuItems.AddRange(saucesItems);
                 context.SaveChanges();
 
-                var breadItems = new List<MenuItems>() { 
+                var breadItems = new List<MenuItems>() {
                 new MenuItems{
                     Emertimi = "Bread Döner Chicken",
                     Pershkrimi = "Tender chicken döner served in fresh bread, topped with crisp vegetables and your choice of flavorful sauces.",
@@ -4818,7 +4818,7 @@ public static class DbInitializer
                 context.MenuItems.AddRange(extrasItems);
                 context.SaveChanges();
 
-                var drinkItems = new List <MenuItems>
+                var drinkItems = new List<MenuItems>
                 {
                 new MenuItems
                 {
@@ -5270,6 +5270,464 @@ public static class DbInitializer
 
             }
 
+
+            var categoriesPopeyes = new List<MenuCategory>();
+            var popeyes = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Popeyes");
+
+            if (popeyes != null)
+            {
+
+                var sandwich = new MenuCategory
+                {
+                    Emertimi = "Sandwiches",
+                    Pershkrimi = "Crispy fried chicken on a toasted brioche bun with pickles and signature sauce.",
+                    Renditja = 1,
+                    RestaurantId = popeyes.Id
+
+                };
+                var tenders = new MenuCategory
+                {
+                    Emertimi = "Tenders",
+                    Pershkrimi = "Crispy, juicy chicken strips seasoned with bold Louisiana spices.",
+                    Renditja = 2,
+                    RestaurantId = popeyes.Id
+
+                };
+                var wings = new MenuCategory
+                {
+                    Emertimi = "Wings",
+                    Pershkrimi = "Crispy, flavorful chicken wings tossed in bold Louisiana spices.",
+                    Renditja = 3,
+                    RestaurantId = popeyes.Id
+
+                };
+                var wraps = new MenuCategory
+                {
+                    Emertimi = "Wraps",
+                    Pershkrimi = "Crispy chicken wrapped in a soft tortilla with fresh toppings and signature sauce.",
+                    Renditja = 4,
+                    RestaurantId = popeyes.Id
+
+                };
+                var kids = new MenuCategory
+                {
+                    Emertimi = "Kids Menu",
+                    Pershkrimi = "Tasty, kid-friendly portions served with sides and a drink.",
+                    Renditja = 5,
+                    RestaurantId = popeyes.Id
+
+                };
+                var bucket = new MenuCategory
+                {
+                    Emertimi = "Bucket",
+                    Pershkrimi = "Generous portions of crispy fried chicken, perfect for sharing.",
+                    Renditja = 6,
+                    RestaurantId = popeyes.Id
+
+                };
+                var sides = new MenuCategory
+                {
+                    Emertimi = "Sides",
+                    Pershkrimi = "Classic, flavorful sides that perfectly complement your meal.",
+                    Renditja = 7,
+                    RestaurantId = popeyes.Id
+
+                };
+                var drink = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Drinks",
+                    Renditja = 8,
+                    RestaurantId = popeyes.Id
+
+                };
+                categoriesPopeyes.AddRange(new[] { sandwich, tenders, wings, wraps, kids, bucket, sides, drink });
+                context.MenuCategories.AddRange(categoriesPopeyes);
+
+
+                var sandwichItems = new List<MenuItems> {
+
+                new MenuItems
+                   {
+                    Emertimi = "Chicken Sandwich",
+                    Pershkrimi = "Crispy fried chicken breast on a toasted brioche bun with pickles and signature sauce.",
+                    Cmimi = 4.79m,
+                    Foto = "popeyes/11.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 700,
+                    CategoryId = sandwich.Id
+                 },
+                new MenuItems
+                   {
+                    Emertimi = "Spicy Chicken Sandwich",
+                    Pershkrimi = "Crispy spicy chicken on a toasted brioche bun with pickles and spicy mayo.",
+                    Cmimi = 4.79m,
+                    Foto = "popeyes/2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 720,
+                    CategoryId = sandwich.Id
+                 },
+                new MenuItems
+                   {
+                    Emertimi = "Deluxe Chicken Sandwich",
+                    Pershkrimi = "Crispy chicken with lettuce, tomato, pickles, and mayo on a toasted brioche bun.",
+                    Cmimi = 5.29m,
+                    Foto = "popeyes/3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 750,
+                    CategoryId = sandwich.Id
+                 },
+                new MenuItems
+                   {
+                    Emertimi = "Colaslaw Sandwich",
+                    Pershkrimi = "Crispy chicken with a crunchy, creamy coleslaw on a soft toasted bun.",
+                    Cmimi = 5.29m,
+                    Foto = "popeyes/4.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 730,
+                    CategoryId = sandwich.Id
+                 }
+
+                };
+
+                context.MenuItems.AddRange(sandwichItems);
+                context.SaveChanges();
+
+                var tenderItems = new List<MenuItems> {
+
+                    new MenuItems
+                    {
+                    Emertimi = "Chicken Tenders 3 Pieces",
+                    Pershkrimi = "Three crispy, juicy chicken strips seasoned with Louisiana spices.",
+                    Cmimi = 3.99m,
+                    Foto = "popeyes/tender1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Soy",
+                    Kalori = 360,
+                    CategoryId = tenders.Id
+
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Chicken Tenders 5 Pieces",
+                    Pershkrimi = "Five crispy, juicy chicken strips seasoned with Louisiana spices.",
+                    Cmimi = 5.99m,
+                    Foto = "popeyes/tender2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Soy",
+                    Kalori = 860,
+                    CategoryId = tenders.Id
+
+                    },
+                      new MenuItems
+                    {
+                    Emertimi = "Chicken Tenders Spicy 3 Pieces",
+                    Pershkrimi = "Three crispy, spicy, juicy chicken strips seasoned with Louisiana spices.",
+                    Cmimi = 3.99m,
+                    Foto = "popeyes/tender1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Soy",
+                    Kalori = 360,
+                    CategoryId = tenders.Id
+
+                    },
+                    new MenuItems
+                    {
+                    Emertimi = "Chicken Tenders Spicy 5 Pieces",
+                    Pershkrimi = "Five crispy, spicy, juicy chicken strips seasoned with Louisiana spices.",
+                    Cmimi = 5.99m,
+                    Foto = "popeyes/tender2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Soy",
+                    Kalori = 860,
+                    CategoryId = tenders.Id
+
+                    }
+
+                };
+                context.MenuItems.AddRange(tenderItems);
+                context.SaveChanges();
+
+                var wingsItems = new List<MenuItems> {
+
+
+                new MenuItems
+                    {
+                    Emertimi = "Hot Wings 3 Pieces",
+                    Pershkrimi = "Three crispy, flavorful chicken wings tossed in bold Louisiana spices.",
+                    Cmimi = 2.99m,
+                    Foto = "popeyes/wings.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Soy",
+                    Kalori = 500,
+                    CategoryId = wings.Id
+                    },
+                new MenuItems
+                    {
+                    Emertimi = "Hot Wings 5 Pieces",
+                    Pershkrimi = "Five crispy, flavorful chicken wings tossed in bold Louisiana spices.",
+                    Cmimi = 4.79m,
+                    Foto = "popeyes/wings2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Soy",
+                    Kalori = 860,
+                    CategoryId = wings.Id
+                    },
+
+                new MenuItems
+                    {
+                    Emertimi = "BBQ Glazed Wings 3 Pieces",
+                    Pershkrimi = "Three crispy chicken wings tossed in sweet and smoky BBQ glaze.",
+                    Cmimi = 3.49m,
+                    Foto = "popeyes/bbq.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 330,
+                    CategoryId = wings.Id
+                    },
+                new MenuItems
+                    {
+                    Emertimi = "BBQ Glazed Wings 5 Pieces",
+                    Pershkrimi = "Five crispy chicken wings tossed in sweet and smoky BBQ glaze.",
+                    Cmimi = 5.49m,
+                    Foto = "popeyes/bbq1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 550,
+                    CategoryId = wings.Id
+                    },
+                new MenuItems
+                    {
+                    Emertimi = "Voodoo Wings 3 pcs",
+                    Pershkrimi = "Three crispy chicken wings tossed in bold, spicy Voodoo sauce.",
+                    Cmimi = 3.79m,
+                    Foto = "popeyes/voodo1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 340,
+                    CategoryId = wings.Id
+                    },
+                new MenuItems
+                    {
+                    Emertimi = "Voodoo Wings 5 pcs",
+                    Pershkrimi = "Three crispy chicken wings tossed in bold, spicy Voodoo sauce.",
+                    Cmimi = 5.49m,
+                    Foto = "popeyes/voodo2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 560,
+                    CategoryId = wings.Id
+                    }
+
+                };
+                context.MenuItems.AddRange(wingsItems);
+                context.SaveChanges();
+
+                var wrapsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                     Emertimi = "Chicken Wrap",
+                    Pershkrimi = "Crispy chicken, fresh veggies, and signature sauce wrapped in a soft tortilla.",
+                    Cmimi = 4.49m,
+                    Foto = "popeyes/wrap1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Mustard",
+                    Kalori = 550,
+                    CategoryId = wraps.Id
+                    },
+                    new MenuItems
+                    {
+                     Emertimi = "Spicy Chicken Wrap ",
+                    Pershkrimi = "Crispy chicken, fresh veggies, and signature spicy sauce wrapped in a soft tortilla.",
+                    Cmimi = 4.49m,
+                    Foto = "popeyes/wrap2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Mustard",
+                    Kalori = 550,
+                    CategoryId = wraps.Id
+                    }
+                };
+                context.MenuItems.AddRange(wrapsItems);
+                context.SaveChanges();
+
+                var kidsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Kids Menu 1",
+                        Pershkrimi = "Kid-sized crispy chicken with a side and a drink, perfect for little appetites.",
+                        Cmimi = 3.99m,
+                        Foto = "popeyes/kids.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Soy",
+                        Kalori = 500,
+                        CategoryId = kids.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Kids Menu Mini Wrap",
+                        Pershkrimi = "A smaller crispy chicken wrap with fresh veggies and mild sauce, perfect for kids.",
+                        Cmimi = 3.99m,
+                        Foto = "popeyes/kids2.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Soy",
+                        Kalori = 500,
+                        CategoryId = kids.Id
+                    }
+                };
+
+                context.MenuItems.AddRange(kidsItems);
+                context.SaveChanges();
+
+                var bucketItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "8 Piece Chicken Bucket",
+                        Pershkrimi = "A generous bucket of 8 pieces of crispy fried chicken, perfect for sharing.",
+                        Cmimi = 12.99m,
+                        Foto = "popeyes/bucket1.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Soy",
+                        Kalori = 1600,
+                        CategoryId = bucket.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "12 Piece Chicken Bucket",
+                        Pershkrimi = "A large bucket of 12 pieces of crispy fried chicken, ideal for family meals.",
+                        Cmimi = 21.99m,
+                        Foto = "popeyes/bucket2.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Soy",
+                        Kalori = 2400,
+                        CategoryId = bucket.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Hot Bucket",
+                        Pershkrimi = "A generous portion of crispy fried chicken, perfect for sharing.",
+                        Cmimi = 12.99m,
+                        Foto = "popeyes/bucket3.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs,Soy",
+                        Kalori = 1200,
+                        CategoryId = bucket.Id
+                     }
+                 };
+                context.MenuItems.AddRange(bucketItems);
+                context.SaveChanges();
+
+                var sidesItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Fries Small",
+                        Pershkrimi = "Crispy, golden fries seasoned to perfection.",
+                        Cmimi = 1.29m,
+                        Foto = "popeyes/fries.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 150,
+                        CategoryId = sides.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Fries Large",
+                        Pershkrimi = "Crispy, golden fries seasoned to perfection.",
+                        Cmimi = 1.99m,
+                        Foto = "popeyes/fries.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori =250 ,
+                        CategoryId = sides.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Coleslaw",
+                        Pershkrimi = "Crunchy coleslaw made with shredded cabbage and a tangy dressing.",
+                        Cmimi = 1.79m,
+                        Foto = "popeyes/side.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk,Eggs",
+                        Kalori = 150,
+                        CategoryId = sides.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Onion Rings 5 Pieces",
+                        Pershkrimi = "Five golden, crispy onion rings with a crunchy coating.",
+                        Cmimi = 1.79m,
+                        Foto = "popeyes/side1.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk,Eggs,Gluten",
+                        Kalori = 250,
+                        CategoryId = sides.Id
+                     }
+                 };
+                context.MenuItems.AddRange(sidesItems);
+                context.SaveChanges();
+
+                var drinkItems = new List<MenuItems> 
+                { 
+                new MenuItems
+                {        
+                        Emertimi = "Coca Cola",
+                        Pershkrimi = "Coca Cola",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/CocaCola.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drink.Id
+
+                 },
+                new MenuItems
+                {        
+                        Emertimi = "Fanta Orange",
+                        Pershkrimi = "Fanta Orange",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/fantaorange.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drink.Id
+
+                 },
+                new MenuItems
+                {        
+                        Emertimi = "Water",
+                        Pershkrimi = "Water",
+                        Cmimi = 1.00m,
+                        Foto = "pastafasta/water.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = drink.Id
+
+                 },
+                new MenuItems
+                {        
+                        Emertimi = "Sprite",
+                        Pershkrimi = "Sprite",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/Sprite.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drink.Id
+
+                 }
+
+                };
+                context.MenuItems.AddRange(drinkItems);
+                context.SaveChanges();
             }
         }
+    }
 }
