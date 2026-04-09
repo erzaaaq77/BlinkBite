@@ -4862,5 +4862,414 @@ public static class DbInitializer
 
 
             }
- }   }
+
+            var categoriesHeavyHit = new List<MenuCategory>();
+            var heavyHit = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Heavy Hit");
+
+            if (heavyHit != null)
+            {
+                var combo = new MenuCategory
+                {
+                    Emertimi = "Combo",
+                    Pershkrimi = "Special meal combinations with burgers, fries, and drinks.",
+                    Renditja = 1,
+                    RestaurantId = heavyHit.Id
+                };
+
+                var burgers = new MenuCategory
+                {
+                    Emertimi = "Burgers",
+                    Pershkrimi = "Juicy beef and chicken burgers with fresh toppings.",
+                    Renditja = 2,
+                    RestaurantId = heavyHit.Id
+                };
+
+                var fries = new MenuCategory
+                {
+                    Emertimi = "Fries",
+                    Pershkrimi = "Crispy golden fries, perfect side for any meal.",
+                    Renditja = 3,
+                    RestaurantId = heavyHit.Id
+                };
+
+                var dips = new MenuCategory
+                {
+                    Emertimi = "Dips",
+                    Pershkrimi = "Flavorful sauces and dips to complement your meal.",
+                    Renditja = 4,
+                    RestaurantId = heavyHit.Id
+                };
+
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Refreshing beverages to complete your combo.",
+                    Renditja = 5,
+                    RestaurantId = heavyHit.Id
+                };
+
+                categoriesHeavyHit.AddRange(new[] { combo, burgers, fries, dips, drinks });
+                context.MenuCategories.AddRange(categoriesHeavyHit);
+                context.SaveChanges();
+
+
+                var comboItems = new List<MenuItems>
+{
+    new MenuItems{
+        Emertimi = "THE HEAVY HIT Combo",
+        Pershkrimi = "Double beef patty, double cheese, caramelized onions, tomato, lettuce, and sauce.",
+        Cmimi = 8.99m,
+        Foto = "heavyhit/theHeavyhitCombo.png",
+        Disponueshme = true,
+        Alergjene = "Gluten,Milk",
+        Kalori = 950,
+        CategoryId = combo.Id
+    },
+    new MenuItems{
+        Emertimi = "THE CLASSIC HIT Combo",
+        Pershkrimi = "Double beef patty, double cheese, fresh onions, pickles, ketchup, and mustard.",
+        Cmimi = 8.49m,
+        Foto = "heavyhit/theClassichitCombo.png",
+        Disponueshme = true,
+        Alergjene = "Gluten,Milk,Mustard",
+        Kalori = 900,
+        CategoryId = combo.Id
+    },
+    new MenuItems{
+        Emertimi = "THE TRUFFLE HIT Combo",
+        Pershkrimi = "Double beef patty, double cheese, grated parmesan, truffle mayo, caramelized onions.",
+        Cmimi = 9.49m,
+        Foto = "heavyhit/theTrufflehitCombo.png",
+        Disponueshme = true,
+        Alergjene = "Gluten,Milk",
+        Kalori = 980,
+        CategoryId = combo.Id
+    },
+    new MenuItems{
+        Emertimi = "THE PROTEIN HIT Combo",
+        Pershkrimi = "Lettuce wrap with double beef patty, double cheese, caramelized onions, tomato, and thick sauce.",
+        Cmimi = 9.49m,
+        Foto = "heavyhit/theProteinhitCombo.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 850,
+        CategoryId = combo.Id
+    }
+};
+                context.MenuItems.AddRange(comboItems);
+                context.SaveChanges();
+
+                var burgerItems = new List<MenuItems>
+{
+    new MenuItems{
+        Emertimi = "THE HEAVY HIT",
+        Pershkrimi = "Double beef patty, double cheese, caramelized onions, tomato, lettuce, and sauce.",
+        Cmimi = 6.49m,
+        Foto = "heavyhit/theHeavyHitBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten,Milk",
+        Kalori = 750,
+        CategoryId = burgers.Id
+    },
+    new MenuItems{
+        Emertimi = "THE CLASSIC HIT",
+        Pershkrimi = "Double beef patty, double cheese, fresh onions, pickles, ketchup, and mustard.",
+        Cmimi = 5.99m,
+        Foto = "heavyhit/theClassicHitBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten,Milk,Mustard",
+        Kalori = 720,
+        CategoryId = burgers.Id
+    },
+    new MenuItems{
+        Emertimi = "THE TRUFFLE HIT",
+        Pershkrimi = "Double beef patty, double cheese, grated parmesan, truffle mayo, caramelized onions.",
+        Cmimi = 6.99m,
+        Foto = "heavyhit/theTruffleHitBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten,Milk",
+        Kalori = 780,
+        CategoryId = burgers.Id
+    },
+    new MenuItems{
+        Emertimi = "THE PROTEIN HIT",
+        Pershkrimi = "Lettuce wrap with double beef patty, double cheese, caramelized onions, tomato, and thick sauce.",
+        Cmimi = 6.99m,
+        Foto = "heavyhit/theProteinHitBurger.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 680,
+        CategoryId = burgers.Id
+    }
+};
+
+                context.MenuItems.AddRange(burgerItems);
+                context.SaveChanges();
+
+                var friesItems = new List<MenuItems>
+{
+    new MenuItems{
+        Emertimi = "Heavy Fries",
+        Pershkrimi = "Double cheese, caramelized onions, and sauce.",
+        Cmimi = 3.99m,
+        Foto = "heavyhit/HeavyFries.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 500,
+        CategoryId = fries.Id
+    },
+    new MenuItems{
+        Emertimi = "Truffle Fries",
+        Pershkrimi = "Truffle mayo and grated parmesan.",
+        Cmimi = 4.49m,
+        Foto = "heavyhit/TruffleFries.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 520,
+        CategoryId = fries.Id
+    },
+    new MenuItems{
+        Emertimi = "Cheese Fries",
+        Pershkrimi = "Say cheeseeeeeee.",
+        Cmimi = 2.79m,
+        Foto = "heavyhit/CheeseFries.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 480,
+        CategoryId = fries.Id
+    },
+    new MenuItems{
+        Emertimi = "Plain Fries",
+        Pershkrimi = "Classic crispy golden fries.",
+        Cmimi = 1.99m,
+        Foto = "heavyhit/PlainFries.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 450,
+        CategoryId = fries.Id
+    }
+};
+
+                context.MenuItems.AddRange(friesItems);
+                context.SaveChanges();
+
+                var dipsItems = new List<MenuItems>
+{
+    new MenuItems{
+        Emertimi = "Heavy Hit Dip",
+        Pershkrimi = "Signature dip with cheese and caramelized onions.",
+        Cmimi = 1.09m,
+        Foto = "heavyhit/HeavyHitDip.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 150,
+        CategoryId = dips.Id
+    },
+    new MenuItems{
+        Emertimi = "Truffle Mayo Dip",
+        Pershkrimi = "Rich truffle mayo with parmesan.",
+        Cmimi = 1.39m,
+        Foto = "heavyhit/TruffleHitDip.png",
+        Disponueshme = true,
+        Alergjene = "Milk,Eggs",
+        Kalori = 160,
+        CategoryId = dips.Id
+    },
+    new MenuItems{
+        Emertimi = "Spicy Mayo Dip",
+        Pershkrimi = "Creamy mayo with a spicy kick.",
+        Cmimi = 1.09m,
+        Foto = "heavyhit/SpicyMayoDip.png",
+        Disponueshme = true,
+        Alergjene = "Eggs",
+        Kalori = 140,
+        CategoryId = dips.Id
+    },
+    new MenuItems{
+        Emertimi = "Mango Dip",
+        Pershkrimi = "Sweet and tangy mango sauce.",
+        Cmimi = 0.49m,
+        Foto = "heavyhit/Mango.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 120,
+        CategoryId = dips.Id
+    },
+    new MenuItems{
+        Emertimi = "Asia Sauce Dip",
+        Pershkrimi = "Savory Asian-style sauce.",
+        Cmimi = 0.49m,
+        Foto = "heavyhit/AsiaSauceDip.png",
+        Disponueshme = true,
+        Alergjene = "Soy",
+        Kalori = 110,
+        CategoryId = dips.Id
+    },
+    new MenuItems{
+        Emertimi = "Curry Dip",
+        Pershkrimi = "Fragrant curry-flavored dip.",
+        Cmimi = 0.49m,
+        Foto = "heavyhit/CurryDip.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 115,
+        CategoryId = dips.Id
+    },
+    new MenuItems{
+        Emertimi = "Mayonnaise Satchet",
+        Pershkrimi = "Classic mayonnaise portion.",
+        Cmimi = 0.19m,
+        Foto = "heavyhit/Mayo.png",
+        Disponueshme = true,
+        Alergjene = "Eggs",
+        Kalori = 100,
+        CategoryId = dips.Id
+    }
+};
+
+                context.MenuItems.AddRange(dipsItems);
+                context.SaveChanges();
+
+                var drinksItems = new List<MenuItems>
+{
+    new MenuItems{
+        Emertimi = "Sparkling Water",
+        Pershkrimi = "Refreshing carbonated water.",
+        Cmimi = 0.89m,
+        Foto = "heavyhit/SparklingWaterHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Still Water",
+        Pershkrimi = "Pure still water.",
+        Cmimi = 0.89m,
+        Foto = "heavyhit/StillWaterHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Fructal Juice",
+        Pershkrimi = "Fruit juice in carton packaging.",
+        Cmimi = 1.29m,
+        Foto = "heavyhit/FructalJuicesHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 120,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Ice Tea",
+        Pershkrimi = "Chilled refreshing ice tea.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/IceTeaHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 90,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Fructal Glass Juice",
+        Pershkrimi = "Premium fruit juice in glass bottle.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/Fructalglass-bottledHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 130,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Coca-Cola Zero 330ml",
+        Pershkrimi = "Classic Coke taste with zero sugar.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/CocaColaZeroHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 1,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Fanta 330ml",
+        Pershkrimi = "Refreshing orange soda.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/FantaHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 140,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Coca-Cola 330ml",
+        Pershkrimi = "Classic Coca-Cola taste.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/CocaColaHH.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 150,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Pepsi 330ml",
+        Pershkrimi = "Refreshing Pepsi cola.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/Pepsi.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 150,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "Pepsi Max 330ml",
+        Pershkrimi = "Zero sugar Pepsi Max.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/PepsiMaxZero.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 1,
+        CategoryId = drinks.Id
+    },
+
+    new MenuItems{
+        Emertimi = "IVY Lemon 330ml",
+        Pershkrimi = "Refreshing lemon soda.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/IVYLemon.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 135,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "IVY Orange 330ml",
+        Pershkrimi = "Citrusy orange soda.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/IVYOrange.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 145,
+        CategoryId = drinks.Id
+    },
+    new MenuItems{
+        Emertimi = "7up 330ml",
+        Pershkrimi = "Crisp lemon-lime soda.",
+        Cmimi = 1.49m,
+        Foto = "heavyhit/7up.png",
+        Disponueshme = true,
+        Alergjene = "",
+        Kalori = 140,
+        CategoryId = drinks.Id
+    }
+};
+
+                context.MenuItems.AddRange(drinksItems);
+                context.SaveChanges();
+
+            }
+
+            }
+        }
 }
