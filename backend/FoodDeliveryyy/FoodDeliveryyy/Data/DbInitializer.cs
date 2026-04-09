@@ -158,7 +158,7 @@ public static class DbInitializer
                             Longitude = 21.158287154546105
                         });
                     }
-                    else if (restaurant.Emertimi == "BurgerKing")
+                    else if (restaurant.Emertimi == "Burger King")
                     {
                         addresses.Add(new RestaurantAddress
                         {
@@ -2733,9 +2733,9 @@ public static class DbInitializer
 
                 context.MenuItems.AddRange(alcoholItems);
                 context.SaveChanges();
-            
 
-        }
+
+            }
             var categoriesPastaFasta = new List<MenuCategory>();
             var pastafasta = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Pasta Fasta");
 
@@ -3452,9 +3452,9 @@ public static class DbInitializer
             }
 
             var categoriesProperPizza = new List<MenuCategory>();
-            var properpizza = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Propper Pizza");
+            var properpizza = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Proper Pizza");
 
-            if(properpizza != null)
+            if (properpizza != null)
             {
                 var pizza = new MenuCategory
                 {
@@ -3478,7 +3478,7 @@ public static class DbInitializer
                     RestaurantId = properpizza.Id
                 };
 
-                categoriesProperPizza.AddRange(new[] {pizza,sweetpizza, drinks });
+                categoriesProperPizza.AddRange(new[] { pizza, sweetpizza, drinks });
                 context.MenuCategories.AddRange(categoriesProperPizza);
                 context.SaveChanges();
 
@@ -3560,7 +3560,7 @@ public static class DbInitializer
                         CategoryId = pizza.Id
 
                     },
-                
+
                     new MenuItems {
                          Emertimi = "Pizza Oriental",
                         Pershkrimi = "A zesty pizza topped with tomato sauce, mozzarella, chicken or beef, bell peppers, onions, and a blend of oriental spices.",
@@ -3572,7 +3572,7 @@ public static class DbInitializer
                         CategoryId = pizza.Id
 
                     },
-                
+
                     new MenuItems {
                          Emertimi = "Pizza 4 Cheeses",
                         Pershkrimi = "A rich and creamy pizza topped with a blend of four cheeses—mozzarella, gorgonzola, parmesan, and fontina—on a golden crust.",
@@ -3588,7 +3588,7 @@ public static class DbInitializer
                 context.MenuItems.AddRange(pizzaItems);
                 context.SaveChanges();
 
-                var sweetPizzaItems = new List<MenuItems> { 
+                var sweetPizzaItems = new List<MenuItems> {
                 new MenuItems
                 {
                          Emertimi = "Pizza Nutella",
@@ -3600,12 +3600,12 @@ public static class DbInitializer
                         Kalori = 2800,
                         CategoryId = sweetpizza.Id
                 }
-                
+
                 };
                 context.MenuItems.AddRange(sweetPizzaItems);
                 context.SaveChanges();
 
-                var drinkItems = new List<MenuItems> { 
+                var drinkItems = new List<MenuItems> {
                 new MenuItems
                 {
                         Emertimi = "Coca Cola",
@@ -3639,7 +3639,7 @@ public static class DbInitializer
                         Kalori = 0,
                         CategoryId = drinks.Id
                 }
-                
+
                 };
                 context.MenuItems.AddRange(drinkItems);
                 context.SaveChanges();
@@ -3649,23 +3649,23 @@ public static class DbInitializer
             var categoriesKFC = new List<MenuCategory>();
             var kfc = context.Restaurants.FirstOrDefault(r => r.Emertimi == "KFC");
 
-            if(kfc != null)
+            if (kfc != null)
             {
-                var burgerandwrap= new MenuCategory
+                var burgerandwrap = new MenuCategory
                 {
                     Emertimi = "Burger and Wrap",
                     Pershkrimi = "A delicious selection of burgers and wraps, featuring crispy chicken, fresh vegetables, and flavorful sauces, all served on a soft bun or wrapped in a warm tortilla.",
                     Renditja = 1,
                     RestaurantId = kfc.Id
                 };
-                var buckets= new MenuCategory
+                var buckets = new MenuCategory
                 {
                     Emertimi = "Buckets & Pieces",
                     Pershkrimi = "A shareable meal featuring a bucket of crispy, golden pieces of chicken, perfect for enjoying with friends or family.",
                     Renditja = 2,
                     RestaurantId = kfc.Id
                 };
-                var sidesdrinks= new MenuCategory
+                var sidesdrinks = new MenuCategory
                 {
                     Emertimi = "Sides & Beverages",
                     Pershkrimi = "Perfect companions for your meal – from tasty sides to refreshing beverages.",
@@ -3678,7 +3678,7 @@ public static class DbInitializer
                 context.SaveChanges();
 
                 var burgerandwrapItems = new List<MenuItems>
-                { 
+                {
                 new MenuItems{
                         Emertimi = "Cheese Burger",
                         Pershkrimi = "A juicy beef patty topped with melted cheese, fresh lettuce, tomato, onions, and a soft bun.",
@@ -3929,13 +3929,588 @@ public static class DbInitializer
                         Kalori = 0,
                         CategoryId = sidesdrinks.Id
                      },
-                
-                
+
+
                 };
+                context.MenuItems.AddRange(sidesdrinksItems);
+                context.SaveChanges();
+            }
+
+            var categoriesGreenandProtein = new List<MenuCategory>();
+            var greenandprotein = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Green and Protein");
+
+            if (greenandprotein != null)
+            {
+                var burgers = new MenuCategory
+                {
+                    Emertimi = "Burgers",
+                    Pershkrimi = "Tasty burgers with a healthy twist",
+                    Renditja = 1,
+                    RestaurantId = greenandprotein.Id
+                };
+                var bowls = new MenuCategory
+                {
+                    Emertimi = "Bowls",
+                    Pershkrimi = "Balanced bowls for energy and taste.",
+                    Renditja = 2,
+                    RestaurantId = greenandprotein.Id
+                };
+                var salads = new MenuCategory
+                {
+                    Emertimi = "Salads",
+                    Pershkrimi = "Fresh and vibrant salads for a healthy meal.",
+                    Renditja = 3,
+                    RestaurantId = greenandprotein.Id
+                };
+                var wraps = new MenuCategory
+                {
+                    Emertimi = "Wraps",
+                    Pershkrimi = "Delicious wraps packed with flavor and nutrition.",
+                    Renditja = 4,
+                    RestaurantId = greenandprotein.Id
+                };
+                var lightmeals = new MenuCategory
+                {
+                    Emertimi = "Light Meals",
+                    Pershkrimi = "Lighter options for a satisfying meal.",
+                    Renditja = 5,
+                    RestaurantId = greenandprotein.Id
+                };
+                var juicessmoothies = new MenuCategory
+                {
+                    Emertimi = "Juices & Smoothies",
+                    Pershkrimi = "Refreshing and nutritious beverages to complement your meal.",
+                    Renditja = 6,
+                    RestaurantId = greenandprotein.Id
+                };
+
+                categoriesGreenandProtein.AddRange(new[] { burgers, bowls, salads, wraps, lightmeals, juicessmoothies });
+                context.MenuCategories.AddRange(categoriesGreenandProtein);
+                context.SaveChanges();
+
+
+                var burgersItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Queen Premium",
+                        Pershkrimi = "Chicken meatballs with eggs, cheese, tomatoes, pickled cucumbers, lettuce, soy bean sauce & Greek yogurt.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/queenpremium.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Milk, Soy, Gluten (bun)",
+                        Kalori = 700,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Duplex Day",
+                        Pershkrimi = "Avocado, eggs, cucumbers, tomatoes, lettuce, soy bean sauce & Greek yogurt.",
+                        Cmimi = 6.49m,
+                        Foto = "greenandprotein/duplexday.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Milk, Soy",
+                        Kalori = 600,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Queen L",
+                        Pershkrimi = "Chicken meatballs with tomatoes, pickled cucumbers, lettuce, soy bean sauce & Greek yogurt.",
+                        Cmimi = 5.49m,
+                        Foto = "greenandprotein/queenL.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk, Soy, Gluten (bun)",
+                        Kalori = 500,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Queen Deluxe XL",
+                        Pershkrimi = "Chicken meatballs with tomatoes, pickled cucumbers, lettuce, soy bean sauce & Greek yogurt.",
+                        Cmimi = 6.99m,
+                        Foto = "greenandprotein/queendeluxeXL.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 550,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Leading Light",
+                        Pershkrimi = "Chicken breast, cheese, eggs, tomatoes, lettuce, soy bean sauce & Greek yogurt.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/leadingLight.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Milk, Soy, Gluten (bun)",
+                        Kalori = 450,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Gorgeous Gang",
+                        Pershkrimi = "Vegan lentil pattie with tomatoes, cucumbers, red onions, lettuce, soy bean sauce & beet & pb sauce.",
+                        Cmimi = 6.99m,
+                        Foto = "greenandprotein/gorgeousGang.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Gluten (bun), Peanuts",
+                        Kalori = 500,
+                        CategoryId = burgers.Id
+                    },
+
+
+
+
+                };
+                context.MenuItems.AddRange(burgersItems);
+                context.SaveChanges();
+
+                var bowlsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Protein Beast",
+                        Pershkrimi = "Chicken breast, avocado, corn, pickled radishes, boiled eggs, soybean sauce, sesame seeds, lemon & parsley.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/proteinbeast.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Soy, Sesame",
+                        Kalori = 700,
+                        CategoryId = bowls.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Greenies Grains",
+                        Pershkrimi = "Spinach, lentils, quinoa, chickpeas, corn, carrots, pumpkin seeds, sesame seeds, pomegranate arils, parsley & strong mustard.",
+                        Cmimi = 6.49m,
+                        Foto = "greenandprotein/greeniesgrains.png",
+                        Disponueshme = true,
+                        Alergjene = "Sesame, Mustard",
+                        Kalori = 600,
+                        CategoryId = bowls.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Sweet & Tasty",
+                        Pershkrimi = "Marinated chicken breast, sweet potato, boiled eggs, soybean sauce, peas, pickled red onions, pomegranate arils, sesame seeds & strong mustard.",
+                        Cmimi = 6.99m,
+                        Foto = "greenandprotein/sweetTasty.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Soy, Sesame, Mustard",
+                        Kalori = 550,
+                        CategoryId = bowls.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Tofu & Mushroom fix",
+                        Pershkrimi = "Marinated tofu, mushrooms, sweet potato, chickpeas, mashed broccoli, spinach & sesame seeds.",
+                        Cmimi = 8.99m,
+                        Foto = "greenandprotein/tofuMushroomFix.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Sesame",
+                        Kalori = 750,
+                        CategoryId = bowls.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "BodyBuilder +",
+                        Pershkrimi = "Chicken breast with fresh vegetables, grains and protein-rich toppings.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/bodybuilder.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Sesame, Mustard",
+                        Kalori = 700,
+                        CategoryId = bowls.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Wabi-Sabi",
+                        Pershkrimi = "Balanced bowl with fresh veggies, grains and Asian-inspired flavors.",
+                        Cmimi = 6.99m,
+                        Foto = "greenandprotein/wabisabi.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Sesame",
+                        Kalori = 300,
+                        CategoryId = bowls.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Chicken's Joy",
+                        Pershkrimi = "Chicken-based bowl with fresh vegetables and flavorful sauces.",
+                        Cmimi = 4.99m,
+                        Foto = "greenandprotein/chikensjoy.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy,Gluten",
+                        Kalori = 400,
+                        CategoryId = bowls.Id
+                     }
+                 };
+                context.MenuItems.AddRange(bowlsItems);
+                context.SaveChanges();
+
+                var saladsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Full-Veg-Protein",
+                        Pershkrimi = "Vegan patties served with tricolor quinoa, hummus, boiled eggs, peas, pickled radish, and sesame seeds, finished with a lemon & parsley dressing.",
+                        Cmimi = 6.49m,
+                        Foto = "greenandprotein/fullvegprotein.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Sesame",
+                        Kalori = 600,
+                        CategoryId = salads.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Healing Power ",
+                        Pershkrimi = "Brown rice with avocado, edamame, lentils, hummus, carrots, pickled radish, and sunflower seeds, topped with a strong mustard sauce.",
+                        Cmimi = 4.49m,
+                        Foto = "greenandprotein/healingpower.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Sesame, Mustard",
+                        Kalori = 250,
+                        CategoryId = salads.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Positive Calorie",
+                        Pershkrimi = "Brown rice with chicken breast, boiled eggs, pickled red onions, corn, peas, beetroot, and sesame seeds, finished with strong mustard dressing.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/positiveCalorie.png",
+                        Disponueshme = true,
+                        Alergjene = " Eggs, Sesame, Mustard",
+                        Kalori = 350,
+                        CategoryId = salads.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Heart & Soul",
+                        Pershkrimi = "Tuna mix with carrots, cucumbers, corn, black beans, rice, whole‑wheat pasta, pickled onions, peppers, sesame seeds, finished with spicy tomato and lemon vinaigrette.",
+                        Cmimi = 5.49m,
+                        Foto = "greenandprotein/heartsoul.png",
+                        Disponueshme = true,
+                        Alergjene = "Fish, Gluten (pasta), Sesame, Peanuts.",
+                        Kalori = 300,
+                        CategoryId = salads.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Ketogen Boost",
+                        Pershkrimi = "Chicken breast with mushrooms, cucumbers, keto cauliflower rice, eggs, red peppers, pickled red onions, white cheese, sesame seeds, finished with lemon & parsley dressing.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/ketogenBoost.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Milk, Sesame",
+                        Kalori = 400,
+                        CategoryId = salads.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Tunalicious",
+                        Pershkrimi = "Tuna mix with carrots, cucumbers, corn, black beans, cabbage slaw, tomatoes, whole‑wheat croutons, finished with sharp vinaigrette.",
+                        Cmimi = 6.99m,
+                        Foto = "greenandprotein/tunalicious.png",
+                        Disponueshme = true,
+                        Alergjene = "Fish, Gluten (croutons), Soy (sauce)",
+                        Kalori = 500,
+                        CategoryId = salads.Id
+                     },
+                };
+                context.MenuItems.AddRange(saladsItems);
+                context.SaveChanges();
+
+                var wrapsItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Chicken Delight",
+                        Pershkrimi = "Grilled chicken with cheese, corn, tomatoes, lettuce, finished with spicy tomato sauce.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/chickendelight.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten (tortilla), Milk (parmesan), Eggs (dressing)",
+                        Kalori = 450,
+                        CategoryId = wraps.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Cool Egg",
+                        Pershkrimi = "Boiled eggs with soybean sauce, cheese, dill, tomatoes, and lettuce.",
+                        Cmimi = 4.99m,
+                        Foto = "greenandprotein/coolEgg.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Milk, Soy, Gluten (tortilla)",
+                        Kalori = 400,
+                        CategoryId = wraps.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Chicken Charm",
+                        Pershkrimi = "Brown rice, chicken breast, black beans, carrots, corn, lettuce, with Greek yogurt & herbs.",
+                        Cmimi = 6.49m,
+                        Foto = "greenandprotein/chickenCharm.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk (yogurt), Gluten (tortilla)",
+                        Kalori = 500,
+                        CategoryId = wraps.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Avocado & Egg",
+                        Pershkrimi = "Avocado, boiled eggs, tomatoes, lettuce, with soybean sauce.",
+                        Cmimi = 5.49m,
+                        Foto = "greenandprotein/avocadoEgg.png",
+                        Disponueshme = true,
+                        Alergjene = "Eggs, Soy, Gluten (tortilla)",
+                        Kalori = 450,
+                        CategoryId = wraps.Id
+                    },
+                   new MenuItems
+                    {
+                        Emertimi = "Gut Power",
+                        Pershkrimi = "Vegan lentil pattie with carrots, broccoli, red onions, cucumbers, lettuce, and soybean sauce.",
+                        Cmimi = 6.99m,
+                        Foto = "greenandprotein/gutPower.png",
+                        Disponueshme = true,
+                        Alergjene = "Soy, Gluten (tortilla), Legumes",
+                        Kalori = 500,
+                        CategoryId = wraps.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Tuna Turner",
+                        Pershkrimi = "Tuna mix with corn, cucumbers, black beans, peppers, red onions, lettuce, finished with spicy tomato sauce.",
+                        Cmimi = 5.99m,
+                        Foto = "greenandprotein/tunaTurner.png",
+                        Disponueshme = true,
+                        Alergjene = "Fish, Gluten (tortilla), Soy",
+                        Kalori = 450,
+                        CategoryId = wraps.Id
+                     }
+            };
+                context.MenuItems.AddRange(wrapsItems);
+                context.SaveChanges();
+
+
+                var lightmealsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Pink Vibes",
+        Pershkrimi = "Strawberries and bananas with house-made granola, dried fruits, seeds, coconut chips, almonds.",
+        Cmimi = 5.99m,
+        Foto = "greenandprotein/pinkVibes.png",
+        Disponueshme = true,
+        Alergjene = "Nuts (almonds), Gluten (granola), Honey",
+        Kalori = 420,
+        CategoryId = lightmeals.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Choco Lover",
+        Pershkrimi = "Banana, cacao, granola, coconut chips, strawberries, peanut butter, peanuts, dark chocolate.",
+        Cmimi = 6.49m,
+        Foto = "greenandprotein/chocoLover.png",
+        Disponueshme = true,
+        Alergjene = "Peanuts, Nuts, Gluten (granola), Milk (chocolate)",
+        Kalori = 480,
+        CategoryId = lightmeals.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Berry Good",
+        Pershkrimi = "Cashew mylk with date sweetener, chia seeds, bananas, strawberries, coconut chips.",
+        Cmimi = 5.99m,
+        Foto = "greenandprotein/berryGood.png",
+        Disponueshme = true,
+        Alergjene = "Nuts (cashew), Coconut",
+        Kalori = 400,
+        CategoryId = lightmeals.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "PBJ Power",
+        Pershkrimi = "Cashew mylk with date sweetener, chia seeds, bananas, peanut butter, dark chocolate, peanuts.",
+        Cmimi = 6.49m,
+        Foto = "greenandprotein/pbjPower.png",
+        Disponueshme = true,
+        Alergjene = "Peanuts, Nuts (cashew), Soy (chocolate)",
+        Kalori = 450,
+        CategoryId = lightmeals.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Simple Sunshine",
+        Pershkrimi = "Oats with soy milk, date sweetener, banana, goji berries, seedless sultanas.",
+        Cmimi = 5.49m,
+        Foto = "greenandprotein/simpleSunshine.png",
+        Disponueshme = true,
+        Alergjene = "Soy, Gluten (oats)",
+        Kalori = 430,
+        CategoryId = lightmeals.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chocolate Beauty",
+        Pershkrimi = "Oats with soy milk, date sweetener, banana, vegan dark chocolate, coconut chips.",
+        Cmimi = 6.49m,
+        Foto = "greenandprotein/chocolateBeauty.png",
+        Disponueshme = true,
+        Alergjene = "Soy, Gluten (oats), Coconut",
+        Kalori = 460,
+        CategoryId = lightmeals.Id
+    }
+};
+
+                context.MenuItems.AddRange(lightmealsItems);
+                context.SaveChanges();
+
+                var juicessmoothiesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Antioxidant Hero",
+        Pershkrimi = "Spinach, pineapple, green apple.",
+        Cmimi = 4.99m,
+        Foto = "greenandprotein/antioxidantHero.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Balanced Chakras",
+        Pershkrimi = "Pineapple, beetroot, carrot, green apple, orange, ginger, lemon.",
+        Cmimi = 5.49m,
+        Foto = "greenandprotein/balancedChakras.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 140,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Ginger Lover",
+        Pershkrimi = "Green apple, ginger, carrot, lemon.",
+        Cmimi = 4.99m,
+        Foto = "greenandprotein/gingerLover.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Happy Oranges",
+        Pershkrimi = "Fresh oranges.",
+        Cmimi = 3.99m,
+        Foto = "greenandprotein/happyOranges.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 100,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Feel Good",
+        Pershkrimi = "Beetroot, carrots, lemon, green apple.",
+        Cmimi = 4.99m,
+        Foto = "greenandprotein/feelGood.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 130,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "O&C",
+        Pershkrimi = "Oranges and carrots.",
+        Cmimi = 3.99m,
+        Foto = "greenandprotein/oAndC.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pink Panther",
+        Pershkrimi = "Orange juice, bananas, strawberries, chia seeds.",
+        Cmimi = 5.49m,
+        Foto = "greenandprotein/pinkPanther.png",
+        Disponueshme = true,
+        Alergjene = "Chia seeds",
+        Kalori = 180,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fiber Attack",
+        Pershkrimi = "Orange juice, avocado, bananas, strawberries, spinach, dates.",
+        Cmimi = 5.99m,
+        Foto = "greenandprotein/fiberAttack.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 200,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Tasty Peanut Butter",
+        Pershkrimi = "Milk, banana, peanut butter, dates.",
+        Cmimi = 5.99m,
+        Foto = "greenandprotein/tastyPeanutButter.png",
+        Disponueshme = true,
+        Alergjene = "Milk, Peanuts",
+        Kalori = 250,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chocolate Cravings",
+        Pershkrimi = "Milk, banana, cacao, dates.",
+        Cmimi = 5.99m,
+        Foto = "greenandprotein/chocolateCravings.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 240,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Vitamin Splash",
+        Pershkrimi = "Orange juice, carrot, bananas, pineapple.",
+        Cmimi = 5.49m,
+        Foto = "greenandprotein/vitaminSplash.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 170,
+        CategoryId = juicessmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Whey Protein & PB",
+        Pershkrimi = "Milk, water, bananas, whey protein, peanut butter, dates.",
+        Cmimi = 6.49m,
+        Foto = "greenandprotein/wheyProteinPB.png",
+        Disponueshme = true,
+        Alergjene = "Milk, Peanuts",
+        Kalori = 300,
+        CategoryId = juicessmoothies.Id
+    }
+};
+
+                context.MenuItems.AddRange(juicessmoothiesItems);
+                context.SaveChanges();
+
+
+
+
             }
 
 
-
-
         }
-    } }
+    }
+}
