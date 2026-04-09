@@ -4510,7 +4510,357 @@ public static class DbInitializer
 
             }
 
+            var categoriesMyShawarma = new List<MenuCategory>();
+            var myshawarma = context.Restaurants.FirstOrDefault(r => r.Emertimi == "My Shawarma");
 
-        }
-    }
+            if (myshawarma != null)
+            {
+
+                var menuchicken = new MenuCategory
+                {
+                    Emertimi = "Menu Chicken",
+                    Pershkrimi = "Juicy, marinated chicken slow-cooked to perfection, wrapped or served with fresh vegetables and flavorful sauces for an authentic shawarma experience.",
+                    Renditja = 1,
+                    RestaurantId = myshawarma.Id
+                };
+                var sauces = new MenuCategory
+                {
+                    Emertimi = "Sauces",
+                    Pershkrimi = "A selection of rich and flavorful sauces, from creamy garlic to spicy and tangy blends, crafted to enhance every bite of your shawarma.",
+                    Renditja = 2,
+                    RestaurantId = myshawarma.Id
+                };
+                var bread = new MenuCategory
+                {
+                    Emertimi = "Bread & Wrap Doner Chicken",
+                    Pershkrimi = "Tender doner chicken served in fresh bread or a soft wrap, topped with crisp vegetables and flavorful sauces",
+                    Renditja = 3,
+                    RestaurantId = myshawarma.Id
+                };
+                var plates = new MenuCategory
+                {
+                    Emertimi = "Shawarma Plates Chicken",
+                    Pershkrimi = "Juicy chicken shawarma served on a plate with fresh vegetables, rice or fries, and a selection of flavorful sauces.",
+                    Renditja = 4,
+                    RestaurantId = myshawarma.Id
+                };
+                var extras = new MenuCategory
+                {
+                    Emertimi = "Shawarma Plates Chicken",
+                    Pershkrimi = "Add-ons to customize your meal, including extra toppings, sauces,and sides for even more flavor.",
+                    Renditja = 5,
+                    RestaurantId = myshawarma.Id
+                };
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Drinks",
+                    Renditja = 6,
+                    RestaurantId = myshawarma.Id
+                };
+
+
+                categoriesMyShawarma.AddRange(new[] { menuchicken, sauces, bread,plates,extras,drinks });
+                context.MenuCategories.AddRange(categoriesMyShawarma);
+                context.SaveChanges();
+
+                var menuchickenItems = new List<MenuItems> { 
+                new MenuItems
+                   {
+                    Emertimi = "M Döner Menu Chicken",
+                    Pershkrimi = "A medium chicken döner menu served with fresh bread or wrap, crispy fries, and a refreshing drink.",
+                    Cmimi = 3.89m,
+                    Foto = "myshawarma/download1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 800,
+                    CategoryId = menuchicken.Id
+                },
+                new MenuItems
+                   {
+                    Emertimi = "L Döner Menu Chicken",
+                    Pershkrimi = "A large chicken döner menu served with fresh bread or wrap, crispy fries, and a refreshing drink.",
+                    Cmimi = 4.49m,
+                    Foto = "myshawarma/download2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 800,
+                    CategoryId = menuchicken.Id
+                },
+                
+                new MenuItems
+                   {
+                    Emertimi = "Eggy Döner Menu Chicken",
+                    Pershkrimi = "A satisfying chicken döner menu with added egg, served in fresh bread or wrap, with crispy fries and a refreshing drink.",
+                    Cmimi = 4.89m,
+                    Foto = "myshawarma/download3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 1100,
+                    CategoryId = menuchicken.Id
+                },
+                new MenuItems
+                   {
+                    Emertimi = "Pitalkë Döner Menu Chicken",
+                    Pershkrimi = "Delicious chicken döner served in traditional pitalkë bread, with fresh vegetables, flavorful sauces, crispy fries, and a refreshing drink",
+                    Cmimi = 4.69m,
+                    Foto = "myshawarma/download4.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 1100,
+                    CategoryId = menuchicken.Id
+                },
+                new MenuItems
+                   {
+                    Emertimi = "Gyros Döner Menu Chicken",
+                    Pershkrimi = "Tender chicken gyros served with fresh bread or wrap, accompanied by crispy fries, fresh vegetables, and flavorful sauces.",
+                    Cmimi = 5.19m,
+                    Foto = "myshawarma/gyros1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 1100,
+                    CategoryId = menuchicken.Id
+                },
+                new MenuItems
+                   {
+                    Emertimi = "Burger Döner Menu Chicken",
+                    Pershkrimi = "A tasty chicken döner served as a burger, paired with crispy fries and a refreshing drink for a complete meal.",
+                    Cmimi = 4.19m,
+                    Foto = "myshawarma/burger11.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 1150,
+                    CategoryId = menuchicken.Id
+                }
+               
+                };
+                context.MenuItems.AddRange(menuchickenItems);
+                context.SaveChanges();
+
+                var saucesItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Home Sauce",
+                        Pershkrimi = "Our signature house-made sauce, creamy and flavorful, perfect for dipping or adding to any dish.",
+                        Cmimi = 0.50m,
+                        Foto = "myshawarma/sauce1.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk, Eggs,Soy",
+                        Kalori = 55,
+                        CategoryId = sauces.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Garlic Sauce",
+                        Pershkrimi = "A creamy and flavorful garlic sauce, perfect for dipping or drizzling over your meal.",
+                        Cmimi = 0.50m,
+                        Foto = "myshawarma/garlic.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk,Eggs",
+                        Kalori = 60,
+                        CategoryId = sauces.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Spicy Sauce",
+                        Pershkrimi = "A bold and tangy spicy sauce, perfect for adding a kick to your meals.",
+                        Cmimi = 0.50m,
+                        Foto = "myshawarma/spicy.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk,Eggs",
+                        Kalori = 40,
+                        CategoryId = sauces.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Thunderlight",
+                        Pershkrimi = "A zesty and bold sauce with a perfect balance of heat and flavor, ideal for adding an extra kick to your meals.",
+                        Cmimi = 0.50m,
+                        Foto = "myshawarma/thunder.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk,Eggs",
+                        Kalori = 50,
+                        CategoryId = sauces.Id
+                     }
+                };
+                context.MenuItems.AddRange(saucesItems);
+                context.SaveChanges();
+
+                var breadItems = new List<MenuItems>() { 
+                new MenuItems{
+                    Emertimi = "Bread Döner Chicken",
+                    Pershkrimi = "Tender chicken döner served in fresh bread, topped with crisp vegetables and your choice of flavorful sauces.",
+                    Cmimi = 2.80m,
+                    Foto = "myshawarma/doner1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 0,
+                    CategoryId = bread.Id
+                 },
+                new MenuItems{
+                    Emertimi = "Beggy Döner Chicken",
+                    Pershkrimi = "A hearty chicken döner served with a fried egg, fresh vegetables, and your choice of sauces, all wrapped in soft bread or a wrap.",
+                    Cmimi = 3.20m,
+                    Foto = "myshawarma/doner2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 600,
+                    CategoryId = bread.Id
+                 },
+                new MenuItems{
+                    Emertimi = "Don'Fries Chicken",
+                    Pershkrimi = "Crispy chicken strips served with golden fries and your choice of dipping sauces, a perfect combo for a quick meal.",
+                    Cmimi = 3.20m,
+                    Foto = "myshawarma/doner3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs",
+                    Kalori = 700,
+                    CategoryId = bread.Id
+                 }
+
+                };
+
+                context.MenuItems.AddRange(breadItems);
+                context.SaveChanges();
+                var platesItems = new List<MenuItems>()
+                {
+                    new MenuItems{
+                        Emertimi = "Full House Chicken",
+                        Pershkrimi = "A generous chicken meal featuring tender chicken pieces, fries, fresh vegetables, and a selection of flavorful sauces",
+                        Cmimi = 3.50m,
+                        Foto = "myshawarma/plate11.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 900,
+                        CategoryId = plates.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Shawarma Platter Chicken",
+                        Pershkrimi = "A hearty chicken shawarma platter served with rice or fries, fresh vegetables, and a choice of flavorful sauces.",
+                        Cmimi = 4.00m,
+                        Foto = "myshawarma/plate22.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 900,
+                        CategoryId = plates.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Chef Döner Chicken",
+                        Pershkrimi = "A premium chicken döner served with fresh vegetables, golden fries, and a choice of signature sauces for a complete meal.",
+                        Cmimi = 4.00m,
+                        Foto = "myshawarma/plate33.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 900,
+                        CategoryId = plates.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Box Döner Chicken",
+                        Pershkrimi = "A convenient and filling chicken döner served in a box with fresh vegetables, golden fries, and your choice of sauces.",
+                        Cmimi = 3.20m,
+                        Foto = "myshawarma/plate44.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 850,
+                        CategoryId = plates.Id
+                     }
+                };
+                context.MenuItems.AddRange(platesItems);
+                context.SaveChanges();
+
+
+
+                var extrasItems = new List<MenuItems>()
+                {
+                    new MenuItems{
+                        Emertimi = "5 pcs Mozarella Sticks",
+                        Pershkrimi = "Five golden, crispy mozzarella sticks, perfectly breaded and served with a side of dipping sauce.",
+                        Cmimi = 2.30m,
+                        Foto = "myshawarma/55.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 400,
+                        CategoryId = extras.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "20 pcs Mozarella Sticks",
+                        Pershkrimi = "Twenty golden, crispy mozzarella sticks, perfectly breaded and served with a side of dipping sauce—ideal for sharing.",
+                        Cmimi =6.70m,
+                        Foto = "myshawarma/55.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 1600,
+                        CategoryId = extras.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "Fries",
+                        Pershkrimi = "Crispy golden fries, lightly salted, perfect as a side or snack.",
+                        Cmimi = 1.00m,
+                        Foto = "myshawarma/fries.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 300,
+                        CategoryId = extras.Id
+                     },
+                    new MenuItems{
+                        Emertimi = "10 pcs Spicy Cheesy Nuggets",
+                        Pershkrimi = "Ten crispy and spicy chicken nuggets stuffed with melted cheese, perfect as a snack or side.",
+                        Cmimi = 2.50m,
+                        Foto = "myshawarma/nuget1.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten,Milk,Eggs",
+                        Kalori = 600,
+                        CategoryId = extras.Id
+                     }
+                 };
+
+                context.MenuItems.AddRange(extrasItems);
+                context.SaveChanges();
+
+                var drinkItems = new List <MenuItems>
+                {
+                new MenuItems
+                {
+                  Emertimi = "Coca Cola",
+                        Pershkrimi = "Coca Cola",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/cocacola.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Fanta Orange",
+                        Pershkrimi = "Fanta Orange",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/fantaorange.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 250,
+                        CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Water",
+                        Pershkrimi = "Water",
+                        Cmimi = 1.50m,
+                        Foto = "pastafasta/water.png",
+                        Disponueshme = true,
+                        Alergjene = "None",
+                        Kalori = 0,
+                        CategoryId = drinks.Id
+                }
+
+                };
+
+                context.MenuItems.AddRange(drinkItems);
+                context.SaveChanges();
+
+
+
+            }
+ }   }
 }
