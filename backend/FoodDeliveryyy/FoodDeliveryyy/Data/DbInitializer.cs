@@ -5343,6 +5343,7 @@ public static class DbInitializer
                 };
                 categoriesPopeyes.AddRange(new[] { sandwich, tenders, wings, wraps, kids, bucket, sides, drink });
                 context.MenuCategories.AddRange(categoriesPopeyes);
+                context.SaveChanges();
 
 
                 var sandwichItems = new List<MenuItems> {
