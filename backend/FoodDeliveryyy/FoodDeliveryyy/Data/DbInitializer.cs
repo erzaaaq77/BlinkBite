@@ -9878,7 +9878,7 @@ public static class DbInitializer
                     Kalori = 0,
                     CategoryId = drinks.Id
                 }
-                
+
 
                 };
                 context.MenuItems.AddRange(drinksItems);
@@ -10106,6 +10106,223 @@ public static class DbInitializer
 
             }
 
+            var categoriesBuffaloBurgers = new List<MenuCategory>();
+            var buffaloBurgers = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Buffalo Burgers");
+
+            if (buffaloBurgers != null)
+            {
+                var burgers = new MenuCategory
+                {
+                    Emertimi = "Burgers",
+                    Pershkrimi = "Juicy flame-grilled burgers.",
+                    Renditja = 1,
+                    RestaurantId = buffaloBurgers.Id
+                };
+
+                var sandwiches = new MenuCategory
+                {
+                    Emertimi = "Sandwich",
+                    Pershkrimi = "Freshly made sandwiches.",
+                    Renditja = 2,
+                    RestaurantId = buffaloBurgers.Id
+                };
+
+                var sides = new MenuCategory
+                {
+                    Emertimi = "Sides",
+                    Pershkrimi = "Tasty side dishes.",
+                    Renditja = 3,
+                    RestaurantId = buffaloBurgers.Id
+                };
+
+                var mexican = new MenuCategory
+                {
+                    Emertimi = "Mexican",
+                    Pershkrimi = "Mexican-inspired dishes.",
+                    Renditja = 4,
+                    RestaurantId = buffaloBurgers.Id
+                };
+
+                categoriesBuffaloBurgers.AddRange(new[] { burgers, sandwiches, sides, mexican });
+                context.MenuCategories.AddRange(categoriesBuffaloBurgers);
+                context.SaveChanges();
+
+                burgers = context.MenuCategories.FirstOrDefault(c => c.Emertimi == "Burgers" && c.RestaurantId == buffaloBurgers.Id);
+                sandwiches = context.MenuCategories.FirstOrDefault(c => c.Emertimi == "Sandwich" && c.RestaurantId == buffaloBurgers.Id);
+                sides = context.MenuCategories.FirstOrDefault(c => c.Emertimi == "Sides" && c.RestaurantId == buffaloBurgers.Id);
+                mexican = context.MenuCategories.FirstOrDefault(c => c.Emertimi == "Mexican" && c.RestaurantId == buffaloBurgers.Id);
+
+                var burgersItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "El Chapo",
+            Pershkrimi = "Double beef, soft bun, mayo, bbq prosciutto, triple cheddar cheese",
+            Cmimi = 5.99m,
+            Foto = "buffaloburgers/elchapo.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 950,
+            CategoryId = burgers.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Gustavo",
+            Pershkrimi = "Beef, soft bun, mayo, ketchup, mustard, emmentaler cheese, grilled onions",
+            Cmimi = 4.90m,
+            Foto = "buffaloburgers/gustavo.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 850,
+            CategoryId = burgers.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Pablo",
+            Pershkrimi = "Beef, soft bun, mayo, bbq prosciutto, double cheddar cheese, jalapenos",
+            Cmimi = 5.20m,
+            Foto = "buffaloburgers/pablo.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 880,
+            CategoryId = burgers.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "American Classic",
+            Pershkrimi = "Beef, soft bun, secret sauce, double cheddar cheese, lettuce, tomato, red onion",
+            Cmimi = 4.90m,
+            Foto = "buffaloburgers/americanclassic.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 820,
+            CategoryId = burgers.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Felix",
+            Pershkrimi = "Beef, soft bun, mayo, ruccola, emmentaler cheese, grilled mushrooms",
+            Cmimi = 4.90m,
+            Foto = "buffaloburgers/felix.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 800,
+            CategoryId = burgers.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Chickano",
+            Pershkrimi = "Chicken burger",
+            Cmimi = 4.49m,
+            Foto = "buffaloburgers/chickano.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 750,
+            CategoryId = burgers.Id
+        }
+    };
+
+                context.MenuItems.AddRange(burgersItems);
+                context.SaveChanges();
+
+                var sandwichesItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Sandwich Tony",
+            Pershkrimi = "Minced beef, mayo beef, prosciutto, red oil sauce, parsley",
+            Cmimi = 3.90m,
+            Foto = "buffaloburgers/sandwichTony.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 600,
+            CategoryId = sandwiches.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Hot Dog",
+            Pershkrimi = "Classic hot dog",
+            Cmimi = 3.99m,
+            Foto = "buffaloburgers/hotdog.png",
+            Disponueshme = true,
+            Alergjene = "Gluten",
+            Kalori = 550,
+            CategoryId = sandwiches.Id
+        }
+    };
+
+                context.MenuItems.AddRange(sandwichesItems);
+                context.SaveChanges();
+
+                var sidesItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Loaded Fries",
+            Pershkrimi = "Fries topped with cheese and sauces",
+            Cmimi = 3.80m,
+            Foto = "buffaloburgers/loadedfries.png",
+            Disponueshme = true,
+            Alergjene = "Milk",
+            Kalori = 500,
+            CategoryId = sides.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Garlic Fries",
+            Pershkrimi = "Fries with garlic and herbs",
+            Cmimi = 2.70m,
+            Foto = "buffaloburgers/garlicfries.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 450,
+            CategoryId = sides.Id
+        }
+    };
+
+                context.MenuItems.AddRange(sidesItems);
+                context.SaveChanges();
+
+                var mexicanItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Matador (Birria Tacos)",
+            Pershkrimi = "Beef birria tacos served with consome",
+            Cmimi = 3.90m,
+            Foto = "buffaloburgers/matador.png",
+            Disponueshme = true,
+            Alergjene = "Gluten",
+            Kalori = 700,
+            CategoryId = mexican.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Chickarita (Chicken Quesadilla)",
+            Pershkrimi = "Chicken quesadilla with onions, jalapenos, secret sauce, sriracha sauce, cheese",
+            Cmimi = 4.20m,
+            Foto = "buffaloburgers/chickarita.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 750,
+            CategoryId = mexican.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Toro (Beef Quesadilla)",
+            Pershkrimi = "Beef quesadilla with consome, cheese, secret sauce, onions, jalapenos, sriracha sauce",
+            Cmimi = 4.20m,
+            Foto = "buffaloburgers/toro.png",
+            Disponueshme = true,
+            Alergjene = "Gluten, Milk",
+            Kalori = 780,
+            CategoryId = mexican.Id
+        }
+    };
+
+                context.MenuItems.AddRange(mexicanItems);
+                context.SaveChanges();
+            }
 
 
         }
