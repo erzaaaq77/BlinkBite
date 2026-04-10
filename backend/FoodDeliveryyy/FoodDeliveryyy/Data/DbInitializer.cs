@@ -5853,7 +5853,8 @@ public static class DbInitializer
                 };
                     context.MenuItems.AddRange(sweetItems);
                     context.SaveChanges();
-                
+
+                }
             }
 
                 var categoriesSaray = new List<MenuCategory>();
@@ -6192,13 +6193,476 @@ public static class DbInitializer
 
                 }
 
+          var categoriesCapvin13 = new List<MenuCategory>();
+          var capvin13 = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Capvin 13");
 
-                
-                
-                 
 
+            if (capvin13 != null)
+            {
+                var uniqueMaestro = new MenuCategory
+                {
+                    Emertimi = "Unique by Maestro Capuano",
+                    Pershkrimi = "Exclusive dishes crafted by Maestro Capuano, showcasing his culinary artistry and creativity.",
+                    Renditja = 1,
+                    RestaurantId = capvin13.Id
+                };
+                var innovativePizza = new MenuCategory
+                {
+                    Emertimi = "Innovative Pizzas",
+                    Pershkrimi = "Creative pizza combinations with unique toppings and flavors, crafted with high-quality ingredients.",
+                    Renditja = 2,
+                    RestaurantId = capvin13.Id
+                };
+                var traditionalPizza = new MenuCategory
+                {
+                    Emertimi = "Traditional Pizzas",
+                    Pershkrimi = "Classic pizza varieties made with traditional recipes and high-quality ingredients.",
+                    Renditja = 3,
+                    RestaurantId = capvin13.Id
+                };
+                var calzoneNapoletano = new MenuCategory
+                {
+                    Emertimi = "Calzone Napoletano",
+                    Pershkrimi = "Traditional Neapolitan calzone filled with classic ingredients and baked to perfection.",
+                    Renditja = 4,
+                    RestaurantId = capvin13.Id
+                };
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "A selection of beverages to complement your meal, including soft drinks, juices, and more.",
+                    Renditja = 5,
+                    RestaurantId = capvin13.Id
+                };
+                categoriesCapvin13.AddRange(new[] { uniqueMaestro, innovativePizza, traditionalPizza, calzoneNapoletano, drinks });
+                context.MenuCategories.AddRange(categoriesCapvin13);
+                context.SaveChanges();
+
+                var uniqueMaestroItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Don Vincenzo",
+                        Pershkrimi = "Ricotta, mozzarella di bufala DOP, pecorino romano, crunchy bread, yellow tomatoes, olive oil.",
+                        Cmimi = 11.00m,
+                        Foto = "capvin13/donVincenzo.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 950,
+                        CategoryId = uniqueMaestro.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Abbraccio E Mamma",
+                        Pershkrimi = "Ricotta, fiordilatte, classic meatballs, grana padano fondue, olive oil.",
+                        Cmimi = 10.00m,
+                        Foto = "capvin13/abbraccioMamma.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 900,
+                        CategoryId = uniqueMaestro.Id
+
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Don Egidio",
+                        Pershkrimi = "Pumpkin cream base, pumpkin chips, classic meatballs, stracciatella, olive oil, basil.",
+                        Cmimi = 9.50m,
+                        Foto = "capvin13/donEgidio.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk",
+                        Kalori = 880,
+                        CategoryId = uniqueMaestro.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Tetti Illuminati",
+                        Pershkrimi = "Chicken mortadella, pistachio cream, pecorino romano, olive oil, basil.",
+                        Cmimi = 10.00m,
+                        Foto = "capvin13/tettiIlluminati.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk, Nuts (Pistachios)",
+                        Kalori = 910,
+                        CategoryId = uniqueMaestro.Id
+
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Napolitudine",
+                        Pershkrimi = "Hand-crushed tomatoes, smoked provola, meatballs, ricotta, basil, olive oil.",
+                        Cmimi = 9.00m,
+                        Foto = "capvin13/napolitudine.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk",
+                        Kalori = 870,
+                        CategoryId = uniqueMaestro.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Provola e Pepe Campione",
+                        Pershkrimi = "Smoked provola cheese and black pepper specialty.",
+                        Cmimi = 9.00m,
+                        Foto = "capvin13/provolaPepe.png",
+                        Disponueshme = true,
+                        Alergjene = "Milk",
+                        Kalori = 860,
+                        CategoryId = uniqueMaestro.Id
+                     }
+                 };
+                context.MenuItems.AddRange(uniqueMaestroItems);
+                context.SaveChanges();
+
+                var innovativePizzaItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Centro Calabria",
+                        Pershkrimi = "Hand-crushed tomatoes, fiordilatte, spicy salami, olive oil, basil.",
+                        Cmimi = 9.00m,
+                        Foto = "capvin13/centroCalabria.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 880,
+                        CategoryId = innovativePizza.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Ritorno A Napoli",
+                        Pershkrimi = "Smoked provola, zucchini cream, tomato bruschetta, potato chips.",
+                        Cmimi = 10.00m,
+                        Foto = "capvin13/ritornoNapoli.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 900,
+                        CategoryId = innovativePizza.Id
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Marinara Contemporanea",
+                        Pershkrimi = "Hand-crushed tomatoes, garlic, olive oil, basil, chili.",
+                        Cmimi = 12.00m,
+                        Foto = "capvin13/marinaraContemporanea.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 8200,
+                        CategoryId = innovativePizza.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Come Una Capricciosa",
+                        Pershkrimi = "Olive oil, mushrooms, fiordilatte, tomatoes, roasted ham, olives, D.O.P.",
+                        Cmimi = 12.00m,
+                        Foto = "capvin13/comeCapricciosa.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 950,
+                        CategoryId = innovativePizza.Id
+
+                    },
+                    new MenuItems
+                    {
+                        Emertimi = "Melanzanella",
+                        Pershkrimi = "Tomatoes, fried aubergines, stracciatella cream, olive oil, basil.",
+                        Cmimi = 10.00m,
+                        Foto = "capvin13/melanzanella.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 890,
+                        CategoryId = innovativePizza.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Stella Di Capuano",
+                        Pershkrimi = "Star-shaped pizza with ricotta, fiordilatte, mortadella, pistachios, olive oil, basil.",
+                        Cmimi = 16.00m,
+                        Foto = "capvin13/stellaCapuano.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk, Nuts (Pistachios)",
+                        Kalori = 800,
+                        CategoryId = innovativePizza.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Bellelaria",
+                        Pershkrimi = "Burrata base, pesto, fiordilatte, tomatoes, olive oil.",
+                        Cmimi = 11.00m,
+                        Foto = "capvin13/bellelaria.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk, Nuts (Pine nuts in pesto)",
+                        Kalori = 970,
+                        CategoryId = innovativePizza.Id
+                     }
+                 };
+                context.MenuItems.AddRange(innovativePizzaItems);
+                context.SaveChanges();
+
+                var traditionalPizzaItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Marinara",
+                        Pershkrimi = "Hand-crushed tomatoes, garlic, olive oil, basil.",
+                        Cmimi = 6.00m,
+                        Foto = "capvin13/marinara.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten",
+                        Kalori = 750,
+                        CategoryId = traditionalPizza.Id
+                    },
+                     new MenuItems
+                    {
+                        Emertimi = "Margherita",
+                        Pershkrimi = "Hand-crushed tomatoes, fiordilatte, basil, olive oil.",
+                        Cmimi = 7.00m,
+                        Foto = "capvin13/margherita.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk",
+                        Kalori = 820,
+                        CategoryId = traditionalPizza.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Napoli",
+                        Pershkrimi = "Tomatoes, fiordilatte, anchovies, olive oil, basil.",
+                        Cmimi = 10.00m,
+                        Foto = "capvin13/napoli.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk,Fish",
+                        Kalori = 880,
+                        CategoryId = traditionalPizza.Id
+                     },
+                    new MenuItems
+                    {
+                       Emertimi = "Diovala Alla Nonno Enzo",
+                       Pershkrimi = "Provola, fiordilatte, spicy sausage, olive oil, basil.",
+                       Cmimi = 8.00m,
+                       Foto = "capvin13/diovalaNonnoEnzo.png",
+                       Disponueshme = true,
+                       Alergjene = "Gluten, Milk",
+                       Kalori = 900,
+                       CategoryId = traditionalPizza.Id
+                    },
+                    new MenuItems
+                    {
+                       Emertimi = "Sguardo Alto",
+                       Pershkrimi = "Provola, pesto, bresaola, grana padano, olive oil, basil.",
+                       Cmimi = 10.00m,
+                       Foto = "capvin13/sguardoAlto.png",
+                       Disponueshme = true,
+                       Alergjene = "Gluten, Milk, Nuts (Pine nuts in pesto)",
+                       Kalori = 950,
+                       CategoryId = traditionalPizza.Id
+                    },
+                    new MenuItems
+                    {
+                       Emertimi = "Salsiccia & Broccoli",
+                       Pershkrimi = "Sausage, broccoli, fiordilatte, olive oil, basil.",
+                       Cmimi = 9.00m,
+                       Foto = "capvin13/salsicciaBroccoli.png",
+                       Disponueshme = true,
+                       Alergjene = "Gluten, Milk",
+                       Kalori = 870,
+                       CategoryId = traditionalPizza.Id
+                    
+                    }
+                 };
+                context.MenuItems.AddRange(traditionalPizzaItems);
+                context.SaveChanges();
+                
+                var calzoneNapoletanoItems = new List<MenuItems>
+                {
+                    new MenuItems
+                    {
+                        Emertimi = "Calzone Al Forno",
+                        Pershkrimi = "Ricotta fuscella, Napoli salami, turkey, mountain fiordilatte, hand-crushed tomatoes.",
+                        Cmimi = 9.00m,
+                        Foto = "capvin13/calzoneAlForno.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk, Eggs",
+                        Kalori = 950,
+                        CategoryId = calzoneNapoletano.Id
+                     },
+                    new MenuItems
+                    {
+                        Emertimi = "Pizza Fritta Completa",
+                        Pershkrimi = "Ricotta fuscella, hand-crushed tomatoes, Napoli salami, smoked provola, Vincenzo’s meatballs, basil, olive oil.",
+                        Cmimi = 8.00m,
+                        Foto = "capvin13/pizzaFrittaCompleta.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Milk, Eggs",
+                        Kalori = 980,
+                        CategoryId = calzoneNapoletano.Id
+                     }
+                    
+                 };
+
+                context.MenuItems.AddRange(calzoneNapoletanoItems);
+                context.SaveChanges();
+
+                var drinksItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Ujë Rugove Glass",
+        Pershkrimi = "Natural spring water Rugove served in glass bottle.",
+        Cmimi = 1.20m,
+        Foto = "capvin13/ujeRugove.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Acqua Tepelena",
+        Pershkrimi = "Mineral water Tepelena.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/acquaTepelena.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "San Pellegrino (Small)",
+        Pershkrimi = "Sparkling mineral water San Pellegrino small bottle.",
+        Cmimi = 1.20m,
+        Foto = "capvin13/sanPellegrinoSmall.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "San Pellegrino (Large)",
+        Pershkrimi = "Sparkling mineral water San Pellegrino large bottle.",
+        Cmimi = 3.00m,
+        Foto = "capvin13/sanPellegrinoLarge.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Coca Cola",
+        Pershkrimi = "Classic Coca Cola soft drink.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/cocaCola.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 140,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Coca Cola Zero",
+        Pershkrimi = "Sugar-free Coca Cola Zero.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/cocaColaZero.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Schweppes",
+        Pershkrimi = "Refreshing Schweppes tonic drink.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/schweppes.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Sprite",
+        Pershkrimi = "Lemon-lime flavored Sprite soft drink.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/sprite.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 130,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fanta",
+        Pershkrimi = "Orange flavored Fanta soft drink.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/fanta.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 150,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Santal",
+        Pershkrimi = "Fruit juice Santal.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/santal.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fructal Fresh Juice",
+        Pershkrimi = "Natural fruit juice Fructal.",
+        Cmimi = 1.50m,
+        Foto = "capvin13/fructal.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Red Bull",
+        Pershkrimi = "Energy drink Red Bull.",
+        Cmimi = 3.00m,
+        Foto = "capvin13/redBull.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 160,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Rose Lemonade",
+        Pershkrimi = "Refreshing rose lemonade.",
+        Cmimi = 3.00m,
+        Foto = "capvin13/roseLemonade.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 100,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Birra 0%",
+        Pershkrimi = "Non-alcoholic beer.",
+        Cmimi = 3.00m,
+        Foto = "capvin13/birraZero.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 90,
+        CategoryId = drinks.Id
+    }
+};
+
+                context.MenuItems.AddRange(drinksItems);
+                context.SaveChanges();
 
             }
+
+
         }
     }
 }
