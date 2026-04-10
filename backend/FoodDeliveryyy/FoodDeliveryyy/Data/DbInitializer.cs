@@ -5853,7 +5853,351 @@ public static class DbInitializer
                 };
                     context.MenuItems.AddRange(sweetItems);
                     context.SaveChanges();
+                
+            }
+
+                var categoriesSaray = new List<MenuCategory>();
+                var saray = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Saray Sweets");
+
+                if (saray != null)
+                {
+                    var bakllavaTradicionale = new MenuCategory
+                    {
+                        Emertimi = "Bakllava Tradicionale",
+                        Pershkrimi = "Traditional baklava varieties prepared with nuts and syrup.",
+                        Renditja = 1,
+                        RestaurantId = saray.Id
+                    };
+
+                    var burma = new MenuCategory
+                    {
+                        Emertimi = "Burma",
+                        Pershkrimi = "Rolled pastry sweets with syrup.",
+                        Renditja = 2,
+                        RestaurantId = saray.Id
+                    };
+
+                    var havuc = new MenuCategory
+                    {
+                        Emertimi = "Havuc Dilim",
+                        Pershkrimi = "Carrot-shaped baklava slice specialty.",
+                        Renditja = 3,
+                        RestaurantId = saray.Id
+                    };
+
+                    var kadaif = new MenuCategory
+                    {
+                        Emertimi = "Kadaif",
+                        Pershkrimi = "Shredded pastry dessert with syrup.",
+                        Renditja = 4,
+                        RestaurantId = saray.Id
+                    };
+
+                    var specialitete = new MenuCategory
+                    {
+                        Emertimi = "Specialitete",
+                        Pershkrimi = "House specialties and unique sweets.",
+                        Renditja = 5,
+                        RestaurantId = saray.Id
+                    };
+
+                    var kuru = new MenuCategory
+                    {
+                        Emertimi = "Kuru",
+                        Pershkrimi = "Dry sweets and pastries.",
+                        Renditja = 6,
+                        RestaurantId = saray.Id
+                    };
+
+                    var midye = new MenuCategory
+                    {
+                        Emertimi = "Midye",
+                        Pershkrimi = "Shell-shaped baklava specialty.",
+                        Renditja = 7,
+                        RestaurantId = saray.Id
+                    };
+
+                    categoriesSaray.AddRange(new[] { bakllavaTradicionale, burma, havuc, kadaif, specialitete, kuru, midye });
+                    context.MenuCategories.AddRange(categoriesSaray);
+                    context.SaveChanges();
+
+
+                    var bakllavaTradicionaleItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Bakllava e Ftohtë me Kokos",
+                            Pershkrimi = "Traditional baklava served cold, layered with coconut flakes and sweet syrup.",
+                            Cmimi = 1.80m,
+                            Foto = "saray/bakllavaKokos.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts, Coconut",
+                            Kalori = 310,
+                            CategoryId = bakllavaTradicionale.Id
+                         },
+                        new MenuItems
+                        {
+                            Emertimi = "Bakllava e Ftohtë me Fistik",
+                            Pershkrimi = "Traditional baklava filled with pistachios, served cold with syrup.",
+                            Cmimi = 1.80m,
+                            Foto = "saray/bakllavaFistik.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Pistachio)",
+                            Kalori = 320,
+                            CategoryId = bakllavaTradicionale.Id
+                         },
+                        new MenuItems
+                        {
+                             Emertimi = "Bakllava e Ftohtë me Arra",
+                             Pershkrimi = "Traditional baklava filled with walnuts, served cold with syrup.",
+                             Cmimi = 1.80m,
+                             Foto = "saray/bakllavaArra.png",                     
+                             Disponueshme = true,
+                             Alergjene = "Gluten, Milk, Eggs, Nuts (Walnuts)",
+                             Kalori = 315,
+                             CategoryId = bakllavaTradicionale.Id
+
+                        }
+                    };
+                    context.MenuItems.AddRange(bakllavaTradicionaleItems);
+                    context.SaveChanges();
+
+                    var burmaItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Burma Arra",
+                            Pershkrimi = "Rolled pastry filled with walnuts and sweet syrup.",
+                            Cmimi = 1.20m,
+                            Foto = "saray/burmaArra.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Walnuts)",
+                            Kalori = 280,
+                            CategoryId = burma.Id
+
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Burma Fistik",
+                            Pershkrimi = "Rolled pastry filled with pistachios and sweet syrup.",
+                            Cmimi = 1.50m,
+                            Foto = "saray/burmaFistik.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Pistachio)",
+                            Kalori = 290,
+                            CategoryId = burma.Id
+                         },
+                        new MenuItems
+                        {
+                            Emertimi = "Burma Kokos",
+                            Pershkrimi = "Rolled pastry filled with coconut flakes and syrup.",
+                            Cmimi = 1.00m,
+                            Foto = "saray/burmaKokos.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Coconut",
+                            Kalori = 270,
+                            CategoryId = burma.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Burma Kadaif",
+                            Pershkrimi = "Rolled kadaif pastry with nuts and syrup.",
+                            Cmimi = 1.70m,
+                            Foto = "saray/burmaKadaif.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts",
+                            Kalori = 270,
+                            CategoryId = burma.Id
+                         }
+                    };
+                    context.MenuItems.AddRange(burmaItems);
+                    context.SaveChanges();
+
+                    var havucDilimItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Havuc Dilim Arra",
+                            Pershkrimi = "Carrot-shaped baklava slice filled with walnuts and sweet syrup.",
+                            Cmimi = 3.00m,
+                            Foto = "saray/havucArra.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Walnuts)",
+                            Kalori = 350,
+                            CategoryId = havuc.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Havuc Dilim Fistik",
+                            Pershkrimi = "Carrot-shaped baklava slice filled with pistachios and sweet syrup.",
+                            Cmimi = 1.80m,
+                            Foto = "saray/havucFistik.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Pistachio)",
+                            Kalori = 310,
+                            CategoryId = havuc.Id
+                         },
+                        new MenuItems
+                        {
+                             Emertimi = "Havuc Dilim Mor",
+                             Pershkrimi = "Carrot-shaped baklava slice with purple coloring and syrup.",
+                             Cmimi = 3.50m,
+                             Foto = "saray/havucMor.png",                     
+                             Disponueshme = true,
+                             Alergjene = "Gluten, Milk, Eggs",
+                             Kalori = 360,
+                             CategoryId = havuc.Id
+                         },
+                        new MenuItems
+                        {
+                             Emertimi = "Havuc Dilim Nutella",
+                             Pershkrimi = "Carrot-shaped baklava slice filled with Nutella cream and syrup.",
+                             Cmimi = 3.50m,
+                             Foto = "saray/havucNutella.png",                     
+                             Disponueshme = true,
+                             Alergjene = "Gluten, Milk, Eggs, Nuts (Cashews)",
+                             Kalori = 380,
+                             CategoryId = havuc.Id
+                         }
+                     };
+                    context.MenuItems.AddRange(havucDilimItems);
+                    context.SaveChanges();
+
+                    var kadaifItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Kadaif Krem",
+                            Pershkrimi = "Shredded kadaif pastry layered with cream and sweet syrup.",
+                            Cmimi = 3.50m,
+                            Foto = "saray/kadaifKrem.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs",
+                            Kalori = 340,
+                            CategoryId = kadaif.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Kadaif Arra",
+                            Pershkrimi = "Shredded pastry dessert filled with walnuts and sweet syrup.",
+                            Cmimi = 3.50m,
+                            Foto = "saray/kadaifArra.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Walnuts)",
+                            Kalori = 360,
+                            CategoryId = kadaif.Id
+                        }
+                       
+                     };
+                    context.MenuItems.AddRange(kadaifItems);
+                    context.SaveChanges();
+
+                    var specialiteteItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Kelebek",
+                            Pershkrimi = "Butterfly-shaped specialty pastry with syrup.",
+                            Cmimi = 1.00m,
+                            Foto = "saray/kelebek.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs",
+                            Kalori = 250,
+                            CategoryId = specialitete.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Kush me Fistik",
+                            Pershkrimi = "Specialty pastry filled with pistachios and syrup.",
+                            Cmimi = 2.00m,
+                            Foto = "saray/kushFistik.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs,Nuts (Pistachios)",
+                            Kalori = 320,
+                            CategoryId = specialitete.Id
+                        }
+                     };
+
+                    context.MenuItems.AddRange(specialiteteItems);
+                    context.SaveChanges();
+
+                    var kuruItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Kuru Arra",
+                            Pershkrimi = "Dry pastry filled with walnuts and sweet syrup.",
+                            Cmimi = 1.20m,
+                            Foto = "saray/kuruArra.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Walnuts)",
+                            Kalori = 280,
+                            CategoryId = kuru.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Kuru Fistik",
+                            Pershkrimi = "Dry pastry filled with pistachios and sweet syrup.",
+                            Cmimi = 1.50m,
+                            Foto = "saray/kuruFistik.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Pistachios)",
+                            Kalori = 290,
+                            CategoryId = kuru.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Kuru Mor",
+                            Pershkrimi = "Dry baklava-style sweet with purple coloring and syrup.",
+                            Cmimi = 1.70m,
+                            Foto = "saray/kuruMor.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs",
+                            Kalori = 300,
+                            CategoryId = kuru.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Kuru Nutella",
+                            Pershkrimi = "Dry baklava-style sweet filled with Nutella cream.",
+                            Cmimi = 1.70m,
+                            Foto = "saray/kuruNutella.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs, Nuts (Hazelnuts)",
+                            Kalori = 320,
+                            CategoryId = kuru.Id
+                        }
+
+                    };
+                    context.MenuItems.AddRange(kuruItems);
+                    context.SaveChanges();
+                    
+                    var midyeItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Midye Fistik",
+                            Pershkrimi = "Shell-shaped baklava specialty filled with pistachios and sweet syrup.",
+                            Cmimi = 1.80m,
+                            Foto = "saray/midyeFistik.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten, Milk, Eggs,Nuts (Pistachios)",
+                            Kalori = 330,
+                            CategoryId = midye.Id
+                        }
+                     };
+
+                    context.MenuItems.AddRange(midyeItems);
+                    context.SaveChanges();
+
                 }
+
+
+                
+                
+                 
+
+
             }
         }
     }
