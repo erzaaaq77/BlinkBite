@@ -557,16 +557,16 @@ public static class DbInitializer
                         addresses.Add(new RestaurantAddress
                         {
                             RestaurantId = restaurant.Id,
-                            Adresa = "Rr  Luan Haradinaj",
+                            Adresa = "Rr Luan Haradinaj",
                             Qyteti = "Prishtinë",
                             Zona = "Qendër",
                             IsMain = true,
                             IsActive = true,
                             Latitude = 42.702782669836346,
-                            Longitude = 21.179737619387176
-
+                            Longitude = 21.17973761
                         });
                     }
+
 
                     else if (restaurant.Emertimi == "Gjiks&Chiks")
                     {
@@ -7020,7 +7020,2247 @@ public static class DbInitializer
                 context.MenuItems.AddRange(drinkItems);
                 context.SaveChanges();
 
+
+
             }
+            var categoriesMulliri = new List<MenuCategory>();
+            var mulliri = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Mulliri");
+
+            if (mulliri != null)
+            {
+                var espressoCoffee = new MenuCategory
+                {
+                    Emertimi = "Espresso & Coffee",
+                    Pershkrimi = "Espresso and coffee classics.",
+                    Renditja = 1,
+                    RestaurantId = mulliri.Id
+                };
+
+                var singleOrigin = new MenuCategory
+                {
+                    Emertimi = "Single Origin Coffee",
+                    Pershkrimi = "Specialty single origin coffees.",
+                    Renditja = 2,
+                    RestaurantId = mulliri.Id
+                };
+
+                var coldDrinks = new MenuCategory
+                {
+                    Emertimi = "Cold Drinks",
+                    Pershkrimi = "Iced coffee and refreshing cold drinks.",
+                    Renditja = 3,
+                    RestaurantId = mulliri.Id
+                };
+
+                var hotChocolate = new MenuCategory
+                {
+                    Emertimi = "Hot Chocolate & Creams",
+                    Pershkrimi = "Hot chocolate and creamy delights.",
+                    Renditja = 4,
+                    RestaurantId = mulliri.Id
+                };
+
+                var teas = new MenuCategory
+                {
+                    Emertimi = "Teas",
+                    Pershkrimi = "Variety of teas.",
+                    Renditja = 5,
+                    RestaurantId = mulliri.Id
+                };
+
+                var hotBeverages = new MenuCategory
+                {
+                    Emertimi = "Hot Beverages",
+                    Pershkrimi = "Selection of hot drinks.",
+                    Renditja = 6,
+                    RestaurantId = mulliri.Id
+                };
+
+                var juicesSmoothies = new MenuCategory
+                {
+                    Emertimi = "Juices & Smoothies",
+                    Pershkrimi = "Fresh juices and smoothies.",
+                    Renditja = 7,
+                    RestaurantId = mulliri.Id
+                };
+
+                var milkshakes = new MenuCategory
+                {
+                    Emertimi = "Milkshakes",
+                    Pershkrimi = "Creamy milkshakes.",
+                    Renditja = 8,
+                    RestaurantId = mulliri.Id
+                };
+
+                var granitaMocktails = new MenuCategory
+                {
+                    Emertimi = "Granita & Mocktails",
+                    Pershkrimi = "Frozen granitas and mocktails.",
+                    Renditja = 9,
+                    RestaurantId = mulliri.Id
+                };
+
+                var water = new MenuCategory
+                {
+                    Emertimi = "Water",
+                    Pershkrimi = "Still and sparkling water.",
+                    Renditja = 10,
+                    RestaurantId = mulliri.Id
+                };
+
+                var softDrinks = new MenuCategory
+                {
+                    Emertimi = "Soft Drinks",
+                    Pershkrimi = "Refreshing soft drinks.",
+                    Renditja = 11,
+                    RestaurantId = mulliri.Id
+                };
+
+                var sandwiches = new MenuCategory
+                {
+                    Emertimi = "Sandwiches",
+                    Pershkrimi = "Freshly made sandwiches.",
+                    Renditja = 12,
+                    RestaurantId = mulliri.Id
+                };
+
+                var croissants = new MenuCategory
+                {
+                    Emertimi = "Croissants",
+                    Pershkrimi = "Croissants and pastries.",
+                    Renditja = 13,
+                    RestaurantId = mulliri.Id
+                };
+
+                var pancakesMuffins = new MenuCategory
+                {
+                    Emertimi = "Pancakes & Muffins",
+                    Pershkrimi = "Delicious pancakes and muffins.",
+                    Renditja = 14,
+                    RestaurantId = mulliri.Id
+                };
+
+                var desserts = new MenuCategory
+                {
+                    Emertimi = "Desserts",
+                    Pershkrimi = "Sweet dessert options.",
+                    Renditja = 15,
+                    RestaurantId = mulliri.Id
+                };
+
+                var rollsBiscuits = new MenuCategory
+                {
+                    Emertimi = "Rolls & Biscuits",
+                    Pershkrimi = "Rolls and biscuits.",
+                    Renditja = 16,
+                    RestaurantId = mulliri.Id
+                };
+
+                var capsules = new MenuCategory
+                {
+                    Emertimi = "Capsules",
+                    Pershkrimi = "Coffee capsules.",
+                    Renditja = 17,
+                    RestaurantId = mulliri.Id
+                };
+
+                var turkishCoffee = new MenuCategory
+                {
+                    Emertimi = "Turkish Coffee",
+                    Pershkrimi = "Traditional Turkish coffee.",
+                    Renditja = 18,
+                    RestaurantId = mulliri.Id
+                };
+
+                var coffeeBeans = new MenuCategory
+                {
+                    Emertimi = "Coffee Beans",
+                    Pershkrimi = "Whole coffee beans.",
+                    Renditja = 19,
+                    RestaurantId = mulliri.Id
+                };
+
+                var groundCoffee = new MenuCategory
+                {
+                    Emertimi = "Ground Coffee",
+                    Pershkrimi = "Freshly ground coffee.",
+                    Renditja = 20,
+                    RestaurantId = mulliri.Id
+                };
+
+                var packagedTeas = new MenuCategory
+                {
+                    Emertimi = "Packaged Teas",
+                    Pershkrimi = "Packaged tea varieties.",
+                    Renditja = 21,
+                    RestaurantId = mulliri.Id
+                };
+
+                var cocoaSalep = new MenuCategory
+                {
+                    Emertimi = "Cocoa & Salep",
+                    Pershkrimi = "Cocoa and salep drinks.",
+                    Renditja = 22,
+                    RestaurantId = mulliri.Id
+                };
+
+                var sweetSnacks = new MenuCategory
+                {
+                    Emertimi = "Sweet Snacks",
+                    Pershkrimi = "Selection of sweet snacks.",
+                    Renditja = 23,
+                    RestaurantId = mulliri.Id
+                };
+
+                var grandmasRecipes = new MenuCategory
+                {
+                    Emertimi = "Grandma’s Recipes",
+                    Pershkrimi = "Traditional homemade recipes.",
+                    Renditja = 24,
+                    RestaurantId = mulliri.Id
+                };
+
+                categoriesMulliri.AddRange(new[] {
+        espressoCoffee, singleOrigin, coldDrinks, hotChocolate, teas, hotBeverages, juicesSmoothies,
+        milkshakes, granitaMocktails, water, softDrinks, sandwiches, croissants, pancakesMuffins,
+        desserts, rollsBiscuits, capsules, turkishCoffee, coffeeBeans, groundCoffee, packagedTeas,
+        cocoaSalep, sweetSnacks, grandmasRecipes
+    });
+
+                context.MenuCategories.AddRange(categoriesMulliri);
+                context.SaveChanges();
+
+                var espressoCoffeeItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Espresso",
+        Pershkrimi = "Classic single shot of espresso.",
+        Cmimi = 1.20m,
+        Foto = "mulliri/Espresso.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Decaf Espresso",
+        Pershkrimi = "Decaffeinated espresso shot.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/EspressoDecaffeinato.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Double Espresso",
+        Pershkrimi = "Strong double shot of espresso.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/DoppioEspresso.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 10,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Macchiato",
+        Pershkrimi = "Espresso topped with milk foam.",
+        Cmimi = 1.20m,
+        Foto = "mulliri/Macchiato.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 15,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Double Macchiato",
+        Pershkrimi = "Double espresso with milk foam.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/DoppioMacchiato.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 25,
+        CategoryId = espressoCoffee.Id
+    },
+ new MenuItems
+    {
+        Emertimi = "Macchiato Doppio Latte",
+        Pershkrimi = "Double espresso with milk foamss.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/MacchiatoDoppioLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 25,
+        CategoryId = espressoCoffee.Id
+    },
+
+    new MenuItems
+    {
+        Emertimi = "Large Macchiato",
+        Pershkrimi = "Large macchiato with extra milk.",
+        Cmimi = 1.60m,
+        Foto = "mulliri/MacchiatoeMadhe.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 35,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caffe Latte",
+        Pershkrimi = "Espresso with steamed milk and foam.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/CaffeLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 120,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caramel Latte",
+        Pershkrimi = "Latte flavored with caramel syrup.",
+        Cmimi = 2.30m,
+        Foto = "mulliri/CaramelLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 150,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Vanilla Latte",
+        Pershkrimi = "Latte flavored with vanilla syrup.",
+        Cmimi = 2.30m,
+        Foto = "mulliri/VanillaLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 140,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Spanish Latte",
+        Pershkrimi = "Latte with condensed milk for sweetness.",
+        Cmimi = 2.60m,
+        Foto = "mulliri/SpanishLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 180,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Hot Mocha",
+        Pershkrimi = "Espresso with chocolate and steamed milk.",
+        Cmimi = 2.80m,
+        Foto = "mulliri/HotMocha.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 190,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Americano",
+        Pershkrimi = "Espresso diluted with hot water.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/AmericanCoffee.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 10,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Americano Latte",
+        Pershkrimi = "Americano with added milk.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/AmericanCoffeeLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 60,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Hot Mochaccino",
+        Pershkrimi = "Espresso with chocolate, milk, and foam.",
+        Cmimi = 2.80m,
+        Foto = "mulliri/HotMochaccino.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 200,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Cafe Bombon",
+        Pershkrimi = "Espresso with sweetened condensed milk.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/CafeBombon.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 160,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Turkish Coffee",
+        Pershkrimi = "Traditional Turkish-style coffee.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/KafeTurke.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 15,
+        CategoryId = espressoCoffee.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Turkish Coffee with Milk",
+        Pershkrimi = "Traditional Turkish coffee with added milk.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/KafeTurkeMeQumesht.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 40,
+        CategoryId = espressoCoffee.Id
+    }
+};
+
+                context.MenuItems.AddRange(espressoCoffeeItems);
+                context.SaveChanges();
+
+
+                var singleOriginItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Espresso Colombia Supremo",
+        Pershkrimi = "Single origin espresso made from Colombia Supremo beans.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/EspressoColombiaSupremo.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = singleOrigin.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Espresso Ethiopia Sidamo",
+        Pershkrimi = "Single origin espresso made from Ethiopia Sidamo beans.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/EspressoEthiopiaSidamo.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = singleOrigin.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Espresso Gourmet",
+        Pershkrimi = "Premium gourmet espresso blend.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/EspressoGourmet.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = singleOrigin.Id
+    }
+};
+
+                context.MenuItems.AddRange(singleOriginItems);
+                context.SaveChanges();
+
+
+                var coldDrinksItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Freddo Espresso",
+        Pershkrimi = "Iced espresso served cold.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/FreddoEspresso.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 10,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Freddo Cappuccino",
+        Pershkrimi = "Iced cappuccino with milk foam.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/FreddoCappuccino.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 80,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Frappe",
+        Pershkrimi = "Classic Greek-style iced coffee.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/Frappe.png",
+        Disponueshme = true,
+        Alergjene = "Milk (optional)",
+        Kalori = 60,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Frappe with Milk",
+        Pershkrimi = "Iced frappe blended with milk.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/FrappeMequmesht.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 90,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Americano",
+        Pershkrimi = "Espresso diluted with cold water and ice.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/IcedAmericano.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 10,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Latte",
+        Pershkrimi = "Espresso with cold milk and ice.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/IcedLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 120,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Caramel Latte",
+        Pershkrimi = "Iced latte flavored with caramel syrup.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/IcedLatteCaramel.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 150,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Vanilla Latte",
+        Pershkrimi = "Iced latte flavored with vanilla syrup.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/IcedLatteVanilla.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 140,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Spanish Latte",
+        Pershkrimi = "Iced latte with condensed milk for sweetness.",
+        Cmimi = 2.50m,
+        Foto = "mulliri/IcedSpanishLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 180,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Mocha",
+        Pershkrimi = "Espresso with chocolate, milk, and ice.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/IcedMocha.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 190,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Freppuccino Chocolate",
+        Pershkrimi = "Frozen blended chocolate coffee drink.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/FreppuccinoÇokollatë.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 220,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Freppuccino Caramel",
+        Pershkrimi = "Frozen blended caramel coffee drink.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/FreppuccinoCaramel.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 230,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chocolate Mochaccino",
+        Pershkrimi = "Iced mochaccino with chocolate flavor.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/MochaccinoÇokollatë.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 210,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caramel Mochaccino",
+        Pershkrimi = "Iced mochaccino with caramel flavor.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/MochaccinoCaramel.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 220,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caramel Peanut Latte",
+        Pershkrimi = "Iced latte with caramel and peanut flavor.",
+        Cmimi = 2.50m,
+        Foto = "mulliri/CaramelPeanutLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk, Nuts (Peanuts)",
+        Kalori = 240,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Cold Chocolate",
+        Pershkrimi = "Refreshing iced chocolate drink.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/ÇokollatëeFtohtë.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 180,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Cold Chocolate with Caramel",
+        Pershkrimi = "Iced chocolate flavored with caramel.",
+        Cmimi = 2.30m,
+        Foto = "mulliri/ÇokollatëeFtohtëmeKaramel.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 200,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Cold Chocolate with Coffee",
+        Pershkrimi = "Iced chocolate blended with coffee.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/ÇokollatëeFtohtëmeKafe.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 210,
+        CategoryId = coldDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Iced Chai Latte",
+        Pershkrimi = "Spiced tea latte served cold with milk.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/IcedChaiLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 170,
+        CategoryId = coldDrinks.Id
+    }
+};
+
+                context.MenuItems.AddRange(coldDrinksItems);
+                context.SaveChanges();
+
+
+                var hotChocolateCreamsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Hot Chocolate",
+        Pershkrimi = "Rich and creamy hot chocolate.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/ÇokollatëeNgrohtë.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 200,
+        CategoryId = hotChocolate.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "White Hot Chocolate",
+        Pershkrimi = "Smooth and sweet white hot chocolate.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/ÇokollatëeBardhëENgrohtë.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 210,
+        CategoryId = hotChocolate.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Cocoa",
+        Pershkrimi = "Classic hot cocoa drink.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/Kakao.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 180,
+        CategoryId = hotChocolate.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Salep",
+        Pershkrimi = "Traditional hot salep drink.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/Salep.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 170,
+        CategoryId = hotChocolate.Id
+    }
+};
+
+                context.MenuItems.AddRange(hotChocolateCreamsItems);
+                context.SaveChanges();
+
+                var teasItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Mountain Tea",
+        Pershkrimi = "Traditional herbal mountain tea.",
+        Cmimi = 1.60m,
+        Foto = "mulliri/QajMali.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chamomile Tea",
+        Pershkrimi = "Relaxing chamomile herbal tea.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajKamomil.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Forest Fruit Tea",
+        Pershkrimi = "Fruit tea blend with forest berries.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajFrutaPylli.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Hibiscus Tea",
+        Pershkrimi = "Refreshing hibiscus herbal tea.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajHibiskus.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Ginger Tea",
+        Pershkrimi = "Spicy and warming ginger tea.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajXhinxher.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Apple & Cinnamon Tea",
+        Pershkrimi = "Fruit tea with apple and cinnamon flavor.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajMolleKanell.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Peach & Apricot Tea",
+        Pershkrimi = "Fruit tea with peach and apricot flavor.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajPjeshkeKajsi.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 5,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Almond & Cinnamon Tea",
+        Pershkrimi = "Unique blend of almond and cinnamon flavors.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajBajameKanell.png",
+        Disponueshme = true,
+        Alergjene = "Nuts (Almonds)",
+        Kalori = 10,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Earl Grey Tea",
+        Pershkrimi = "Classic black tea with bergamot flavor.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajEarlGrey.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Special Green Tea",
+        Pershkrimi = "Premium green tea blend.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajJeshilSpecial.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Jasmine Green Tea",
+        Pershkrimi = "Green tea infused with jasmine flowers.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/QajJeshilJasemin.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = teas.Id
+    }
+};
+
+                context.MenuItems.AddRange(teasItems);
+                context.SaveChanges();
+
+
+                var hotBeveragesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Chai Latte",
+        Pershkrimi = "Spiced tea latte made with black tea, milk, and aromatic spices.",
+        Cmimi = 3.20m,
+        Foto = "mulliri/chaiLatte.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 180,
+        CategoryId = hotBeverages.Id
+    }
+};
+
+                context.MenuItems.AddRange(hotBeveragesItems);
+                context.SaveChanges();
+
+                var juicesSmoothiesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Orange Juice",
+        Pershkrimi = "Freshly squeezed orange juice.",
+        Cmimi = 2.80m,
+        Foto = "mulliri/LengPortokalli.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Orange & Carrot Juice",
+        Pershkrimi = "Blend of orange and carrot juice.",
+        Cmimi = 3.00m,
+        Foto = "mulliri/LengPortokalliKarrote.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Beetroot Juice",
+        Pershkrimi = "Fresh beetroot juice.",
+        Cmimi = 3.00m,
+        Foto = "mulliri/LengPanxhari.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 100,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Kiwi Juice",
+        Pershkrimi = "Fresh kiwi juice.",
+        Cmimi = 3.50m,
+        Foto = "mulliri/LengKiwi.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 90,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Strawberry Smoothie",
+        Pershkrimi = "Smoothie made with fresh strawberries.",
+        Cmimi = 3.50m,
+        Foto = "mulliri/SmoothieStrawberry.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 180,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Blackberry Smoothie",
+        Pershkrimi = "Smoothie made with fresh blackberries.",
+        Cmimi = 3.70m,
+        Foto = "mulliri/SmoothieManaferre.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 190,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Raspberry Smoothie",
+        Pershkrimi = "Smoothie made with fresh raspberries.",
+        Cmimi = 3.70m,
+        Foto = "mulliri/SmoothieMjeder.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 185,
+        CategoryId = juicesSmoothies.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Kiwi Smoothie",
+        Pershkrimi = "Smoothie made with fresh kiwi.",
+        Cmimi = 3.50m,
+        Foto = "mulliri/SmoothieKiwi.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 170,
+        CategoryId = juicesSmoothies.Id
+    }
+};
+
+                context.MenuItems.AddRange(juicesSmoothiesItems);
+                context.SaveChanges();
+
+                var milkshakesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Chocolate Milkshake",
+        Pershkrimi = "Creamy milkshake with chocolate flavor.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MilkshakeQokollate.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 250,
+        CategoryId = milkshakes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Strawberry Milkshake",
+        Pershkrimi = "Milkshake made with fresh strawberries.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MilkshakeLuleshtrydhe.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 240,
+        CategoryId = milkshakes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caramel Milkshake",
+        Pershkrimi = "Milkshake flavored with caramel syrup.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MilkshakeKaramel.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 260,
+        CategoryId = milkshakes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Orange Milkshake",
+        Pershkrimi = "Refreshing milkshake with orange flavor.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MilkshakePortokall.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 230,
+        CategoryId = milkshakes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Passion Fruit Milkshake",
+        Pershkrimi = "Exotic milkshake with passion fruit flavor.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MilkshakeFrutPasioni.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 240,
+        CategoryId = milkshakes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Lemon Milkshake",
+        Pershkrimi = "Refreshing milkshake with lemon flavor.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MilkshakeLimon.png",
+        Disponueshme = true,
+        Alergjene = "Milk",
+        Kalori = 220,
+        CategoryId = milkshakes.Id
+    }
+};
+
+                context.MenuItems.AddRange(milkshakesItems);
+                context.SaveChanges();
+
+                var granitaMocktailsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Raspberry Granita",
+        Pershkrimi = "Frozen raspberry granita, refreshing and fruity.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/raspberryGranita.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = granitaMocktails.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mango&Lime Granita",
+        Pershkrimi = "Frozen mango granita, tropical and sweet.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/GranitaMangoLime.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 130,
+        CategoryId = granitaMocktails.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pineapple Soda",
+        Pershkrimi = "Refreshing soda with pineapple flavor.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/AnanasSoda.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 100,
+        CategoryId = granitaMocktails.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Grenadine Soda",
+        Pershkrimi = "Sparkling soda flavored with grenadine syrup.",
+        Cmimi = 2.40m,
+        Foto = "mulliri/GrenadineSoda.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = granitaMocktails.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Orange Spritz",
+        Pershkrimi = "Sparkling orange spritz mocktail.",
+        Cmimi = 2.30m,
+        Foto = "mulliri/OrangeSpritz.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 90,
+        CategoryId = granitaMocktails.Id
+    }
+};
+
+                context.MenuItems.AddRange(granitaMocktailsItems);
+                context.SaveChanges();
+
+                var waterItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Rugove Glass Water 0.25L",
+        Pershkrimi = "Premium still water in glass bottle.",
+        Cmimi = 1.20m,
+        Foto = "mulliri/UjeRugoveQelq.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Rugove Glass Water 0.75L",
+        Pershkrimi = "Premium still water in large glass bottle.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/UjeRugoveQelq075l.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Rugove Plastic Water 0.5L",
+        Pershkrimi = "Still water in plastic bottle.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/UjeRugovePlastike.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Rugove Plastic Water 0.33L",
+        Pershkrimi = "Still water in small plastic bottle.",
+        Cmimi = 0.80m,
+        Foto = "mulliri/UjeRugovePlastike033l.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Lajthiza Water 0.5L",
+        Pershkrimi = "Still water from Lajthiza source.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/UjeLajthiza.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Lajthiza Sparkling Water 0.33L",
+        Pershkrimi = "Carbonated water from Lajthiza source.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/UjeLajthizaMeGaz.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pana Water 0.25L",
+        Pershkrimi = "Premium bottled water from Pana.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/UjePana.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Sanpellegrino Water 0.25L",
+        Pershkrimi = "Italian sparkling mineral water.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/UjeSanpelegrino.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Killkoti Water 0.5L",
+        Pershkrimi = "Still bottled water from Killkoti.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/UjeKllokoti.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Radenska Water 0.5L",
+        Pershkrimi = "Sparkling mineral water Radenska.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/UjeRadenska.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = water.Id
+    }
+};
+
+                context.MenuItems.AddRange(waterItems);
+                context.SaveChanges();
+
+                var softDrinksItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Coca Cola",
+        Pershkrimi = "Classic Coca Cola soft drink.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/cocaCola.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 140,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Coca Cola Zero",
+        Pershkrimi = "Sugar-free Coca Cola Zero.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/cocaColaZero.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fanta Orange",
+        Pershkrimi = "Refreshing orange flavored soda.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/Fanta.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 150,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fanta Exotic",
+        Pershkrimi = "Tropical exotic flavored soda.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/FantaExotic.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 150,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Sprite",
+        Pershkrimi = "Lemon-lime flavored soda.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/Sprite.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 140,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fructal",
+        Pershkrimi = "Fruit-based refreshing drink.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/Fructal.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Lemon Soda",
+        Pershkrimi = "Sparkling soda with lemon flavor.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/LemonSoda.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 100,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Orange Soda",
+        Pershkrimi = "Sparkling soda with orange flavor.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/OrangeSoda.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mohito Soda",
+        Pershkrimi = "Refreshing soda with mojito flavor.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/MohitoSoda.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 90,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Schweppes Tonic Water",
+        Pershkrimi = "Classic tonic water.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/SchweppesTonic.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Schweppes Bitter Lemon",
+        Pershkrimi = "Sparkling soda with bitter lemon flavor.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/SchweppesBitterLemon.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 90,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Ice Tea",
+        Pershkrimi = "Refreshing iced tea drink.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/IceTea.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 80,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Red Bull",
+        Pershkrimi = "Energy drink Red Bull.",
+        Cmimi = 2.60m,
+        Foto = "mulliri/RedBull.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Rose Lemonade",
+        Pershkrimi = "Premium rose flavored lemonade.",
+        Cmimi = 3.80m,
+        Foto = "mulliri/RoseLemonade.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = softDrinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Golden Eagle",
+        Pershkrimi = "Local energy drink Golden Eagle.",
+        Cmimi = 1.70m,
+        Foto = "mulliri/GoldenEagle.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = softDrinks.Id
+    }
+};
+
+                context.MenuItems.AddRange(softDrinksItems);
+                context.SaveChanges();
+
+
+                var sandwichesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Savory Croissant with Turkey & Gouda",
+        Pershkrimi = "Buttery croissant filled with turkey and Gouda cheese.",
+        Cmimi = 2.60m,
+        Foto = "mulliri/KruasaniKripur.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 320,
+        CategoryId = sandwiches.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chicken Ham & Gouda Toast",
+        Pershkrimi = "Grilled toast with chicken ham and Gouda cheese.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/TostProshutë.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 280,
+        CategoryId = sandwiches.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Integrale Milano",
+        Pershkrimi = "Whole grain Milano-style sandwich.",
+        Cmimi = 2.60m,
+        Foto = "mulliri/IntegralMilano.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 300,
+        CategoryId = sandwiches.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pretzel with Beef Salami & Gouda",
+        Pershkrimi = "Pretzel sandwich filled with beef salami and Gouda cheese.",
+        Cmimi = 2.90m,
+        Foto = "mulliri/PretzelSallamViqi.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 350,
+        CategoryId = sandwiches.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chicken Breast & Kaçkavall Panini",
+        Pershkrimi = "Panini filled with grilled chicken breast and Kaçkavall cheese.",
+        Cmimi = 2.90m,
+        Foto = "mulliri/PanineGjoksPule.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 360,
+        CategoryId = sandwiches.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chicken Ham & Potato Panini",
+        Pershkrimi = "Panini with chicken ham and potato filling.",
+        Cmimi = 2.60m,
+        Foto = "mulliri/PaninemeProshutePule.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 340,
+        CategoryId = sandwiches.Id
+    }
+};
+
+                context.MenuItems.AddRange(sandwichesItems);
+                context.SaveChanges();
+
+                var croissantsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Pistachio Cream Croissant",
+        Pershkrimi = "Flaky croissant filled with rich pistachio cream.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/KruasanKremFëstëk.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Nuts (Pistachio)",
+        Kalori = 320,
+        CategoryId = croissants.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Hazelnut Chocolate Cream Croissant",
+        Pershkrimi = "Buttery croissant filled with hazelnut chocolate cream.",
+        Cmimi = 1.60m,
+        Foto = "mulliri/KruasanKremQokollateLajthi.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Nuts (Hazelnut)",
+        Kalori = 310,
+        CategoryId = croissants.Id
+    }
+};
+
+                context.MenuItems.AddRange(croissantsItems);
+                context.SaveChanges();
+
+                var pancakesMuffinsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Chocolate Filled Donut",
+        Pershkrimi = "Soft donut filled with rich chocolate cream.",
+        Cmimi = 1.60m,
+        Foto = "mulliri/PetulleMbushurmeÇokollat.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 320,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chocolate Coated Donut",
+        Pershkrimi = "Donut coated with chocolate glaze.",
+        Cmimi = 1.60m,
+        Foto = "mulliri/PetulleVeshurmeÇokollat.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 310,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pistachio Filled Donut",
+        Pershkrimi = "Donut filled with pistachio cream.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/PetulleMbushurmeFestek.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Nuts (Pistachio)",
+        Kalori = 330,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pistachio Coated Donut",
+        Pershkrimi = "Donut coated with pistachio cream.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/PetulleVeshurmeFestek.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Nuts (Pistachio)",
+        Kalori = 325,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chocolate Muffin",
+        Pershkrimi = "Moist muffin with chocolate flavor.",
+        Cmimi = 1.70m,
+        Foto = "mulliri/MuffinÇokollat.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 280,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pistachio Muffin",
+        Pershkrimi = "Muffin flavored with pistachio.",
+        Cmimi = 2.10m,
+        Foto = "mulliri/MuffinFestek.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs, Nuts (Pistachio)",
+        Kalori = 300,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Red Velvet Muffin",
+        Pershkrimi = "Classic red velvet muffin with a soft texture.",
+        Cmimi = 1.70m,
+        Foto = "mulliri/MuffinRedVelvet.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 290,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Raisin Muffin",
+        Pershkrimi = "Muffin with dried raisins.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/MuffinRrushiThat.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 270,
+        CategoryId = pancakesMuffins.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Blueberry Muffin",
+        Pershkrimi = "Muffin with fresh blueberries.",
+        Cmimi = 1.70m,
+        Foto = "mulliri/MuffinBoronic.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 280,
+        CategoryId = pancakesMuffins.Id
+    }
+};
+
+                context.MenuItems.AddRange(pancakesMuffinsItems);
+                context.SaveChanges();
+
+                var dessertsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Capriccio Tart",
+        Pershkrimi = "Delicate tart topped with mixed fruits.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/TarteCapriccio.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 280,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fig Tart",
+        Pershkrimi = "Tart filled with fig cream and decorated icing.",
+        Cmimi = 2.00m,
+        Foto = "mulliri/TarteFiku.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 290,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Carrot Cake",
+        Pershkrimi = "Moist carrot cake slice with cream layers.",
+        Cmimi = 2.90m,
+        Foto = "mulliri/TorteMeKarrote.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs, Nuts",
+        Kalori = 350,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mango Cheesecake",
+        Pershkrimi = "Cheesecake topped with mango sauce.",
+        Cmimi = 3.20m,
+        Foto = "mulliri/CheesecakeMango.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 370,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Blueberry Cheesecake",
+        Pershkrimi = "Cheesecake topped with blueberry sauce.",
+        Cmimi = 3.20m,
+        Foto = "mulliri/CheesecakeBoronic.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 365,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Brownie Mousse",
+        Pershkrimi = "Chocolate mousse with brownie pieces.",
+        Cmimi = 2.70m,
+        Foto = "mulliri/MousseBrownie.png",
+        Disponueshme = true,
+        Alergjene = "Milk, Eggs",
+        Kalori = 330,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Biscoff Mousse",
+        Pershkrimi = "Creamy mousse topped with Biscoff spread.",
+        Cmimi = 2.70m,
+        Foto = "mulliri/MousseBiscoff.png",
+        Disponueshme = true,
+        Alergjene = "Milk, Eggs, Gluten",
+        Kalori = 340,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Hazelnut Profiterole",
+        Pershkrimi = "Profiterole filled with hazelnut cream.",
+        Cmimi = 2.20m,
+        Foto = "mulliri/ProfiterolLajthi.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Nuts (Hazelnut)",
+        Kalori = 300,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pistachio Profiterole",
+        Pershkrimi = "Profiterole filled with pistachio cream.",
+        Cmimi = 2.20m,
+        Foto = "mulliri/ProfiterolFestek.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Nuts (Pistachio)",
+        Kalori = 305,
+        CategoryId = desserts.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Banana Cake",
+        Pershkrimi = "Moist banana cake slice.",
+        Cmimi = 4.20m,
+        Foto = "mulliri/TortemeBanane.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 360,
+        CategoryId = desserts.Id
+    }
+};
+
+                context.MenuItems.AddRange(dessertsItems);
+                context.SaveChanges();
+
+
+                var rollsBiscuitsItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Fitbar",
+        Pershkrimi = "Healthy oat and fruit energy bar.",
+        Cmimi = 1.50m,
+        Foto = "mulliri/Fitbar.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 180,
+        CategoryId = rollsBiscuits.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Crunchy Oats & Date Roll",
+        Pershkrimi = "Crunchy roll made with oats and Arabian dates.",
+        Cmimi = 1.40m,
+        Foto = "mulliri/KrokanteTershere.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 200,
+        CategoryId = rollsBiscuits.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caramel Roll",
+        Pershkrimi = "Sweet roll filled with caramel cream.",
+        Cmimi = 2.80m,
+        Foto = "mulliri/KaramelRolls.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 320,
+        CategoryId = rollsBiscuits.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Cinnamon Apple Roll",
+        Pershkrimi = "Roll filled with apple and cinnamon.",
+        Cmimi = 2.80m,
+        Foto = "mulliri/CinnamonAppleRoll.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 310,
+        CategoryId = rollsBiscuits.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pistachio Roll",
+        Pershkrimi = "Sweet roll filled with pistachio cream.",
+        Cmimi = 3.20m,
+        Foto = "mulliri/PistachioRoll.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Nuts (Pistachio), Milk",
+        Kalori = 330,
+        CategoryId = rollsBiscuits.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Oat & Raisin Biscuit",
+        Pershkrimi = "Crunchy biscuit made with oats and raisins.",
+        Cmimi = 1.20m,
+        Foto = "mulliri/BiskotemeTershere.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 150,
+        CategoryId = rollsBiscuits.Id
+    }
+};
+
+                context.MenuItems.AddRange(rollsBiscuitsItems);
+                context.SaveChanges();
+
+
+                var capsulesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Oro (10 Nespresso Original)",
+        Pershkrimi = "Smooth and balanced espresso blend Oro.",
+        Cmimi = 3.90m,
+        Foto = "mulliri/EspressoOro10.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Colombia (10 Nespresso Original)",
+        Pershkrimi = "Rich espresso with Colombian origin.",
+        Cmimi = 4.30m,
+        Foto = "mulliri/EspressoColombia10.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Brazil (10 Nespresso Original)",
+        Pershkrimi = "Smooth espresso with Brazilian origin.",
+        Cmimi = 3.90m,
+        Foto = "mulliri/EspressoBrazil10.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Ethiopia (10 Nespresso Original)",
+        Pershkrimi = "Floral and aromatic Ethiopian espresso.",
+        Cmimi = 4.30m,
+        Foto = "mulliri/EspressoEthiopia10.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso India (10 Nespresso Original)",
+        Pershkrimi = "Strong and spicy Indian espresso.",
+        Cmimi = 3.90m,
+        Foto = "mulliri/EspressoIndia10.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Decaf (10 Nespresso Original)",
+        Pershkrimi = "Decaffeinated espresso blend.",
+        Cmimi = 4.80m,
+        Foto = "mulliri/EspressoDekaf10.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Oro (50 Cialde)",
+        Pershkrimi = "Large pack of Oro espresso pods.",
+        Cmimi = 15.50m,
+        Foto = "mulliri/EspressoOro50.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Brazil (18 Cialde)",
+        Pershkrimi = "Pack of 18 Brazilian espresso pods.",
+        Cmimi = 8.00m,
+        Foto = "mulliri/EspressoBrazil18.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso India (18 Cialde)",
+        Pershkrimi = "Pack of 18 Indian espresso pods.",
+        Cmimi = 8.00m,
+        Foto = "mulliri/EspressoIndia18.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = capsules.Id
+    }
+};
+
+                context.MenuItems.AddRange(capsulesItems);
+                context.SaveChanges();
+
+
+
+                var turkishCoffeeItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Mulliri Turkish Coffee 100g",
+        Pershkrimi = "Traditional ground Turkish coffee, rich and aromatic.",
+        Cmimi = 1.80m,
+        Foto = "mulliri/MulliriKafeTurke.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = turkishCoffee.Id
+    }
+};
+
+                context.MenuItems.AddRange(turkishCoffeeItems);
+                context.SaveChanges();
+
+
+                var coffeeBeansItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Professional Barista 1000g",
+        Pershkrimi = "Premium espresso beans for professional barista use.",
+        Cmimi = 24.00m,
+        Foto = "mulliri/ProfessionalBarista.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = coffeeBeans.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Crema Bar 1000g",
+        Pershkrimi = "Espresso beans with smooth crema.",
+        Cmimi = 17.00m,
+        Foto = "mulliri/CremaBar.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = coffeeBeans.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Crema Bar Supremo 1000g",
+        Pershkrimi = "Supreme blend of espresso beans with rich crema.",
+        Cmimi = 18.50m,
+        Foto = "mulliri/CremaBarSupremo.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = coffeeBeans.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Espresso Miscela Premium 1000g",
+        Pershkrimi = "Premium blend of espresso beans for refined taste.",
+        Cmimi = 40.00m,
+        Foto = "mulliri/MiscelaPremium.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = coffeeBeans.Id
+    }
+};
+                context.MenuItems.AddRange(coffeeBeansItems);
+                context.SaveChanges();
+
+                var groundCoffeeItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Mulliri Moka Intenso 250g",
+        Pershkrimi = "Intense ground coffee blend for moka pot.",
+        Cmimi = 5.00m,
+        Foto = "mulliri/MulliriMokaIntenso.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = groundCoffee.Id
+    }
+};
+
+                context.MenuItems.AddRange(groundCoffeeItems);
+                context.SaveChanges();
+
+                var packagedTeasItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Ginger Tea",
+        Pershkrimi = "Packaged herbal tea with ginger flavor.",
+        Cmimi = 6.00m,
+        Foto = "mulliri/Xhinxher.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = packagedTeas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Apple & Cinnamon Tea",
+        Pershkrimi = "Packaged tea with apple and cinnamon flavor.",
+        Cmimi = 6.00m,
+        Foto = "mulliri/MolleKanell.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = packagedTeas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Almond & Cinnamon Tea",
+        Pershkrimi = "Packaged tea with almond and cinnamon flavor.",
+        Cmimi = 6.00m,
+        Foto = "mulliri/BajameKanell.png",
+        Disponueshme = true,
+        Alergjene = "Nuts (Almond)",
+        Kalori = 0,
+        CategoryId = packagedTeas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Earl Grey Tea",
+        Pershkrimi = "Classic Earl Grey packaged tea.",
+        Cmimi = 6.00m,
+        Foto = "mulliri/EarlGrey.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = packagedTeas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Green Gunpowder Tea",
+        Pershkrimi = "Traditional green gunpowder packaged tea.",
+        Cmimi = 6.00m,
+        Foto = "mulliri/JeshilGunpowder.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = packagedTeas.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Green Jasmine Tea",
+        Pershkrimi = "Green tea blended with jasmine flowers.",
+        Cmimi = 6.00m,
+        Foto = "mulliri/JeshilmeJasemin.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = packagedTeas.Id
+    }
+};
+                context.MenuItems.AddRange(packagedTeasItems);
+                context.SaveChanges();
+
+
+                var cocoaSalepItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Mulliri Cocoa 100g",
+        Pershkrimi = "Rich cocoa powder, 100g pack.",
+        Cmimi = 2.50m,
+        Foto = "mulliri/MulliriKakao.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = cocoaSalep.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mulliri Salep",
+        Pershkrimi = "Rich cocoa powder",
+        Cmimi = 4.50m,
+        Foto = "mulliri/MulliriSalep.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = cocoaSalep.Id
+    }
+};
+
+                context.MenuItems.AddRange(cocoaSalepItems);
+                context.SaveChanges();
+
+                var sweetSnacksItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Campbells Shortbread Fingers 100g",
+        Pershkrimi = "Classic buttery shortbread fingers, 100g pack.",
+        Cmimi = 2.70m,
+        Foto = "mulliri/Campbells.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 480,
+        CategoryId = sweetSnacks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Caramel Stroopwafel Piece",
+        Pershkrimi = "Single caramel stroopwafel with syrup filling.",
+        Cmimi = 1.00m,
+        Foto = "mulliri/CaramelStroopwafel.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 150,
+        CategoryId = sweetSnacks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mini Caramel Stroopwafels",
+        Pershkrimi = "Pack of mini stroopwafels with caramel filling.",
+        Cmimi = 4.10m,
+        Foto = "mulliri/MiniCaramelStroopwafels.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk, Eggs",
+        Kalori = 600,
+        CategoryId = sweetSnacks.Id
+    }
+};
+
+                context.MenuItems.AddRange(sweetSnacksItems);
+                context.SaveChanges();
+
+                var grandmasRecipesItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Cherry Juice",
+        Pershkrimi = "Refreshing bottled cherry juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengVishnje.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Orange Juice",
+        Pershkrimi = "Fresh bottled orange juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengPortokalli.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 110,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Peach Juice",
+        Pershkrimi = "Sweet bottled peach juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengPjeshke.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 115,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Multivitamin Juice",
+        Pershkrimi = "Mixed fruit multivitamin juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengMultivitamin.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 130,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Apple Juice",
+        Pershkrimi = "Classic bottled apple juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengMolle.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 115,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Forest Fruit Juice",
+        Pershkrimi = "Juice blend of forest fruits.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengFrutaMali.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 125,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Strawberry Juice",
+        Pershkrimi = "Sweet bottled strawberry juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengDredheze.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 120,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Pear Juice",
+        Pershkrimi = "Refreshing bottled pear juice.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengDardhe.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 115,
+        CategoryId = grandmasRecipes.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Blueberry Juice",
+        Pershkrimi = "Juice made from fresh blueberries.",
+        Cmimi = 1.90m,
+        Foto = "mulliri/LengBoronice.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 125,
+        CategoryId = grandmasRecipes.Id
+    }
+};
+
+                context.MenuItems.AddRange(grandmasRecipesItems);
+                context.SaveChanges();
+
+
+
+            }
+
+
         }
     }
 }
