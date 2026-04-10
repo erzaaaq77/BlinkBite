@@ -6970,7 +6970,7 @@ public static class DbInitializer
                 context.MenuItems.AddRange(risottoItems);
                 context.SaveChanges();
 
-                var drinkItems = new List<MenuItems> { 
+                var drinkItems = new List<MenuItems> {
                 new MenuItems
                 {
                     Emertimi = "Coca Cola",
@@ -7015,7 +7015,7 @@ public static class DbInitializer
                     Kalori = 150,
                     CategoryId = drinks.Id
                 }
-                
+
                 };
                 context.MenuItems.AddRange(drinkItems);
                 context.SaveChanges();
@@ -9261,6 +9261,629 @@ public static class DbInitializer
             }
 
 
+            var categoriesGjicksandChicks = new List<MenuCategory>();
+            var gjiks = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Gjiks&Chiks");
+
+            if (gjiks != null)
+            {
+
+                var appetizer = new MenuCategory
+                {
+
+                    Emertimi = "Appetizer",
+                    Pershkrimi = "Tasty starters perfect for sharing, featuring a variety of crispy, savory, and flavorful bites to begin your meal",
+                    Renditja = 1,
+                    RestaurantId = gjiks.Id
+                };
+
+                var salad = new MenuCategory
+                {
+
+                    Emertimi = "Salad",
+                    Pershkrimi = "Fresh and vibrant salads made with crisp ingredients and light, flavorful dressings.",
+                    Renditja = 2,
+                    RestaurantId = gjiks.Id
+                };
+
+                var rice = new MenuCategory
+                {
+
+                    Emertimi = "Rice",
+                    Pershkrimi = "Fresh and vibrant salads made with crisp ingredients and light, flavorful dressings.",
+                    Renditja = 3,
+                    RestaurantId = gjiks.Id
+                };
+                var nigiri = new MenuCategory
+                {
+
+                    Emertimi = "Nigiri Sushi",
+                    Pershkrimi = "Hand-pressed sushi rice topped with fresh slices of fish or seafood, simple and delicate in flavor.",
+                    Renditja = 4,
+                    RestaurantId = gjiks.Id
+                };
+
+                var sushi = new MenuCategory
+                {
+
+                    Emertimi = "Sushi Roll",
+                    Pershkrimi = "Freshly rolled sushi filled with a variety of ingredients, combining flavors and textures in every bite.",
+                    Renditja = 5,
+                    RestaurantId = gjiks.Id
+                };
+                var sides = new MenuCategory
+                {
+
+                    Emertimi = "Sides",
+                    Pershkrimi = "Perfect complements to your meal, featuring a selection of tasty and satisfying additions.",
+                    Renditja = 6,
+                    RestaurantId = gjiks.Id
+                };
+                var taco = new MenuCategory
+                {
+
+                    Emertimi = "Taco & Wraps",
+                    Pershkrimi = "Soft tortillas filled with flavorful ingredients, fresh toppings, and delicious sauces for a satisfying bite.",
+                    Renditja = 7,
+                    RestaurantId = gjiks.Id
+                };
+                var linguini = new MenuCategory
+                {
+
+                    Emertimi = "Linguini",
+                    Pershkrimi = "Delicate long pasta served with rich sauces and flavorful ingredients for a classic Italian taste.",
+                    Renditja = 8,
+                    RestaurantId = gjiks.Id
+                };
+                var noodles = new MenuCategory
+                {
+
+                    Emertimi = "Noodles",
+                    Pershkrimi = "Stir-fried or sauced noodles prepared with flavorful ingredients and savory seasonings.",
+                    Renditja = 9,
+                    RestaurantId = gjiks.Id
+                };
+                var drinks = new MenuCategory
+                {
+
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Drinks",
+                    Renditja = 10,
+                    RestaurantId = gjiks.Id
+                };
+                categoriesGjicksandChicks.AddRange(new[] { appetizer, salad, rice, nigiri, sushi, sides, taco, linguini, noodles, drinks });
+                context.MenuCategories.AddRange(categoriesGjicksandChicks);
+                context.SaveChanges();
+
+                var appetizerItems = new List<MenuItems>
+                {
+
+                new MenuItems
+                {
+                   Emertimi = "Chicken Katsu",
+                   Pershkrimi = "Crispy breaded chicken cutlet served with a light savory sauce, offering a crunchy outside and tender inside.",
+                   Cmimi = 6.50m,
+                   Foto = "gjiks/1.png",
+                   Disponueshme = true,
+                   Alergjene = "Gluten, Eggs,Soy",
+                   Kalori = 680,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Tom Yum Soup",
+                   Pershkrimi = "A hot and sour Thai soup with fragrant herbs, mushrooms, and a rich, tangy broth.",
+                   Cmimi = 6.20m,
+                   Foto = "gjiks/2.png",
+                   Disponueshme = true,
+                   Alergjene = "Fish,Shellfish,Soy",
+                   Kalori = 200,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Shrimp Tempura",
+                   Pershkrimi = "Light and crispy battered shrimp, fried to golden perfection and served with dipping sauce.",
+                   Cmimi = 8.00m,
+                   Foto = "gjiks/3.png",
+                   Disponueshme = true,
+                   Alergjene = "Fish,Shellfish,Soy",
+                   Kalori = 300,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Kadaif Shrimp",
+                   Pershkrimi = "Crispy shredded kadaif wrapped shrimp, fried until golden and served with a light dipping sauce.",
+                   Cmimi = 7.50m,
+                   Foto = "gjiks/4.png",
+                   Disponueshme = true,
+                   Alergjene = "Fish,Gluten,Shellfish,Soy",
+                   Kalori = 350,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Korean Crispy Chicken",
+                   Pershkrimi = "Crispy fried chicken tossed in a flavorful Korean-style sauce, sweet, savory, and slightly spicy.",
+                   Cmimi = 5.90m,
+                   Foto = "gjiks/5.png",
+                   Disponueshme = true,
+                   Alergjene = "Gluten,Eggs,Soy,Sesame",
+                   Kalori = 600,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Gyoza",
+                   Pershkrimi = "Pan-fried dumplings filled with seasoned meat and vegetables, served with a light dipping sauce.",
+                   Cmimi = 4.00m,
+                   Foto = "gjiks/6.png",
+                   Disponueshme = true,
+                   Alergjene = "Gluten,Soy,Sesame",
+                   Kalori = 250,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Spring Rolls",
+                   Pershkrimi = "Crispy rolls filled with vegetables and light seasoning, served golden and crunchy.",
+                   Cmimi = 5.00m,
+                   Foto = "gjiks/7.png",
+                   Disponueshme = true,
+                   Alergjene = "Gluten,Soy",
+                   Kalori = 250,
+                   CategoryId = appetizer.Id
+                },
+                new MenuItems
+                {
+                   Emertimi = "Tempura Calamari",
+                   Pershkrimi = "Lightly battered and crispy fried calamari, served with a savory dipping sauce.",
+                   Cmimi = 13.50m,
+                   Foto = "gjiks/8.png",
+                   Disponueshme = true,
+                   Alergjene = "Shellfish,Gluten,Soy,Eggs",
+                   Kalori = 300,
+                   CategoryId = appetizer.Id
+                }
+                };
+                context.MenuItems.AddRange(appetizerItems);
+                context.SaveChanges();
+
+                var saladItems = new List<MenuItems>
+                {
+                new MenuItems
+                {
+                   Emertimi = "Caesar Salad",
+                   Pershkrimi = "Crisp romaine lettuce with parmesan cheese, croutons, and creamy Caesar dressing.",
+                   Cmimi = 6.90m,
+                   Foto = "gjiks/s1.png",
+                   Disponueshme = true,
+                   Alergjene = "Fish,Gluten,Soy,Eggs,Milk",
+                   Kalori = 350,
+                   CategoryId = salad.Id
+
+                },
+                new MenuItems
+                {
+                   Emertimi = "Crisp Garden Fete",
+                   Pershkrimi = "Fresh mixed greens with crisp vegetables, herbs, and a light refreshing dressing",
+                   Cmimi = 8.50m,
+                   Foto = "gjiks/s2.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy, Mustard",
+                   Kalori = 200,
+                   CategoryId = salad.Id
+
+                },
+                new MenuItems
+                {
+                   Emertimi = "Wakame Salad",
+                   Pershkrimi = "Fresh seaweed salad seasoned with sesame dressing for a light and refreshing taste.",
+                   Cmimi = 7.50m,
+                   Foto = "gjiks/s3.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy, Sesame",
+                   Kalori = 200,
+                   CategoryId = salad.Id
+
+                }
+            };
+                context.MenuItems.AddRange(saladItems);
+                context.SaveChanges();
+
+                var riceItems = new List<MenuItems>
+            {
+            new MenuItems
+            {
+                   Emertimi = "Beef Rice Bowl",
+                   Pershkrimi = "Tender sliced beef served over steamed rice with savory sauce and fresh garnishes.",
+                   Cmimi = 7.50m,
+                   Foto = "gjiks/r1.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy, Sesame,Gluten",
+                   Kalori = 650,
+                   CategoryId = rice.Id
+
+            },
+            new MenuItems
+            {
+                   Emertimi = "Chicken Rice Bowl",
+                   Pershkrimi = "Juicy chicken served over steamed rice with savory sauce and fresh toppings.",
+                   Cmimi = 5.90m,
+                   Foto = "gjiks/r2.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy, Sesame,Gluten",
+                   Kalori = 650,
+                   CategoryId = rice.Id
+
+            },
+            new MenuItems
+            {
+                   Emertimi = "Shrimp Rice Bowl",
+                   Pershkrimi = "Tender shrimp served over steamed rice with savory sauce and fresh garnishes.",
+                   Cmimi = 7.90m,
+                   Foto = "gjiks/r3.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy, Sesame,Gluten,Shellfish",
+                   Kalori = 550,
+                   CategoryId = rice.Id
+
+            },
+            new MenuItems
+            {
+                   Emertimi = "Salmon Rice Bowls",
+                   Pershkrimi = "Fresh salmon served over steamed rice with savory sauce and fresh toppings.",
+                   Cmimi = 7.90m,
+                   Foto = "gjiks/r44.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy, Sesame,Gluten,Fish",
+                   Kalori = 600,
+                   CategoryId = rice.Id
+
+            }
+
+            };
+                context.MenuItems.AddRange(riceItems);
+                context.SaveChanges();
+
+
+                var nigiriItems = new List<MenuItems>()
+                {
+                new MenuItems
+                {
+                   Emertimi = "Nigiri Salmon 4 pcs",
+                   Pershkrimi = "Fresh slice of salmon served over seasoned sushi rice for a simple and delicate bite.",
+                   Cmimi = 11.90m,
+                   Foto = "gjiks/n11.png",
+                   Disponueshme = true,
+                   Alergjene = "Fish",
+                   Kalori = 200,
+                   CategoryId = nigiri.Id
+                },
+
+                new MenuItems
+                {
+                   Emertimi = "Sushi Mix Nigiri 16 pcs",
+                   Pershkrimi = "A selection of fresh nigiri with assorted fish and seafood over seasoned sushi rice.",
+                   Cmimi = 23.50m,
+                   Foto = "gjiks/n22.png",
+                   Disponueshme = true,
+                   Alergjene = "Shellfish,Fish",
+                   Kalori = 350,
+                   CategoryId = nigiri.Id
+
+                }
+
+                };
+                context.MenuItems.AddRange(nigiriItems);
+                context.SaveChanges();
+
+                var sushiItems = new List<MenuItems>
+                {
+                new MenuItems
+                {
+                  Emertimi = "California Roll",
+                   Pershkrimi = "Sushi roll with crab, avocado, cucumber, and rice wrapped in seaweed.",
+                   Cmimi = 9.90m,
+                   Foto = "gjiks/sushi1.png",
+                   Disponueshme = true,
+                   Alergjene = "Crustaceans,Gluten,Soy,Sesame",
+                   Kalori = 250,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Tempura Roll",
+                   Pershkrimi = "Crispy tempura-fried shrimp or vegetables rolled with rice, seaweed, and savory sauce.",
+                   Cmimi = 8.90m,
+                   Foto = "gjiks/sushi2.png",
+                   Disponueshme = true,
+                   Alergjene = "Shellfish,Gluten,Soy,Sesame,Eggs",
+                   Kalori = 400,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Philadelphia Roll",
+                   Pershkrimi = "Sushi roll with salmon, cream cheese, and cucumber for a creamy and fresh flavor.",
+                   Cmimi = 9.00m,
+                   Foto = "gjiks/sushi3.png",
+                   Disponueshme = true,
+                   Alergjene = "Fish,Gluten,Soy,Sesame",
+                   Kalori = 300,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Fried California Roll",
+                   Pershkrimi = "Crispy deep-fried California roll with crab, avocado, and cucumber, served warm with savory sauce.",
+                   Cmimi = 10.90m,
+                   Foto = "gjiks/sushi4.png",
+                   Disponueshme = true,
+                   Alergjene = "Crustaceans,Fish,Gluten,Soy,Sesame",
+                   Kalori = 450,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Cheese Salmon Roll",
+                   Pershkrimi = "Fresh salmon and creamy cheese rolled with rice and seaweed for a rich and smooth taste.",
+                   Cmimi = 12.50m,
+                   Foto = "gjiks/sushi5.png",
+                   Disponueshme = true,
+                   Alergjene = "Milk,Fish,Gluten,Soy,Sesame",
+                   Kalori = 350,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Cheese Salmon Roll",
+                   Pershkrimi = "Fresh salmon and creamy cheese rolled with rice and seaweed for a rich and smooth taste.",
+                   Cmimi = 12.50m,
+                   Foto = "gjiks/sushi55.png",
+                   Disponueshme = true,
+                   Alergjene = "Milk,Fish,Gluten,Soy,Sesame",
+                   Kalori = 350,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Beef Roll",
+                   Pershkrimi = "Sushi roll filled with tender beef, rice, and fresh vegetables wrapped in seaweed.",
+                   Cmimi = 14.50m,
+                   Foto = "gjiks/sushi6.png",
+                   Disponueshme = true,
+                   Alergjene = "Gluten,Soy,Sesame",
+                   Kalori = 350,
+                   CategoryId = sushi.Id
+                },
+                new MenuItems
+                {
+                  Emertimi = "Tempura Mango",
+                   Pershkrimi = "Crispy tempura-battered mango, lightly fried and served with a sweet sauce for a warm, crunchy-sweet bite.",
+                   Cmimi = 13.50m,
+                   Foto = "gjiks/sushi7.png",
+                   Disponueshme = true,
+                   Alergjene = "Gluten,Soy,Eggs",
+                   Kalori = 250,
+                   CategoryId = sushi.Id
+                }
+                };
+                context.MenuItems.AddRange(sushiItems);
+                context.SaveChanges();
+
+                var sidesItems = new List<MenuItems>
+                {
+                new MenuItems
+                {
+                Emertimi = "Edamame",
+                   Pershkrimi = "Steamed young soybeans lightly salted for a simple and healthy side dish.",
+                   Cmimi = 4.00m,
+                   Foto = "gjiks/sides1.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy",
+                   Kalori = 150,
+                   CategoryId = sides.Id
+                },
+                new MenuItems
+                {
+                Emertimi = "Fried Mushrooms",
+                   Pershkrimi = "Crispy golden fried mushrooms, lightly breaded and served with a savory dipping sauce.",
+                   Cmimi = 4.50m,
+                   Foto = "gjiks/sides22.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy,Gluten,Soy",
+                   Kalori = 300,
+                   CategoryId = sides.Id
+                },
+                new MenuItems
+                {
+                Emertimi = "Mac'n'cheese",
+                   Pershkrimi = "Creamy baked macaroni pasta with rich cheese sauce, topped for a golden finish.",
+                   Cmimi = 3.90m,
+                   Foto = "gjiks/side3.png",
+                   Disponueshme = true,
+                   Alergjene = "Soy,Gluten,Soy",
+                   Kalori = 600,
+                   CategoryId = sides.Id
+                }
+                };
+                context.MenuItems.AddRange(sidesItems);
+                context.SaveChanges();
+
+                var tacoItems = new List<MenuItems>
+                {
+                new MenuItems
+                {
+                    Emertimi = "Chicken Taco",
+                    Pershkrimi = "Soft tortilla filled with seasoned chicken, fresh toppings, and savory sauce for a delicious bite.",
+                    Cmimi = 6.50m,
+                    Foto = "gjiks/taco2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Soy.Milk,Mustard",
+                    Kalori = 300,
+                    CategoryId = taco.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Chicken Tortilla",
+                    Pershkrimi = "Soft tortilla filled with seasoned chicken, fresh vegetables, and creamy sauce..",
+                    Cmimi = 4.50m,
+                    Foto = "gjiks/taco1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Soy,Milk,Mustard",
+                    Kalori = 450,
+                    CategoryId = taco.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Chicken Taco x3 Tacos",
+                    Pershkrimi = "Three soft tortillas filled with seasoned chicken, fresh vegetables, and flavorful sauce.",
+                    Cmimi = 6.50m,
+                    Foto = "gjiks/taco3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Soy,Milk,Mustard",
+                    Kalori = 500,
+                    CategoryId = taco.Id
+                }
+                };
+                context.MenuItems.AddRange(tacoItems);
+                context.SaveChanges();
+
+                var linguiniItems = new List<MenuItems>
+
+                {
+                new MenuItems
+                {
+                    Emertimi = "Chicken Linguini",
+                    Pershkrimi = "Tender chicken served with linguini pasta in a rich, flavorful sauce.",
+                    Cmimi = 7.20m,
+                    Foto = "gjiks/l1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Nuts,Milk,Soy",
+                    Kalori = 650,
+                    CategoryId = linguini.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Shrimp Linguini",
+                    Pershkrimi = "Tender shrimp served with linguini pasta in a rich, savory sauce.",
+                    Cmimi = 9.40m,
+                    Foto = "gjiks/l2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Shellfish,Milk,Soy",
+                    Kalori = 650,
+                    CategoryId = linguini.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Beef Linguini",
+                    Pershkrimi = "Tender beef served with linguini pasta in a rich, savory sauce.",
+                    Cmimi = 8.90m,
+                    Foto = "gjiks/l3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Eggs,Milk,Soy",
+                    Kalori = 700,
+                    CategoryId = linguini.Id
+                }
+                };
+                context.MenuItems.AddRange(linguiniItems);
+                context.SaveChanges();
+
+                var noodlesItems = new List<MenuItems>
+                {
+                new MenuItems{
+                    Emertimi = "Fly Noodles Veggie",
+                    Pershkrimi = "Stir-fried noodles with fresh mixed vegetables, tossed in a savory light sauce.",
+                    Cmimi = 4.90m,
+                    Foto = "gjiks/nn1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Sesame,Soy",
+                    Kalori = 450,
+                    CategoryId = noodles.Id
+                },
+                new MenuItems{
+                    Emertimi = "Fly Noodles Chicken",
+                    Pershkrimi = "Stir-fried noodles with tender chicken and fresh vegetables in a savory sauce.",
+                    Cmimi = 6.90m,
+                    Foto = "gjiks/nn2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Sesame,Soy",
+                    Kalori = 550,
+                    CategoryId = noodles.Id
+                },
+                new MenuItems{
+                    Emertimi = "Fly Noodles Beef",
+                    Pershkrimi = "Stir-fried noodles with tender beef and fresh vegetables in a savory sauce.",
+                    Cmimi = 6.90m,
+                    Foto = "gjiks/nn3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Sesame,Soy",
+                    Kalori = 650,
+                    CategoryId = noodles.Id
+                },
+                new MenuItems{
+                    Emertimi = "Fly Noodles Shrimp",
+                    Pershkrimi = "Stir-fried noodles with juicy shrimp and fresh vegetables in a savory sauce.",
+                    Cmimi = 8.90m,
+                    Foto = "gjiks/nn4.png",
+                    Disponueshme = true,
+                    Alergjene = "Shellfish,Gluten,Sesame,Soy",
+                    Kalori = 600,
+                    CategoryId = noodles.Id
+                }
+                };
+                context.MenuItems.AddRange(noodlesItems);
+                context.SaveChanges();
+
+                var drinksItems = new List<MenuItems>
+                {
+                new MenuItems{
+                Emertimi = " Coca Cola",
+                    Pershkrimi = "Refreshing Coca Cola beverage.",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/CocaCola.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 140,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems{
+                Emertimi = " Fanta Orange",
+                    Pershkrimi = "Refreshing Fanta Orange beverage.",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/FantaOrange.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 140,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems{
+                Emertimi = " Sprite",
+                    Pershkrimi = "Refreshing Sprite beverage.",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/Sprite.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 140,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems{
+                Emertimi = " Water",
+                    Pershkrimi = "Refreshing Water beverage.",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/Water.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 0,
+                    CategoryId = drinks.Id
+                }
+                
+
+                };
+                context.MenuItems.AddRange(drinksItems);
+                context.SaveChanges();
+            }
         }
     }
 }
