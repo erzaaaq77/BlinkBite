@@ -9884,6 +9884,230 @@ public static class DbInitializer
                 context.MenuItems.AddRange(drinksItems);
                 context.SaveChanges();
             }
+
+            var categoriesSmashBurgerCo = new List<MenuCategory>();
+            var smashBurger = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Smash Burger CO");
+
+            if (smashBurger != null)
+            {
+                var burgers = new MenuCategory
+                {
+                    Emertimi = "Burgers",
+                    Pershkrimi = "Juicy flame-grilled burgers.",
+                    Renditja = 1,
+                    RestaurantId = smashBurger.Id
+                };
+
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Refreshing soft drinks and water.",
+                    Renditja = 2,
+                    RestaurantId = smashBurger.Id
+                };
+
+                categoriesSmashBurgerCo.AddRange(new[] { burgers, drinks });
+                context.MenuCategories.AddRange(categoriesSmashBurgerCo);
+                context.SaveChanges();
+
+
+                var burgersItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Cheese Burger",
+        Pershkrimi = "Beef patty, cheese, pickles, lettuce, tomato, smash sauce",
+        Cmimi = 4.25m,
+        Foto = "smashburger/cheeseBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 650,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Double Cheese Burger",
+        Pershkrimi = "Two beef patties, cheese, pickles, lettuce, tomato, smash sauce",
+        Cmimi = 5.50m,
+        Foto = "smashburger/doubleCheeseBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 950,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Mexican 🌶️",
+        Pershkrimi = "Beef patty, cheese, jalapeño, nachos, lettuce, tomato, hot smash sauce",
+        Cmimi = 4.50m,
+        Foto = "smashburger/mexicanBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 700,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Double Mexican 🌶️",
+        Pershkrimi = "Two beef patties, cheese, jalapeño, nachos, lettuce, tomato, hot smash sauce",
+        Cmimi = 5.75m,
+        Foto = "smashburger/doubleMexicanBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 1000,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "New Yorker",
+        Pershkrimi = "Beef patty, cheese, pickles & beef slices, lettuce, tomato, smash sauce",
+        Cmimi = 4.88m,
+        Foto = "smashburger/newYorker.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 720,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Double New Yorker",
+        Pershkrimi = "Two beef patties, cheese, pickles & beef slices, lettuce, tomato, smash sauce",
+        Cmimi = 6.13m,
+        Foto = "smashburger/doubleNewYorker.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 1050,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Chicken Strip Burger",
+        Pershkrimi = "Chicken strips, cheese, pickles, lettuce, smash sauce",
+        Cmimi = 4.25m,
+        Foto = "smashburger/chickenStripBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 600,
+        CategoryId = burgers.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Nashville Strip Burger",
+        Pershkrimi = "Spicy chicken strips, cheese, jalapeño, lettuce, hot smash sauce, barbecue",
+        Cmimi = 4.63m,
+        Foto = "smashburger/nashvilleStripBurger.png",
+        Disponueshme = true,
+        Alergjene = "Gluten, Milk",
+        Kalori = 650,
+        CategoryId = burgers.Id
+    }
+};
+
+                context.MenuItems.AddRange(burgersItems);
+                context.SaveChanges();
+
+
+                var drinksItems = new List<MenuItems>
+{
+    new MenuItems
+    {
+        Emertimi = "Still Water",
+        Pershkrimi = "Refreshing still water bottle.",
+        Cmimi = 1.00m,
+        Foto = "smashburger/waterStill.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Sparkling Water",
+        Pershkrimi = "Sparkling water bottle.",
+        Cmimi = 1.00m,
+        Foto = "smashburger/waterStill.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Coca Cola",
+        Pershkrimi = "Classic refreshing cola.",
+        Cmimi = 1.50m,
+        Foto = "smashburger/cocacola.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 140,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Coca Cola Zero",
+        Pershkrimi = "Sugar-free cola.",
+        Cmimi = 1.50m,
+        Foto = "smashburger/cocacolazero.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 0,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Fanta",
+        Pershkrimi = "Orange-flavored soft drink.",
+        Cmimi = 1.50m,
+        Foto = "smashburger/fanta.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 160,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Sprite",
+        Pershkrimi = "Lemon-lime soft drink.",
+        Cmimi = 1.50m,
+        Foto = "smashburger/sprite.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 150,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Sola Ice Tea",
+        Pershkrimi = "Refreshing iced tea.",
+        Cmimi = 1.50m,
+        Foto = "smashburger/solaicetea.png",
+        Disponueshme = true,
+        Alergjene = "None",
+        Kalori = 80,
+        CategoryId = drinks.Id
+    },
+    new MenuItems
+    {
+        Emertimi = "Beer",
+        Pershkrimi = "Cold beer (18+).",
+        Cmimi = 2.50m,
+        Foto = "smashburger/beer.png",
+        Disponueshme = true,
+        Alergjene = "Gluten",
+        Kalori = 200,
+        CategoryId = drinks.Id
+    }
+};
+
+                context.MenuItems.AddRange(drinksItems);
+                context.SaveChanges();
+
+
+
+            }
+
+
+
         }
     }
 }
