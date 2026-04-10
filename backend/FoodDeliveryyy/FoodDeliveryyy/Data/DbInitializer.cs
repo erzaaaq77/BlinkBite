@@ -5857,73 +5857,73 @@ public static class DbInitializer
                 }
             }
 
-                var categoriesSaray = new List<MenuCategory>();
-                var saray = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Saray Sweets");
+            var categoriesSaray = new List<MenuCategory>();
+            var saray = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Saray Sweets");
 
-                if (saray != null)
+            if (saray != null)
+            {
+                var bakllavaTradicionale = new MenuCategory
                 {
-                    var bakllavaTradicionale = new MenuCategory
-                    {
-                        Emertimi = "Bakllava Tradicionale",
-                        Pershkrimi = "Traditional baklava varieties prepared with nuts and syrup.",
-                        Renditja = 1,
-                        RestaurantId = saray.Id
-                    };
+                    Emertimi = "Bakllava Tradicionale",
+                    Pershkrimi = "Traditional baklava varieties prepared with nuts and syrup.",
+                    Renditja = 1,
+                    RestaurantId = saray.Id
+                };
 
-                    var burma = new MenuCategory
-                    {
-                        Emertimi = "Burma",
-                        Pershkrimi = "Rolled pastry sweets with syrup.",
-                        Renditja = 2,
-                        RestaurantId = saray.Id
-                    };
+                var burma = new MenuCategory
+                {
+                    Emertimi = "Burma",
+                    Pershkrimi = "Rolled pastry sweets with syrup.",
+                    Renditja = 2,
+                    RestaurantId = saray.Id
+                };
 
-                    var havuc = new MenuCategory
-                    {
-                        Emertimi = "Havuc Dilim",
-                        Pershkrimi = "Carrot-shaped baklava slice specialty.",
-                        Renditja = 3,
-                        RestaurantId = saray.Id
-                    };
+                var havuc = new MenuCategory
+                {
+                    Emertimi = "Havuc Dilim",
+                    Pershkrimi = "Carrot-shaped baklava slice specialty.",
+                    Renditja = 3,
+                    RestaurantId = saray.Id
+                };
 
-                    var kadaif = new MenuCategory
-                    {
-                        Emertimi = "Kadaif",
-                        Pershkrimi = "Shredded pastry dessert with syrup.",
-                        Renditja = 4,
-                        RestaurantId = saray.Id
-                    };
+                var kadaif = new MenuCategory
+                {
+                    Emertimi = "Kadaif",
+                    Pershkrimi = "Shredded pastry dessert with syrup.",
+                    Renditja = 4,
+                    RestaurantId = saray.Id
+                };
 
-                    var specialitete = new MenuCategory
-                    {
-                        Emertimi = "Specialitete",
-                        Pershkrimi = "House specialties and unique sweets.",
-                        Renditja = 5,
-                        RestaurantId = saray.Id
-                    };
+                var specialitete = new MenuCategory
+                {
+                    Emertimi = "Specialitete",
+                    Pershkrimi = "House specialties and unique sweets.",
+                    Renditja = 5,
+                    RestaurantId = saray.Id
+                };
 
-                    var kuru = new MenuCategory
-                    {
-                        Emertimi = "Kuru",
-                        Pershkrimi = "Dry sweets and pastries.",
-                        Renditja = 6,
-                        RestaurantId = saray.Id
-                    };
+                var kuru = new MenuCategory
+                {
+                    Emertimi = "Kuru",
+                    Pershkrimi = "Dry sweets and pastries.",
+                    Renditja = 6,
+                    RestaurantId = saray.Id
+                };
 
-                    var midye = new MenuCategory
-                    {
-                        Emertimi = "Midye",
-                        Pershkrimi = "Shell-shaped baklava specialty.",
-                        Renditja = 7,
-                        RestaurantId = saray.Id
-                    };
+                var midye = new MenuCategory
+                {
+                    Emertimi = "Midye",
+                    Pershkrimi = "Shell-shaped baklava specialty.",
+                    Renditja = 7,
+                    RestaurantId = saray.Id
+                };
 
-                    categoriesSaray.AddRange(new[] { bakllavaTradicionale, burma, havuc, kadaif, specialitete, kuru, midye });
-                    context.MenuCategories.AddRange(categoriesSaray);
-                    context.SaveChanges();
+                categoriesSaray.AddRange(new[] { bakllavaTradicionale, burma, havuc, kadaif, specialitete, kuru, midye });
+                context.MenuCategories.AddRange(categoriesSaray);
+                context.SaveChanges();
 
 
-                    var bakllavaTradicionaleItems = new List<MenuItems>
+                var bakllavaTradicionaleItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -5952,7 +5952,7 @@ public static class DbInitializer
                              Emertimi = "Bakllava e Ftohtë me Arra",
                              Pershkrimi = "Traditional baklava filled with walnuts, served cold with syrup.",
                              Cmimi = 1.80m,
-                             Foto = "saray/bakllavaArra.png",                     
+                             Foto = "saray/bakllavaArra.png",
                              Disponueshme = true,
                              Alergjene = "Gluten, Milk, Eggs, Nuts (Walnuts)",
                              Kalori = 315,
@@ -5960,10 +5960,10 @@ public static class DbInitializer
 
                         }
                     };
-                    context.MenuItems.AddRange(bakllavaTradicionaleItems);
-                    context.SaveChanges();
+                context.MenuItems.AddRange(bakllavaTradicionaleItems);
+                context.SaveChanges();
 
-                    var burmaItems = new List<MenuItems>
+                var burmaItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -6011,10 +6011,10 @@ public static class DbInitializer
                             CategoryId = burma.Id
                          }
                     };
-                    context.MenuItems.AddRange(burmaItems);
-                    context.SaveChanges();
+                context.MenuItems.AddRange(burmaItems);
+                context.SaveChanges();
 
-                    var havucDilimItems = new List<MenuItems>
+                var havucDilimItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -6043,7 +6043,7 @@ public static class DbInitializer
                              Emertimi = "Havuc Dilim Mor",
                              Pershkrimi = "Carrot-shaped baklava slice with purple coloring and syrup.",
                              Cmimi = 3.50m,
-                             Foto = "saray/havucMor.png",                     
+                             Foto = "saray/havucMor.png",
                              Disponueshme = true,
                              Alergjene = "Gluten, Milk, Eggs",
                              Kalori = 360,
@@ -6054,17 +6054,17 @@ public static class DbInitializer
                              Emertimi = "Havuc Dilim Nutella",
                              Pershkrimi = "Carrot-shaped baklava slice filled with Nutella cream and syrup.",
                              Cmimi = 3.50m,
-                             Foto = "saray/havucNutella.png",                     
+                             Foto = "saray/havucNutella.png",
                              Disponueshme = true,
                              Alergjene = "Gluten, Milk, Eggs, Nuts (Cashews)",
                              Kalori = 380,
                              CategoryId = havuc.Id
                          }
                      };
-                    context.MenuItems.AddRange(havucDilimItems);
-                    context.SaveChanges();
+                context.MenuItems.AddRange(havucDilimItems);
+                context.SaveChanges();
 
-                    var kadaifItems = new List<MenuItems>
+                var kadaifItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -6088,12 +6088,12 @@ public static class DbInitializer
                             Kalori = 360,
                             CategoryId = kadaif.Id
                         }
-                       
-                     };
-                    context.MenuItems.AddRange(kadaifItems);
-                    context.SaveChanges();
 
-                    var specialiteteItems = new List<MenuItems>
+                     };
+                context.MenuItems.AddRange(kadaifItems);
+                context.SaveChanges();
+
+                var specialiteteItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -6119,10 +6119,10 @@ public static class DbInitializer
                         }
                      };
 
-                    context.MenuItems.AddRange(specialiteteItems);
-                    context.SaveChanges();
+                context.MenuItems.AddRange(specialiteteItems);
+                context.SaveChanges();
 
-                    var kuruItems = new List<MenuItems>
+                var kuruItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -6170,10 +6170,10 @@ public static class DbInitializer
                         }
 
                     };
-                    context.MenuItems.AddRange(kuruItems);
-                    context.SaveChanges();
-                    
-                    var midyeItems = new List<MenuItems>
+                context.MenuItems.AddRange(kuruItems);
+                context.SaveChanges();
+
+                var midyeItems = new List<MenuItems>
                     {
                         new MenuItems
                         {
@@ -6188,13 +6188,13 @@ public static class DbInitializer
                         }
                      };
 
-                    context.MenuItems.AddRange(midyeItems);
-                    context.SaveChanges();
+                context.MenuItems.AddRange(midyeItems);
+                context.SaveChanges();
 
-                }
+            }
 
-          var categoriesCapvin13 = new List<MenuCategory>();
-          var capvin13 = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Capvin 13");
+            var categoriesCapvin13 = new List<MenuCategory>();
+            var capvin13 = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Capvin 13");
 
 
             if (capvin13 != null)
@@ -6463,12 +6463,12 @@ public static class DbInitializer
                        Alergjene = "Gluten, Milk",
                        Kalori = 870,
                        CategoryId = traditionalPizza.Id
-                    
+
                     }
                  };
                 context.MenuItems.AddRange(traditionalPizzaItems);
                 context.SaveChanges();
-                
+
                 var calzoneNapoletanoItems = new List<MenuItems>
                 {
                     new MenuItems
@@ -6493,7 +6493,7 @@ public static class DbInitializer
                         Kalori = 980,
                         CategoryId = calzoneNapoletano.Id
                      }
-                    
+
                  };
 
                 context.MenuItems.AddRange(calzoneNapoletanoItems);
@@ -6662,7 +6662,365 @@ public static class DbInitializer
 
             }
 
+            var categoriesFika = new List<MenuCategory>();
+            var fika = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Fika Eatery");
 
+            if (fika != null)
+            {
+
+                var burgers = new MenuCategory
+                {
+
+                    Emertimi = "Burger",
+                    Pershkrimi = "Juicy grilled patty with fresh lettuce, tomato, cheese, and signature sauce in a soft toasted bun",
+                    Renditja = 1,
+                    RestaurantId = fika.Id
+
+                };
+
+                var sandwich = new MenuCategory
+                {
+
+                    Emertimi = "Sandwich",
+                    Pershkrimi = "Freshly made with your choice of filling, crisp vegetables, and flavorful sauce in soft, toasted bread.",
+                    Renditja = 2,
+                    RestaurantId = fika.Id
+
+                };
+                var bagel = new MenuCategory
+                {
+
+                    Emertimi = " Bagel Sandwich",
+                    Pershkrimi = "Freshly made with your choice of filling, crisp vegetables, and flavorful sauce in soft, bagel",
+                    Renditja = 3,
+                    RestaurantId = fika.Id
+
+                };
+                var salad = new MenuCategory
+                {
+
+                    Emertimi = " Salad",
+                    Pershkrimi = "Fresh mixed greens with crisp vegetables and a light, flavorful dressing.",
+                    Renditja = 4,
+                    RestaurantId = fika.Id
+
+                };
+                var risotto = new MenuCategory
+                {
+
+                    Emertimi = " Risotto",
+                    Pershkrimi = "Creamy Italian rice dish cooked slowly with rich flavors and finished with parmesan.",
+                    Renditja = 5,
+                    RestaurantId = fika.Id
+
+                };
+                var drinks = new MenuCategory
+                {
+
+                    Emertimi = " Drinks",
+                    Pershkrimi = "Refreshing beverages to complement your meal.",
+                    Renditja = 6,
+                    RestaurantId = fika.Id
+
+                };
+
+
+
+
+
+                categoriesFika.AddRange(new[] { burgers, sandwich, bagel, salad, risotto, drinks });
+                context.MenuCategories.AddRange(categoriesFika);
+                context.SaveChanges();
+
+
+                var burgerItems = new List<MenuItems> {
+                new MenuItems{
+                    Emertimi = "Fika Chicken Burger",
+                    Pershkrimi = "Juicy grilled patty with fresh lettuce, tomato, cheese, and signature sauce in a soft toasted bun.",
+                    Cmimi = 5.30m,
+                    Foto = "fika/burger.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk",
+                    Kalori = 550,
+                    CategoryId = burgers.Id
+                 },
+                new MenuItems{
+                    Emertimi = "Fika Beef Burger",
+                    Pershkrimi = "Juicy grilled beef patty with fresh lettuce, tomato, cheese, and signature Fika sauce in a soft toasted bun.",
+                    Cmimi = 5.80m,
+                    Foto = "fika/burger1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk,Mustard",
+                    Kalori = 550,
+                    CategoryId = burgers.Id
+                 },
+                new MenuItems{
+                    Emertimi = "Fika Cheese Burger",
+                    Pershkrimi = "Juicy beef patty topped with melted cheese, fresh lettuce, and creamy sauce in a soft toasted bun.",
+                    Cmimi = 5.80m,
+                    Foto = "fika/#burger2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk,Mustard",
+                    Kalori = 650,
+                    CategoryId = burgers.Id
+                 }
+                };
+                context.MenuItems.AddRange(burgerItems);
+                context.SaveChanges();
+
+                var sandwichItems = new List<MenuItems> {
+
+                new MenuItems
+                {
+                    Emertimi = "Sandwich Spicy Chicken Crunch",
+                    Pershkrimi = "Crispy chicken fillet with spicy seasoning, fresh lettuce, and creamy sauce in toasted bread for an extra crunchy bite.",
+                    Cmimi = 4.50m,
+                    Foto = "fika/sand1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk,Mustard,Eggs",
+                    Kalori = 500,
+                    CategoryId = sandwich.Id
+
+
+                },
+                new MenuItems
+                {
+                    Emertimi = "Grilled Chicken Sandwich",
+                    Pershkrimi = "Tender grilled chicken with fresh lettuce, tomato, and light sauce in soft toasted bread.",
+                    Cmimi = 4.40m,
+                    Foto = "fika/sand2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk,Mustard,Eggs",
+                    Kalori = 500,
+                    CategoryId = sandwich.Id
+
+
+                },
+                new MenuItems
+                {
+                    Emertimi = "Prosciutto Sandwich",
+                    Pershkrimi = "Thin slices of prosciutto with fresh lettuce, tomato, and creamy sauce in soft toasted bread.",
+                    Cmimi = 5.00m,
+                    Foto = "fika/sand3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk,Mustard,Eggs",
+                    Kalori = 450,
+                    CategoryId = sandwich.Id
+
+
+                },
+                new MenuItems
+                {
+                    Emertimi = "Club Sandwich",
+                    Pershkrimi = "Layered sandwich with chicken, crispy bacon, fresh lettuce, tomato, and creamy sauce on toasted bread.",
+                    Cmimi = 4.00m,
+                    Foto = "fika/sand4.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Milk,Mustard,Eggs",
+                    Kalori = 600,
+                    CategoryId = sandwich.Id
+
+
+                },
+                new MenuItems
+                {
+                    Emertimi = "Veggie Sandwich",
+                    Pershkrimi = "Fresh vegetables with lettuce, tomato, cucumber, and light sauce in soft toasted bread.",
+                    Cmimi = 4.00m,
+                    Foto = "fika/sand5.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten",
+                    Kalori = 300,
+                    CategoryId = sandwich.Id
+
+
+                }
+
+                };
+                context.MenuItems.AddRange(sandwichItems);
+                context.SaveChanges();
+
+
+                var bagelItems = new List<MenuItems> {
+
+                new MenuItems
+                {
+                    Emertimi = "Prosciutto Bagel",
+                    Pershkrimi = "Soft toasted bagel filled with prosciutto, fresh lettuce, tomato, and creamy sauce.",
+                    Cmimi = 4.50m,
+                    Foto = "fika/bagel1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Mustard",
+                    Kalori = 450,
+                    CategoryId = sandwich.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Turkey Bagel",
+                    Pershkrimi = "Soft toasted bagel filled with sliced turkey, fresh lettuce, tomato, and creamy sauce.",
+                    Cmimi = 4.30m,
+                    Foto = "fika/bagel2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Mustard",
+                    Kalori = 450,
+                    CategoryId = sandwich.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Egg & Turkey Bagel",
+                    Pershkrimi = "Soft toasted bagel filled with egg and turkey ham, fresh lettuce, tomato, and creamy sauce.",
+                    Cmimi = 4.30m,
+                    Foto = "fika/baglel3.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Mustard",
+                    Kalori = 450,
+                    CategoryId = sandwich.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Avocado & Egg Bagel",
+                    Pershkrimi = "Soft toasted bagel filled with creamy avocado, boiled egg, fresh lettuce, and light sauce.",
+                    Cmimi = 5.00m,
+                    Foto = "fika/bagel4.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Eggs,Mustard",
+                    Kalori = 400,
+                    CategoryId = sandwich.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Smoked Salmon Bagel",
+                    Pershkrimi = "Soft toasted bagel filled with smoked salmon, cream cheese, fresh lettuce, and lemon touch.",
+                    Cmimi = 6.50m,
+                    Foto = "fika/bagel5.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten,Milk,Fish,Mustard",
+                    Kalori = 450,
+                    CategoryId = sandwich.Id
+                }
+                };
+                context.MenuItems.AddRange(bagelItems);
+                context.SaveChanges();
+
+                var saladItems = new List<MenuItems>
+                    {
+                        new MenuItems
+                        {
+                            Emertimi = "Caesar Salad",
+                            Pershkrimi = "Crisp romaine lettuce, creamy Caesar dressing, croutons, and parmesan cheese.",
+                            Cmimi = 6.50m,
+                            Foto = "fika/cesar.png",
+                            Disponueshme = true,
+                            Alergjene = "Milk, Gluten, Eggs, Fish (Anchovies in dressing)",
+                            Kalori = 350,
+                            CategoryId = salad.Id
+                        },
+                        new MenuItems
+                        {
+                            Emertimi = "Crispy Chicken Salad",
+                            Pershkrimi = "Fresh mixed greens topped with crispy chicken, cherry tomatoes, cucumber, and light dressing.",
+                            Cmimi = 6.50m,
+                            Foto = "fika/salad.png",
+                            Disponueshme = true,
+                            Alergjene = "Milk,Soy,Eggs,Mustard",
+                            Kalori = 450,
+                            CategoryId = salad.Id
+                        },
+
+                        new MenuItems
+                        {
+                            Emertimi = "Tuna Salad",
+                            Pershkrimi = "Fresh mixed greens with tuna, sweet corn, cherry tomatoes, and light dressing.",
+                            Cmimi = 6.30m,
+                            Foto = "fika/salad2.png",
+                            Disponueshme = true,
+                            Alergjene = "Gluten,Fish, Eggs ",
+                            Kalori = 350,
+                            CategoryId = salad.Id
+                        }
+                };
+                context.MenuItems.AddRange(saladItems);
+                context.SaveChanges();
+
+                var risottoItems = new List<MenuItems> {
+                new MenuItems
+                {
+                    Emertimi = "Chicken, Spinach & Sun-Dried Tomato Risotto",
+                    Pershkrimi = "Creamy risotto with tender chicken, fresh spinach, and sun-dried tomatoes, finished with parmesan.",
+                    Cmimi = 6.30m,
+                    Foto = "fika/r1.png",
+                    Disponueshme = true,
+                    Alergjene = "Milk,Soy",
+                    Kalori = 650,
+                    CategoryId = risotto.Id
+                 },
+                new MenuItems
+                {
+                    Emertimi = "Chicken & Soy Sauce Risotto",
+                    Pershkrimi = "Creamy risotto with tender chicken, flavored with savory soy sauce and finished with parmesan.",
+                    Cmimi = 6.30m,
+                    Foto = "fika/r2.png",
+                    Disponueshme = true,
+                    Alergjene = "Milk,Soy,Eggs,Gluten",
+                    Kalori = 650,
+                    CategoryId = risotto.Id
+                 }
+
+                };
+                context.MenuItems.AddRange(risottoItems);
+                context.SaveChanges();
+
+                var drinkItems = new List<MenuItems> { 
+                new MenuItems
+                {
+                    Emertimi = "Coca Cola",
+                    Pershkrimi = "Classic Coca Cola soft drink.",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/CocaCola.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Fanta Orange",
+                    Pershkrimi = "Fanta Orange",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/fantaorange.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Sprite",
+                    Pershkrimi = "Sprite",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/sprite.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Water",
+                    Pershkrimi = "Water",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/water.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                }
+                
+                };
+                context.MenuItems.AddRange(drinkItems);
+                context.SaveChanges();
+
+            }
         }
     }
 }
