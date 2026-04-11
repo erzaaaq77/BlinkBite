@@ -10490,7 +10490,7 @@ public static class DbInitializer
                 context.MenuItems.AddRange(fishChipsItems);
                 context.SaveChanges();
 
-                
+
 
                 var extrasItems = new List<MenuItems>
     {
@@ -10640,7 +10640,315 @@ public static class DbInitializer
 
             }
 
+            var categoriesFrix = new List<MenuCategory>();
+            var frix = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Frix");
+
+            if (frix != null)
+            {
+
+                var fries = new MenuCategory
+                {
+                    Emertimi = "Fries",
+                    Pershkrimi = "Crispy and delicious fries.",
+                    Renditja = 1,
+                    RestaurantId = frix.Id
+
+                };
+                var burgers = new MenuCategory
+                {
+                    Emertimi = "Burgers",
+                    Pershkrimi = "Juicy and delicious burgers.",
+                    Renditja = 2,
+                    RestaurantId = frix.Id
+
+                };
+                var hotdog = new MenuCategory
+                {
+                    Emertimi = "Hotdog",
+                    Pershkrimi = "Delicious and savory hotdogs.",
+                    Renditja = 3,
+                    RestaurantId = frix.Id
+
+                };
+                var sandwich = new MenuCategory
+                {
+                    Emertimi = "Sandwich",
+                    Pershkrimi = "Delicious and savory sandwiches.",
+                    Renditja = 4,
+                    RestaurantId = frix.Id
+
+                };
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Refreshing beverages.",
+                    Renditja = 5,
+                    RestaurantId = frix.Id
+
+                };
+                categoriesFrix.AddRange(new[] { fries, burgers, hotdog, sandwich, drinks });
+                context.MenuCategories.AddRange(categoriesFrix);
+                context.SaveChanges();
+
+                var friesItems = new List<MenuItems>
+                {
+                new MenuItems
+                {
+                    Emertimi = "Veggie Mushroom",
+                    Pershkrimi = "Stir-fried vegetables with mushrooms in a light, savory sauce.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/1.png",
+                    Disponueshme = true,
+                    Alergjene = "Soy,Eggs",
+                    Kalori = 300,
+                    CategoryId = fries.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Conquer the Everest",
+                    Pershkrimi = "A hearty, loaded dish with a rich mix of premium ingredients, bold flavors, and a satisfying finish.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/2.png",
+                    Disponueshme = true,
+                    Alergjene = "Soy,Eggs",
+                    Kalori = 800,
+                    CategoryId = fries.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Cheesy Cheese",
+                    Pershkrimi = "Rich and creamy dish loaded with melted cheese for an extra indulgent, comforting bite.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/33.png",
+                    Disponueshme = true,
+                    Alergjene = "Soy,Eggs,Milk",
+                    Kalori = 600,
+                    CategoryId = fries.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Patato Wedges",
+                    Pershkrimi = "Crispy and golden potato wedges, perfect as a side or snack.",
+                    Cmimi = 2.99m,
+                    Foto = "frix/44.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 600,
+                    CategoryId = fries.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Fitil",
+                    Pershkrimi = "Crispy fried strips served golden and crunchy with a flavorful dipping sauce",
+                    Cmimi = 2.49m,
+                    Foto = "frix/55.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 250,
+                    CategoryId = fries.Id 
+                }
+                };
+                context.MenuItems.AddRange(friesItems);
+                context.SaveChanges();
+
+                var burgerItems = new List<MenuItems>
+                {
+
+                    new MenuItems{
+                        Emertimi = "Frix Burger",
+                        Pershkrimi = "Juicy beef patty with lettuce, tomato, and our special sauce.",
+                        Cmimi = 3.99m,
+                        Foto = "frix/bb1.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Soy, Eggs",
+                        Kalori = 700,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems{
+                        Emertimi = "Chicken Burger",
+                        Pershkrimi = "Juicy chicken patty with lettuce, tomato, and our special sauce.",
+                        Cmimi = 3.49m,
+                        Foto = "frix/bb2.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Soy, Eggs",
+                        Kalori = 450,
+                        CategoryId = burgers.Id
+                    },
+               
+                    new MenuItems{
+                        Emertimi = "Hash Brown Beef Burger",
+                        Pershkrimi = "Juicy beef patty topped with crispy hash brown, melted cheese, fresh lettuce, and creamy sauce in a toasted bun.",
+                        Cmimi = 3.89m,
+                        Foto = "frix/bb3.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Soy, Eggs",
+                        Kalori = 900,
+                        CategoryId = burgers.Id
+                    },
+                    new MenuItems{
+                        Emertimi = "Dutch Sliders",
+                        Pershkrimi = "Mini burgers with juicy beef, melted cheese, and soft buns, served in a tasty bite-sized portion.",
+                        Cmimi = 3.89m,
+                        Foto = "frix/bb4.png",
+                        Disponueshme = true,
+                        Alergjene = "Gluten, Soy, Eggs",
+                        Kalori = 400,
+                        CategoryId = burgers.Id
+                    }
+                };
+                context.MenuItems.AddRange(burgerItems);
+                 context.SaveChanges();
+
+                var hotdogItems = new List<MenuItems> 
+                {
+                new MenuItems
+                {
+                    Emertimi = "Hotdog Classic",
+                    Pershkrimi = "Grilled sausage served in a soft bun with classic toppings and sauces.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/h11.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs",
+                    Kalori = 300,
+                    CategoryId = hotdog.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Hotdog Mexican",
+                    Pershkrimi = "Grilled sausage in a soft bun topped with spicy sauce, fresh vegetables, and a Mexican-style flavor twist.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/h222.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs",
+                    Kalori = 400,
+                    CategoryId = hotdog.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Wrap Dog",
+                    Pershkrimi = "Grilled sausage wrapped in a soft tortilla with fresh toppings and savory sauce.",
+                    Cmimi = 2.99m,
+                    Foto = "frix/w1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs,Milk",
+                    Kalori = 350,
+                    CategoryId = hotdog.Id 
+                },
+                new MenuItems
+                {
+                    Emertimi = "Chicken Burrito",
+                    Pershkrimi = "Flour tortilla filled with grilled chicken, rice, beans, cheese, and fresh salsa, wrapped and served warm.",
+                    Cmimi = 2.99m,
+                    Foto = "frix/w2.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs",
+                    Kalori = 750,
+                    CategoryId = hotdog.Id 
+                }
+                };
+                context.MenuItems.AddRange(hotdogItems);
+                context.SaveChanges();
+
+                var sandwichItems = new List <MenuItems> 
+                {
+                new MenuItems
+                {
+                    Emertimi = "Frix Chicken Sandwich",
+                    Pershkrimi = "Crispy fried chicken fillet served in a soft bun with lettuce and signature sauce.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/s1.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs",
+                    Kalori = 600,
+                    CategoryId = hotdog.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Chicken Pesto Sandwich",
+                    Pershkrimi = "Grilled chicken with basil pesto, fresh greens, and cheese served in a toasted sandwich bun.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/s22.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs",
+                    Kalori = 550,
+                    CategoryId = hotdog.Id
+                },
+                new MenuItems
+                {
+                    Emertimi = "Tuna Sandwich",
+                    Pershkrimi = "Tuna mixed with mayo, served with fresh lettuce in soft bread or a toasted bun.",
+                    Cmimi = 3.49m,
+                    Foto = "frix/s33.png",
+                    Disponueshme = true,
+                    Alergjene = "Gluten, Soy, Eggs,Fish",
+                    Kalori = 550,
+                    CategoryId = hotdog.Id
+                }
+                };
+
+                context.MenuItems.AddRange(sandwichItems);
+                context.SaveChanges();
+
+                var drinkItems = new List<MenuItems> { 
+                new MenuItems
+                 {
+                    Emertimi = "Coca Cola",
+                    Pershkrimi = "Coca Cola",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/cocacola.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems
+                 {
+                    Emertimi = "Fanta Orange",
+                    Pershkrimi = "Fanta orange",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/fantaorange.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                },
+                
+                new MenuItems
+                 {
+                    Emertimi = "Sprite",
+                    Pershkrimi = "Sprite",
+                    Cmimi = 1.50m,
+                    Foto = "pastafasta/sprite.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 150,
+                    CategoryId = drinks.Id
+                },
+                new MenuItems
+                 {
+                    Emertimi = "Water",
+                    Pershkrimi = "Water",
+                    Cmimi = 1.00m,
+                    Foto = "pastafasta/water.png",
+                    Disponueshme = true,
+                    Alergjene = "None",
+                    Kalori = 0,
+                    CategoryId = drinks.Id
+                }
+                
+                
+                
+                
+                };
+                context.MenuItems.AddRange(drinkItems);
+                context.SaveChanges();
+            }
+            
+
+                }
+
 
         }
     }
-}
+
+    
