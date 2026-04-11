@@ -10324,6 +10324,322 @@ public static class DbInitializer
                 context.SaveChanges();
             }
 
+            var categoriesHookFishandChips = new List<MenuCategory>();
+            var fishandchips = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Hook Fish&Chips");
+
+            if (fishandchips != null)
+            {
+                var offers = new MenuCategory
+                {
+                    Emertimi = "Offers",
+                    Pershkrimi = "Special offers and combo deals.",
+                    Renditja = 1,
+                    RestaurantId = fishandchips.Id
+                };
+
+                var fishChips = new MenuCategory
+                {
+                    Emertimi = "Fish & Chips",
+                    Pershkrimi = "Classic fish and chips dishes.",
+                    Renditja = 2,
+                    RestaurantId = fishandchips.Id
+                };
+
+                var extras = new MenuCategory
+                {
+                    Emertimi = "Extras",
+                    Pershkrimi = "Tasty extras and sides.",
+                    Renditja = 3,
+                    RestaurantId = fishandchips.Id
+                };
+
+                var drinks = new MenuCategory
+                {
+                    Emertimi = "Drinks",
+                    Pershkrimi = "Refreshing beverages.",
+                    Renditja = 4,
+                    RestaurantId = fishandchips.Id
+                };
+
+                categoriesHookFishandChips.AddRange(new[] { offers, fishChips, extras, drinks });
+                context.MenuCategories.AddRange(categoriesHookFishandChips);
+                context.SaveChanges();
+
+
+                var offersItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Grill x Hook",
+            Pershkrimi = "Super combo of Hake fish and Shrimp",
+            Cmimi = 6.90m,
+            Foto = "hookfishandchips/grillxhook.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Shellfish",
+            Kalori = 650,
+            CategoryId = offers.Id
+        }
+                };
+
+                context.MenuItems.AddRange(offersItems);
+                context.SaveChanges();
+
+                var fishChipsItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Double Fillet",
+            Pershkrimi = "Two crispy fish fillets served with fries.",
+            Cmimi = 7.50m,
+            Foto = "hookfishandchips/doublefillet.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten",
+            Kalori = 900,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Single Fillet",
+            Pershkrimi = "One crispy fish fillet served with fries.",
+            Cmimi = 5.50m,
+            Foto = "hookfishandchips/singlefillet.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten",
+            Kalori = 650,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Single Hook",
+            Pershkrimi = "Signature single fish fillet with fries.",
+            Cmimi = 5.90m,
+            Foto = "hookfishandchips/singlehook.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten",
+            Kalori = 670,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Crispy Shrimp",
+            Pershkrimi = "Golden fried shrimp served with fries.",
+            Cmimi = 6.90m,
+            Foto = "hookfishandchips/crispyshrimp.png",
+            Disponueshme = true,
+            Alergjene = "Shellfish, Gluten",
+            Kalori = 720,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Grilled Shrimp",
+            Pershkrimi = "Grilled shrimp served with fries.",
+            Cmimi = 7.20m,
+            Foto = "hookfishandchips/grilledshrimp.png",
+            Disponueshme = true,
+            Alergjene = "Shellfish",
+            Kalori = 680,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Fish Fingers",
+            Pershkrimi = "Crispy fish fingers served with fries.",
+            Cmimi = 4.90m,
+            Foto = "hookfishandchips/fishfingers.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten",
+            Kalori = 600,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Fish Burger",
+            Pershkrimi = "Fish fillet burger with lettuce and tartar sauce.",
+            Cmimi = 5.90m,
+            Foto = "hookfishandchips/fishburger.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten, Milk",
+            Kalori = 750,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Menu Combo",
+            Pershkrimi = "Coca-Cola and onion rings.",
+            Cmimi = 8.50m,
+            Foto = "hookfishandchips/menucombo.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten, Milk",
+            Kalori = 950,
+            CategoryId = fishChips.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Crunchy Smelt",
+            Pershkrimi = "Crispy fried smelt fish served with fries.",
+            Cmimi = 6.20m,
+            Foto = "hookfishandchips/crunchysmelt.png",
+            Disponueshme = true,
+            Alergjene = "Fish, Gluten",
+            Kalori = 700,
+            CategoryId = fishChips.Id
+        }
+    };
+
+                context.MenuItems.AddRange(fishChipsItems);
+                context.SaveChanges();
+
+                
+
+                var extrasItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Extra Tartar",
+            Pershkrimi = "Classic tartar sauce.",
+            Cmimi = 0.80m,
+            Foto = "hookfishandchips/extratartar.png",
+            Disponueshme = true,
+            Alergjene = "Egg, Milk",
+            Kalori = 120,
+            CategoryId = extras.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Extra Spicy 🌶️",
+            Pershkrimi = "Hot and spicy sauce.",
+            Cmimi = 0.80m,
+            Foto = "hookfishandchips/extraspicy.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 90,
+            CategoryId = extras.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Extra Sweet Chili",
+            Pershkrimi = "Sweet chili sauce.",
+            Cmimi = 0.80m,
+            Foto = "hookfishandchips/extrasweetchili.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 100,
+            CategoryId = extras.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Pomfrit",
+            Pershkrimi = "Classic French fries.",
+            Cmimi = 2.50m,
+            Foto = "hookfishandchips/pomfrit.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 400,
+            CategoryId = extras.Id
+        }
+    };
+
+                context.MenuItems.AddRange(extrasItems);
+                context.SaveChanges();
+
+                var drinksItems = new List<MenuItems>
+    {
+        new MenuItems
+        {
+            Emertimi = "Coca Cola",
+            Pershkrimi = "Classic Coca Cola.",
+            Cmimi = 1.50m,
+            Foto = "hookfishandchips/cocacola.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 140,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Coca Cola Zero",
+            Pershkrimi = "Sugar-free Coca Cola Zero.",
+            Cmimi = 1.50m,
+            Foto = "hookfishandchips/cocacolazero.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 0,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Fanta",
+            Pershkrimi = "Refreshing orange Fanta.",
+            Cmimi = 1.50m,
+            Foto = "hookfishandchips/fanta.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 160,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Ice Tea",
+            Pershkrimi = "Cool and refreshing iced tea.",
+            Cmimi = 1.50m,
+            Foto = "hookfishandchips/icetea.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 90,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Schweppes",
+            Pershkrimi = "Sparkling Schweppes tonic.",
+            Cmimi = 1.50m,
+            Foto = "hookfishandchips/schweppes.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 110,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Red Bull",
+            Pershkrimi = "Energy drink Red Bull.",
+            Cmimi = 2.00m,
+            Foto = "hookfishandchips/redbull.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 120,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Water",
+            Pershkrimi = "Still mineral water.",
+            Cmimi = 1.00m,
+            Foto = "hookfishandchips/water.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 0,
+            CategoryId = drinks.Id
+        },
+        new MenuItems
+        {
+            Emertimi = "Sparkling Water",
+            Pershkrimi = "Carbonated sparkling water.",
+            Cmimi = 1.20m,
+            Foto = "hookfishandchips/sparklingwater.png",
+            Disponueshme = true,
+            Alergjene = "None",
+            Kalori = 0,
+            CategoryId = drinks.Id
+        }
+    };
+
+                context.MenuItems.AddRange(drinksItems);
+                context.SaveChanges();
+
+            }
+
 
         }
     }
