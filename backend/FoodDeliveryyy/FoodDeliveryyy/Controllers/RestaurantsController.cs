@@ -18,8 +18,21 @@ namespace FoodDeliveryyy.Controllers;
         _context = context;
     }
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurant()   {
-        return await _context.Restaurants.ToListAsync();
+    public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurant([FromQuery] string? search)
+    {
+        var query = _context.Restaurants.AsQueryable();
+
+        if (!string.IsNullOrEmpty(search))
+        {
+            search = search.Trim().ToLower();
+
+            query = query.Where(r =>
+                r.Emertimi.ToLower().Contains(search) ||
+                (r.Kategori != null && r.Kategori.ToLower().Contains(search))
+            );
+        }
+
+        return await query.ToListAsync();
     }
 
 
