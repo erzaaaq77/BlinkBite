@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using FoodDeliveryyy.Models.DTOs; 
 
 namespace FoodDeliveryyy.Controllers
 {
