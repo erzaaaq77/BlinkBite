@@ -1,9 +1,10 @@
 using FoodDeliveryyy.Data;
-using FoodDeliveryyy.Models.Identity;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Identity;
+using FoodDeliveryyy.Services;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
-using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,7 +25,7 @@ builder.Services.AddIdentity<User, Role>()
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
-
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddCors(options =>
 {

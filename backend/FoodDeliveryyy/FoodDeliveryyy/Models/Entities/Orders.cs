@@ -55,5 +55,7 @@ public class Orders {
     public virtual Deliveries? Delivery { get; set; }
 
     public virtual Reviews? Review { get; set; }
+    public DateTime? StatusUpdatedAt { get; set; } 
+
 
 }

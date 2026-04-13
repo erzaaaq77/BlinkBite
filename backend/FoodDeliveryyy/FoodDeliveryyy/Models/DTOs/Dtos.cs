@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
+namespace FoodDeliveryyy.Models.DTOs;
+
 public class RegisterDto
 {
     [Required]
@@ -22,4 +24,12 @@ public class LoginDto
     public string Username { get; set; } = string.Empty;
 
     public string Password { get; set; } = string.Empty;
+}
+
+public class OrderStatusUpdateDto
+{
+    [Required]
+    public int OrderId { get; set; }
+    [Required]
+    public string? Comment { get; set; } = string.Empty;
 }
