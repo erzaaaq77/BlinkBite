@@ -25,18 +25,18 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles ="Admin,RestaurantOwner")]
+    [Authorize(Roles = "Admin,RestaurantOwner")]
     public async Task<ActionResult<IEnumerable<Orders>>> GetOrders()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role =User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
         IQueryable<Orders> query = _context.Orders
             .Include(o => o.User)
             .Include(o => o.Restaurant)
             .Include(o => o.OrderItems);
 
-            if (role == "RestaurantOwner")
+        if (role == "RestaurantOwner")
         {
             var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
             if (restaurant != null)
@@ -44,14 +44,15 @@ public class OrdersController : ControllerBase
                 query = query.Where(o => o.RestaurantId == restaurant.Id);
             }
         }
-            var orders = await query.OrderByDescending(o => o.DataPorosis).ToListAsync();
+        var orders = await query.OrderByDescending(o => o.DataPorosis).ToListAsync();
         return Ok(orders);
 
 
     }
 
-
+    [Authorize]
     [HttpGet("{id}")]
+    
     public async Task<ActionResult<Orders>> GetOrder(int id)
     {
         var userId=User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -219,10 +220,10 @@ public class OrdersController : ControllerBase
 
         if (!Enum.TryParse<OrderStatus>(request.Status, true, out var parsedStatus))
         {
-            return BadRequest("Status is not valid. Accepted values:Pending,Accepted,Preparing,Reade,Delivered,Cancelled");
+            return BadRequest("Status is not valid. Accepted values:Pending,Accepted,Preparing,Ready,Delivered,Cancelled");
         }
 
-        var result = await _orderService.updateOrderStatusAsync(id, parsedStatus, userId, role, request.Comment);
+        var result = await _orderService.UpdateOrderStatusAsync(id, parsedStatus, userId, role, request.Comment);
         if (!result)
         {
             return BadRequest("Status update not allowed or order not found");
@@ -235,6 +236,7 @@ public class OrdersController : ControllerBase
         }
             );
     }
+    
         
     
 
@@ -256,7 +258,7 @@ public class OrdersController : ControllerBase
             return Forbid();
         }
 
-        var result = await _orderService.updateOrderStatusAsync(id, OrderStatus.Accepted, userId, role, comment);
+        var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Accepted, userId, role, comment);
 
         if(!result) return BadRequest("Cannot accept order.Make sure order is pending");
 
@@ -280,7 +282,7 @@ public class OrdersController : ControllerBase
             return Forbid();
         }
 
-        var result = await _orderService.updateOrderStatusAsync(id, OrderStatus.Preparing, userId, role, comment);
+        var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Preparing, userId, role, comment);
         if(!result) return BadRequest("Cannot start preparing order.Make sure order is accepted");
         
         return Ok(new { message = "Order is being prepared", status = "Preparing" });
