@@ -214,11 +214,6 @@ function App() {
     if (token) fetchCurrentUser();
   }, []);
 
-   function logout() {
-    localStorage.removeItem("token");
-    window.location.href = "/login";
-  }
-
   return (
     <>
       {/* NAVBAR */}
@@ -228,11 +223,6 @@ function App() {
             <img src={logo} width="40" alt="logo" />
             <span className="ms-2 fw-bold">BlinkBite</span>
           </div>
-          <div className="ms-auto">
-        <button onClick={logout} className="btn btn-outline-danger">
-          Logout
-        </button>
-      </div>
 
           <div className="search-box d-none d-md-block">
             <input
