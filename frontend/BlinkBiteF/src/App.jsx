@@ -16,7 +16,10 @@ function App() {
 
   const [token, setToken] = useState(localStorage.getItem("token") || "");
   const [currentUser, setCurrentUser] = useState(null);
-  const [authMessage, setAuthMessage] = useState("");
+
+  // ✅ Mesazhe të ndara për Login dhe Signup
+  const [loginMessage, setLoginMessage] = useState("");
+  const [signupMessage, setSignupMessage] = useState("");
 
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -31,9 +34,8 @@ function App() {
   const [addressPostal, setAddressPostal] = useState("");
 
   const filtered = (restaurants || []).filter(r =>
-  (r.name || "").toLowerCase().includes(search.toLowerCase())
-);
-
+    (r.name || "").toLowerCase().includes(search.toLowerCase())
+  );
 
   const authHeaders = () => {
     const headers = { "Content-Type": "application/json" };
@@ -44,7 +46,6 @@ function App() {
   const fetchCategories = async () => {
     try {
       const res = await fetch(`${API_BASE}/restaurants/kategori`, { headers: authHeaders() });
-
       if (!res.ok) throw new Error("Failed to load categories");
       const data = await res.json();
       setCategories(data);
@@ -97,7 +98,7 @@ function App() {
   };
 
   const handleSignup = async () => {
-    setAuthMessage("");
+    setSignupMessage("");
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
@@ -111,24 +112,25 @@ function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthMessage(data?.title || JSON.stringify(data) || "Signup failed");
+        setSignupMessage(data?.title || JSON.stringify(data) || "Signup failed");
         return;
       }
-      setAuthMessage("Signup successful. You can now login.");
-      closeModal("#signupModal");
-      setLoginUsername(signupUsername || signupEmail);
-      setLoginPassword("");
-      setSignupUsername("");
-      setSignupEmail("");
-      setSignupPassword("");
+      setSignupMessage("Signup successful! You can now login.");
+      setTimeout(() => {
+        closeModal("#signupModal");
+        setSignupMessage("");
+        setSignupUsername("");
+        setSignupEmail("");
+        setSignupPassword("");
+      }, 1500);
     } catch (err) {
       console.error(err);
-      setAuthMessage("Signup error");
+      setSignupMessage("Signup error. Please try again.");
     }
   };
 
   const handleLogin = async () => {
-    setAuthMessage("");
+    setLoginMessage("");
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
@@ -140,34 +142,43 @@ function App() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setAuthMessage(data?.message || "Login failed");
+        setLoginMessage(data?.message || "Login failed. Check your credentials.");
         return;
       }
       if (data.token) {
         localStorage.setItem("token", data.token);
         setToken(data.token);
-        setAuthMessage("Login successful");
-        closeModal("#loginModal");
-        setLoginPassword("");
-        await fetchCurrentUser();
-        await fetchCategories();
-        await fetchRestaurants();
+        setLoginMessage("Login successful! Welcome back 👋");
+        setTimeout(async () => {
+          closeModal("#loginModal");
+          setLoginMessage("");
+          setLoginUsername("");
+          setLoginPassword("");
+          await fetchCurrentUser();
+          await fetchCategories();
+          await fetchRestaurants();
+        }, 1000);
       } else {
-        setAuthMessage("Login successful (no token returned)");
+        setLoginMessage("Login successful (no token returned)");
         closeModal("#loginModal");
         await fetchCurrentUser();
       }
     } catch (err) {
       console.error(err);
-      setAuthMessage("Login error");
+      setLoginMessage("Login error. Please try again.");
     }
   };
 
+  // ✅ Logout i rregulluar - fshin gjithçka
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken("");
     setCurrentUser(null);
-    setAuthMessage("Logged out");
+    setLoginUsername("");
+    setLoginPassword("");
+    setLoginMessage("");
+    setSignupMessage("");
+    setCartCount(0);
   };
 
   const handleSaveAddress = async () => {
@@ -281,10 +292,11 @@ function App() {
 
             {token ? (
               <>
+                {/* ✅ Username i rregulluar */}
                 <div className="me-2">
-                  <span className="small text-muted">Hi, {currentUser?.userName || currentUser?.userName || "User"}</span>
+                  <span className="small text-muted">Hi, {currentUser?.userName || "User"}</span>
                 </div>
-                <button className="btn btn-outline-secondary" onClick={handleLogout}>
+                <button className="btn btn-outline-danger" onClick={handleLogout}>
                   Logout
                 </button>
               </>
@@ -348,7 +360,12 @@ function App() {
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div className="modal-body">
-              {authMessage && <div className="alert alert-info">{authMessage}</div>}
+              {/* ✅ Tani përdor loginMessage */}
+              {loginMessage && (
+                <div className={`alert ${loginMessage.includes("successful") ? "alert-success" : "alert-danger"}`}>
+                  {loginMessage}
+                </div>
+              )}
               <input
                 type="text"
                 className="form-control mb-3"
@@ -381,7 +398,12 @@ function App() {
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div className="modal-body">
-              {authMessage && <div className="alert alert-info">{authMessage}</div>}
+              {/* ✅ Tani përdor signupMessage */}
+              {signupMessage && (
+                <div className={`alert ${signupMessage.includes("successful") ? "alert-success" : "alert-danger"}`}>
+                  {signupMessage}
+                </div>
+              )}
               <input
                 type="text"
                 className="form-control mb-3"
@@ -416,7 +438,6 @@ function App() {
       <section className="hero">
         <h1>Order your favorite food instantly</h1>
         <p>Fast, simple and modern food delivery</p>
-
         <div className="hero-search">
           <input placeholder="Enter your address..." />
           <button>Find Food</button>
@@ -424,39 +445,36 @@ function App() {
       </section>
 
       {/* CATEGORIES */}
-<section className="container py-5 text-center categories">
-  <h2 className="text-center mb-3">Categories</h2>
-  <div className="categories-row">
-    {categories.length === 0 ? (
-      <p>Loading categories...</p>
-    ) : (
-      categories.map((cat, index) => (
-        <div
-          key={index}
-          className="category-card"
-          style={{
-            flex: "1",
-            backgroundImage: `url(https://source.unsplash.com/300x200/?${cat})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-          onClick={() => {
-            console.log("Clicked category:", cat);
-          }}
-        >
-          <span>{cat}</span>
+      <section className="container py-5 text-center categories">
+        <h2 className="text-center mb-3">Categories</h2>
+        <div className="categories-row">
+          {categories.length === 0 ? (
+            <p>Loading categories...</p>
+          ) : (
+            categories.map((cat, index) => (
+              <div
+                key={index}
+                className="category-card"
+                style={{
+                  flex: "1",
+                  backgroundImage: `url(https://source.unsplash.com/300x200/?${cat})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }}
+                onClick={() => {
+                  console.log("Clicked category:", cat);
+                }}
+              >
+                <span>{cat}</span>
+              </div>
+            ))
+          )}
         </div>
-      ))
-    )}
-  </div>
-</section>
-
-
+      </section>
 
       {/* RESTAURANTS */}
       <section className="container pb-5">
         <h2 className="text-center mb-4">Restaurants</h2>
-
         <div className="row g-4">
           {filtered.map((r) => (
             <div className="col-md-3 col-6" key={r.id}>
