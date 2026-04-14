@@ -83,7 +83,11 @@ namespace FoodDeliveryyy.Controllers
 
         private string GenerateJwtToken(User user, IList<string> roles)
         {
-            var jwtKey = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured.");
+            var jwtKey = _configuration["Jwt:Key"] ?? Environment.GetEnvironmentVariable("JWT_KEY");
+            if (string.IsNullOrWhiteSpace(jwtKey))
+            {
+                throw new InvalidOperationException("JWT Key is not configured. Set Jwt:Key or JWT_KEY.");
+            }
             var jwtIssuer = _configuration["Jwt:Issuer"] ?? throw new InvalidOperationException("JWT Issuer is not configured.");
             var jwtAudience = _configuration["Jwt:Audience"] ?? throw new InvalidOperationException("JWT Audience is not configured.");
 
@@ -91,7 +95,7 @@ namespace FoodDeliveryyy.Controllers
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(ClaimTypes.NameIdentifier, user.Id),
-                new Claim(ClaimTypes.Name, user.UserName ?? string.Empty),
+                new Claim(ClaimTypes.Name, user.UserName ?? user.Email ?? user.Id),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email ?? string.Empty),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
