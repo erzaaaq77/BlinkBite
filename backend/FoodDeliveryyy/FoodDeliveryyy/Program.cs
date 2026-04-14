@@ -1,4 +1,5 @@
 using FoodDeliveryyy.Data;
+using FoodDeliveryyy.Middleware;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
 using FoodDeliveryyy.Services;
@@ -56,6 +57,9 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
+builder.Services.AddProblemDetails();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
@@ -65,6 +69,7 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
 
 var app = builder.Build();
 
@@ -89,6 +94,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseCors("ReactPolicy");
+app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
