@@ -24,6 +24,7 @@ namespace FoodDeliveryyy.Data
 
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
+        public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

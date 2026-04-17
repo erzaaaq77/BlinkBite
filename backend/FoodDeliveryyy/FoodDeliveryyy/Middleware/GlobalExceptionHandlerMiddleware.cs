@@ -1,56 +1,71 @@
-﻿using System;
+
+
+﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace FoodDeliveryyy.Middleware
 {
-    public class GlobalExceptionHandlerMiddleware
+    public class GlobalExceptionHandlerMiddleware : IExceptionHandler
     {
-        private readonly RequestDelegate _next;
         private readonly ILogger<GlobalExceptionHandlerMiddleware> _logger;
         private readonly IWebHostEnvironment _env;
 
-        public GlobalExceptionHandlerMiddleware(RequestDelegate next, ILogger<GlobalExceptionHandlerMiddleware> logger, IWebHostEnvironment env)
+        public GlobalExceptionHandlerMiddleware(ILogger<GlobalExceptionHandlerMiddleware> logger, IWebHostEnvironment env)
         {
-            _next = next ?? throw new ArgumentNullException(nameof(next));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _env = env ?? throw new ArgumentNullException(nameof(env));
+            _logger = logger;
+            _env = env;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async ValueTask<bool> TryHandleAsync(
+            HttpContext httpContext,
+            Exception exception,
+            CancellationToken cancellationToken)
         {
-            try
+            _logger.LogError(exception, "An unhandled exception occurred: {Message}", exception.Message);
+
+            var problemDetails = new ProblemDetails
             {
-                await _next(context);
-            }
-            catch (Exception ex)
+                Status = GetStatusCode(exception),
+                Title = "An error occurred while processing your request",
+                Type = exception.GetType().Name, 
+                Instance = httpContext.Request.Path
+            };
+
+            if (_env.IsDevelopment())
             {
-                _logger.LogError(ex, "Unhandled exception occurred while processing the request.");
-                context.Response.Clear();
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                context.Response.ContentType = "application/json";
-
-                var isDev = string.Equals(_env.EnvironmentName, "Development", StringComparison.OrdinalIgnoreCase);
-
-                var payload = new
-                {
-                    message = isDev ? ex.Message : "An unexpected error occurred.",
-                    detail = isDev ? ex.StackTrace : null
-                };
-
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
-                };
-
-                var json = JsonSerializer.Serialize(payload, options);
-
-                await context.Response.WriteAsync(json);
+                problemDetails.Detail = exception.Message;
+                problemDetails.Extensions["stackTrace"] = exception.StackTrace?.ToString();
             }
+            else
+            {
+                problemDetails.Detail = "An internal error occurred. Please try again later.";
+            }
+
+            httpContext.Response.StatusCode = problemDetails.Status.Value;
+            httpContext.Response.ContentType = "application/json";
+
+            var json = JsonSerializer.Serialize(problemDetails, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            });
+
+            await httpContext.Response.WriteAsync(json, cancellationToken);
+
+            return true;
+        }
+
+        private static int GetStatusCode(Exception exception)
+        {
+            return exception switch
+            {
+                ArgumentException or ArgumentNullException => StatusCodes.Status400BadRequest,
+                KeyNotFoundException => StatusCodes.Status404NotFound,
+                UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
+                InvalidOperationException => StatusCodes.Status409Conflict,
+                _ => StatusCodes.Status500InternalServerError
+            };
         }
     }
 }
+
