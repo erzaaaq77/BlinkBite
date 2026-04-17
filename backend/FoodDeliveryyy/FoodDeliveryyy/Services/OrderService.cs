@@ -3,6 +3,8 @@ using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
+using FoodDeliveryyy.Hubs;
 
 namespace FoodDeliveryyy.Services;
 
@@ -10,11 +12,13 @@ public class OrderService : IOrderService
 {
     private readonly AppDbContext _context;
     private readonly ILogger<OrderService> _logger;
+    private readonly IHubContext<OrderHub> _hubContext;
 
-    public OrderService(AppDbContext context, ILogger<OrderService> logger)
+    public OrderService(AppDbContext context, ILogger<OrderService> logger, IHubContext<OrderHub> hubContext)
     {
         _context = context;
         _logger = logger;
+        _hubContext = hubContext;
     }
 
     public async Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string userId, string role, string? comment = null)
@@ -72,9 +76,21 @@ public class OrderService : IOrderService
             Comments = comment ?? string.Empty
         };
 
+
         _context.OrderStatusHistories.Add(history);
         await _context.SaveChangesAsync();
 
+        await _hubContext.Clients.Group($"order-{orderId}").SendAsync("OrderStatusUpdated", new
+        {
+            OrderId = orderId,
+            OldStatus = oldStatus.ToString(),
+
+            NewStatus=newStatus.ToString(),
+            UpdatedAt=DateTime.UtcNow,
+            Comment=comment?? string.Empty,
+            ChangedBy=role
+
+        });
         _logger.LogInformation("Order {OrderId} status changed from {OldStatus} to {NewStatus} by {Role} ({UserId})",
 
             orderId, order.Statusi, newStatus, role, userId

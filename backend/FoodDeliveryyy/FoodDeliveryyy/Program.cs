@@ -1,4 +1,5 @@
 using FoodDeliveryyy.Data;
+using FoodDeliveryyy.Hubs;
 using FoodDeliveryyy.Middleware;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
@@ -56,7 +57,7 @@ builder.Services.AddAuthentication(options =>
 });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IOrderService, OrderService>();
-
+builder.Services.AddSignalR();
 builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
 builder.Services.AddProblemDetails();
 
@@ -66,7 +67,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:5173", "http://localhost:5176")
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
@@ -98,5 +100,5 @@ app.UseExceptionHandler();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapHub<OrderHub>("/orderHub");
 app.Run();
