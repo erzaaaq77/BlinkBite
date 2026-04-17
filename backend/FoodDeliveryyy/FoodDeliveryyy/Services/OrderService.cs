@@ -25,6 +25,15 @@ public class OrderService : IOrderService
 
         if (order == null) return false;
 
+        if (order.Statusi == newStatus) return false;
+
+        if (order.Statusi == OrderStatus.Delivered || order.Statusi == OrderStatus.Cancelled)
+        {
+            _logger.LogWarning("Attempted to change status of finished order {OrderId} from {OldStatus} to {NewStatus}",
+                orderId, order.Statusi, newStatus);
+            return false;
+        }
+
         if (role == "RestaurantOwner" && order.Restaurant.UserId != userId)
             return false;
 
@@ -39,14 +48,56 @@ public class OrderService : IOrderService
         };
 
         if (!isValidTransition)
+
+        {
+            _logger.LogWarning("Invalid transition {OldStatus} -> {NewStatus} by {Role}",
+
+                order.Statusi, newStatus, role
+                );
             return false;
+        }
+        
+        var oldStatus = order.Statusi;
 
         order.Statusi = newStatus;
         order.StatusiUpdatedAt = DateTime.UtcNow;
 
+        var history =new OrderStatusHistory
+        {
+            OrderId = orderId,
+            OldStatus = oldStatus,
+            NewStatus = newStatus,
+            ChangeBy = $"{role} ({userId})",
+            ChangedAt = DateTime.UtcNow,
+            Comments = comment ?? string.Empty
+        };
+
+        _context.OrderStatusHistories.Add(history);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("Order {OrderId} status changed to {NewStatus}", orderId, newStatus);
+        _logger.LogInformation("Order {OrderId} status changed from {OldStatus} to {NewStatus} by {Role} ({UserId})",
+
+            orderId, order.Statusi, newStatus, role, userId
+
+            );
+
         return true;
     }
+
+    public async Task<List<OrderStatusHistory>> GetOrderHistoryAsync(int orderId)
+    {
+        return await _context.OrderStatusHistories
+            .Where(h => h.OrderId == orderId)
+            .OrderByDescending(h => h.ChangedAt)
+            .ToListAsync();
+    }
+
+    public async Task<OrderStatusHistory?> GetLastStatusChangeAsync(int orderId)
+    {
+        return await _context.OrderStatusHistories
+            .Where(h => h.OrderId == orderId)
+            .OrderByDescending(h => h.ChangedAt)
+            .FirstOrDefaultAsync();
+    }
 }
+
