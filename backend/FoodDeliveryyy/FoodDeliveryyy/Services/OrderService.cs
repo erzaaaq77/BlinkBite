@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
 using FoodDeliveryyy.Hubs;
 
+
 namespace FoodDeliveryyy.Services;
 
 public class OrderService : IOrderService
@@ -13,18 +14,21 @@ public class OrderService : IOrderService
     private readonly AppDbContext _context;
     private readonly ILogger<OrderService> _logger;
     private readonly IHubContext<OrderHub> _hubContext;
+    private readonly IEmailService _emailService;
 
-    public OrderService(AppDbContext context, ILogger<OrderService> logger, IHubContext<OrderHub> hubContext)
+    public OrderService(AppDbContext context, ILogger<OrderService> logger, IHubContext<OrderHub> hubContext, IEmailService emailService)
     {
         _context = context;
         _logger = logger;
         _hubContext = hubContext;
+        _emailService = emailService;
     }
 
     public async Task<bool> UpdateOrderStatusAsync(int orderId, OrderStatus newStatus, string userId, string role, string? comment = null)
     {
         var order = await _context.Orders
             .Include(o => o.Restaurant)
+            .Include(o => o.User)
             .FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order == null) return false;
@@ -84,13 +88,30 @@ public class OrderService : IOrderService
         {
             OrderId = orderId,
             OldStatus = oldStatus.ToString(),
-
-            NewStatus=newStatus.ToString(),
-            UpdatedAt=DateTime.UtcNow,
-            Comment=comment?? string.Empty,
-            ChangedBy=role
-
+            NewStatus = newStatus.ToString(),
+            UpdatedAt = DateTime.UtcNow,
+            Comment = comment ?? string.Empty,
+            ChangedBy = role
         });
+
+ 
+        try
+        {
+            if (order.User != null && !string.IsNullOrEmpty(order.User.Email))
+            {
+                await _emailService.SendOrderStatusUpdateEmailAsync(
+                    order.User.Email,
+                    order.User.UserName ?? "Customer",
+                    orderId,
+                    oldStatus.ToString(),
+                    newStatus.ToString()
+                );
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send email notification for order {OrderId}", orderId);
+        }
         _logger.LogInformation("Order {OrderId} status changed from {OldStatus} to {NewStatus} by {Role} ({UserId})",
 
             orderId, order.Statusi, newStatus, role, userId
@@ -120,5 +141,7 @@ public class OrderService : IOrderService
     {
         return await _context.Orders.AnyAsync(x => x.Id == orderId);
     }
+
+    
 }
 

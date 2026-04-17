@@ -60,7 +60,7 @@ builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddSignalR();
 builder.Services.AddExceptionHandler<GlobalExceptionHandlerMiddleware>();
 builder.Services.AddProblemDetails();
-
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
