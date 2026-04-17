@@ -99,5 +99,10 @@ public class OrderService : IOrderService
             .OrderByDescending(h => h.ChangedAt)
             .FirstOrDefaultAsync();
     }
+
+    public async Task<bool> OrderExistsAsync(int orderId)
+    {
+        return await _context.Orders.AnyAsync(x => x.Id == orderId);
+    }
 }
 

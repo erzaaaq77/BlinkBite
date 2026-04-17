@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Data;
 using System.Security.Claims;
 
+
 namespace FoodDeliveryyy.Controllers;
 
 [Route("api/[controller]")]
@@ -405,10 +406,18 @@ public class OrdersController : ControllerBase
         return Ok(new { orderId = id, total = total + order.TarifaDorezimit - order.Zbritja });
     }
 
-    private bool OrderExists(int id)
+    [HttpGet("{id}/history")]
+    public async Task<IActionResult> GetHistory(int id)
     {
-        return _context.Orders.Any(e => e.Id == id);
+        if (!await _orderService.OrderExistsAsync(id))
+            return NotFound($"Order with ID {id} not found");
+
+        var history = await _orderService.GetOrderHistoryAsync(id);
+        return Ok(history);
     }
+
+
+
 }
 
 public class UpdateStatusRequest
