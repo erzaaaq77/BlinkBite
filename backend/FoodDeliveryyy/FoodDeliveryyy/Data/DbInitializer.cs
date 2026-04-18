@@ -103,28 +103,55 @@ public static class DbInitializer
             }
         }
 
+        var seedCategories = new Category[]
+        {
+            new Category { Name = "Sushi", ImageUrl = "/uploads/categories/sushiIcon.png" },
+            new Category { Name = "Fast Food", ImageUrl = "/uploads/categories/fastFoodIcon.png" },
+            new Category { Name = "Italian", ImageUrl = "/uploads/categories/ItalianIcon.png" },
+            new Category { Name = "Pizza", ImageUrl = "/uploads/categories/pizzaIcon.png" },
+            new Category { Name = "Healthy", ImageUrl = "/uploads/categories/healthyIcon.png" },
+            new Category { Name = "Shawarma", ImageUrl = "/uploads/categories/shawarmaIcon.png" },
+            new Category { Name = "Burgers", ImageUrl = "/uploads/categories/burgersIcon.png" },
+            new Category { Name = "Dessert", ImageUrl = "/uploads/categories/dessertIcon.png" },
+            new Category { Name = "Traditional", ImageUrl = "/uploads/categories/TraditionalIcon.png" },
+            
+            new Category { Name = "Seafood", ImageUrl = "/uploads/categories/seafoodIcon.png" },
+            new Category { Name = "Korean", ImageUrl = "/uploads/categories/koreanIcon.png" }
+        };
+
+        var categoriesToAdd = seedCategories
+            .Where(c => !context.Categories.Any(db => db.Name == c.Name))
+            .ToArray();
+
+        if (categoriesToAdd.Any())
+        {
+            context.Categories.AddRange(categoriesToAdd);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Inserted {categoriesToAdd.Length} categories");
+        }
+
         var seedRestaurants = new Restaurant[]
         {
-            new Restaurant { Emertimi = "SushiCo", Pershkrimi = "SuchiCo – Fresh sushi...", Telefoni = "+383 49 000 000", Email = "info@sushicokosova.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Sushi" },
-            new Restaurant { Emertimi = "Burger King", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@burgerking.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
+            new Restaurant { Emertimi = "SushiCo", Pershkrimi = "SuchiCo – Fresh sushi...", Telefoni = "+383 49 000 000", Email = "info@sushicokosova.com", Logo = "/uploads/logos/sushico1.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Sushi" },
+            new Restaurant { Emertimi = "Burger King", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@burgerking.com", Logo = "/uploads/logos/BurgerKingLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
 
-            new Restaurant { Emertimi = "Pasta Fasta", Pershkrimi = "Delicious pasta", Telefoni = "+383 49 111 000", Email = "info@pastafasta.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Italian" },
-            new Restaurant { Emertimi = "Proper Pizza", Pershkrimi = "Fresh pizza", Telefoni = "+383 49 000 100", Email = "info@properpizaaks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Pizza" },
-            new Restaurant { Emertimi = "KFC", Pershkrimi = "Fameous fastfood", Telefoni = "+383 49 222 000", Email = "info@kfc-ks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
-            new Restaurant { Emertimi = "Green and Protein", Pershkrimi = "Delicous healthy meals", Telefoni = "+383 49 000 000", Email = "info@greenandproteinks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Healthy" },
-            new Restaurant { Emertimi = "My Shawarma", Pershkrimi = "Your authentic Shawarma", Telefoni = "+383 49 000 000", Email = "info@myshawarma.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Shawarma" },
-            new Restaurant { Emertimi = "Heavy Hit", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@heavyhit-ks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
-            new Restaurant { Emertimi = "Popeyes", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@popeyes.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
-            new Restaurant { Emertimi = "Agusholli", Pershkrimi = "Sweet sweets!", Telefoni = "+383 49 000 000", Email = "info@agushollisweets.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Dessert" },
-            new Restaurant { Emertimi = "Saray Sweets", Pershkrimi = "Baklava and much more!", Telefoni = "+383 49 000 000", Email = "info@saraysweets.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Dessert" },
-            new Restaurant { Emertimi = "Capvin 13", Pershkrimi = "Delicious burgers and more", Telefoni = "+383 49 000 000", Email = "info@capvin13.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
-            new Restaurant { Emertimi = "Fika Eatery", Pershkrimi = "Healthy and delicious meals", Telefoni = "+383 49 000 000", Email = "info@fikaeatery.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Healthy" },
-            new Restaurant { Emertimi = "Mulliri", Pershkrimi = "Traditional food with a modern twist", Telefoni = "+383 49 000 000", Email = "info@mullirivjeter.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Traditional" },
-            new Restaurant { Emertimi = "Gjiks&Chiks", Pershkrimi = "Delicious chicken dishes!", Telefoni = "+383 49 000 000", Email = "info@gjiksandchiks.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Chicken" },
-            new Restaurant { Emertimi = "Smash Burger CO", Pershkrimi = "Delicious burgers and more", Telefoni = "+383 49 000 000", Email = "info@smashburgerco.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
-            new Restaurant { Emertimi = "Buffalo Burgers", Pershkrimi = "Delicious burgers and more", Telefoni = "+383 49 000 000", Email = "info@buffaloburgers.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
-            new Restaurant { Emertimi = "Hook Fish&Chips", Pershkrimi = "Delicious fish and chips!", Telefoni = "+383 49 000 000", Email = "info@hookfishandchips.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Seafood" },
-            new Restaurant { Emertimi = "Frix", Pershkrimi = "Delicious fries and more!", Telefoni = "+383 49 000 000", Email = "info@frixs.com", Logo = "", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
+            new Restaurant { Emertimi = "Pasta Fasta", Pershkrimi = "Delicious pasta", Telefoni = "+383 49 111 000", Email = "info@pastafasta.com", Logo = "/uploads/logos/PastaFastaLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Italian" },
+            new Restaurant { Emertimi = "Proper Pizza", Pershkrimi = "Fresh pizza", Telefoni = "+383 49 000 100", Email = "info@properpizaaks.com", Logo = "/uploads/logos/PropperPizzaLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Pizza" },
+            new Restaurant { Emertimi = "KFC", Pershkrimi = "Fameous fastfood", Telefoni = "+383 49 222 000", Email = "info@kfc-ks.com", Logo = "/uploads/logos/KfcLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
+            new Restaurant { Emertimi = "Green and Protein", Pershkrimi = "Delicous healthy meals", Telefoni = "+383 49 000 000", Email = "info@greenandproteinks.com", Logo = "/uploads/logos/GreenProteinLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Healthy" },
+            new Restaurant { Emertimi = "My Shawarma", Pershkrimi = "Your authentic Shawarma", Telefoni = "+383 49 000 000", Email = "info@myshawarma.com", Logo = "/uploads/logos/MyShawarmaLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Shawarma" },
+            new Restaurant { Emertimi = "Heavy Hit", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@heavyhit-ks.com", Logo = "/uploads/logos/HeavyHitLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
+            new Restaurant { Emertimi = "Popeyes", Pershkrimi = "Flame-grilled burgers...", Telefoni = "+383 49 000 000", Email = "info@popeyes.com", Logo = "/uploads/logos/PopeyesLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
+            new Restaurant { Emertimi = "Agusholli", Pershkrimi = "Sweet sweets!", Telefoni = "+383 49 000 000", Email = "info@agushollisweets.com", Logo = "/uploads/logos/AgusholliLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Dessert" },
+            new Restaurant { Emertimi = "Saray Sweets", Pershkrimi = "Baklava and much more!", Telefoni = "+383 49 000 000", Email = "info@saraysweets.com", Logo = "/uploads/logos/SaraysweetsLogo.webp", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Dessert" },
+            new Restaurant { Emertimi = "Capvin 13", Pershkrimi = "Delicious burgers and more", Telefoni = "+383 49 000 000", Email = "info@capvin13.com", Logo = "/uploads/logos/Capvin13Logo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
+            new Restaurant { Emertimi = "Fika Eatery", Pershkrimi = "Healthy and delicious meals", Telefoni = "+383 49 000 000", Email = "info@fikaeatery.com", Logo = "/uploads/logos/FikaLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Healthy" },
+            new Restaurant { Emertimi = "Mulliri", Pershkrimi = "Traditional food with a modern twist", Telefoni = "+383 49 000 000", Email = "info@mullirivjeter.com", Logo = "/uploads/logos/MulliriLogo.jpg", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Traditional" },
+            new Restaurant { Emertimi = "Gjiks&Chiks", Pershkrimi = "Delicious chicken dishes!", Telefoni = "+383 49 000 000", Email = "info@gjiksandchiks.com", Logo = "/uploads/logos/GjiksLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Korean" },
+            new Restaurant { Emertimi = "Smash Burger CO", Pershkrimi = "Delicious burgers and more", Telefoni = "+383 49 000 000", Email = "info@smashburgerco.com", Logo = "/uploads/logos/SmashLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
+            new Restaurant { Emertimi = "Buffalo Burgers", Pershkrimi = "Delicious burgers and more", Telefoni = "+383 49 000 000", Email = "info@buffaloburgers.com", Logo = "/uploads/logos/BuffaloLogo.jpg", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Burgers" },
+            new Restaurant { Emertimi = "Hook Fish&Chips", Pershkrimi = "Delicious fish and chips!", Telefoni = "+383 49 000 000", Email = "info@hookfishandchips.com", Logo = "/uploads/logos/HookLogo.webp", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Seafood" },
+            new Restaurant { Emertimi = "Frix", Pershkrimi = "Delicious fries and more!", Telefoni = "+383 49 000 000", Email = "info@frixs.com", Logo = "/uploads/logos/FrixLogo.png", OrariHapjes = new TimeOnly(10, 0), OrariMbylljes = new TimeOnly(0, 0), Rating = 4.5m, Statusi = RestaurantStatus.Active, UserId = merchantUser.Id, Kategori = "Fast Food" },
         };
 
         var toAdd = seedRestaurants
@@ -5856,6 +5883,24 @@ public static class DbInitializer
 
                 }
             }
+
+                var categoryMap = await context.Categories
+                    .ToDictionaryAsync(c => c.Name.ToLower().Trim(), c => c.Id);
+
+                var restaurantsWithoutCategoryId = await context.Restaurants
+                    .Where(r => r.CategoryId == null && !string.IsNullOrWhiteSpace(r.Kategori))
+                    .ToListAsync();
+
+                foreach (var restaurant in restaurantsWithoutCategoryId)
+                {
+                    var normalizedCategory = restaurant.Kategori.ToLower().Trim();
+                    if (categoryMap.TryGetValue(normalizedCategory, out var categoryId))
+                    {
+                        restaurant.CategoryId = categoryId;
+                    }
+                }
+
+                await context.SaveChangesAsync();
 
             var categoriesSaray = new List<MenuCategory>();
             var saray = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Saray Sweets");

@@ -44,6 +44,11 @@ public class Restaurant {
     [StringLength(50)]
     public string Kategori { get; set; } = string.Empty;
 
+    public int? CategoryId { get; set; }
+
+    [ForeignKey("CategoryId")]
+    public virtual Category? Category { get; set; }
+
     [ForeignKey("UserId")]
     //virtual -> mundeson lazyloading (te dhenat i marrim veq kur na duhen)
     public virtual User? User { get; set; }

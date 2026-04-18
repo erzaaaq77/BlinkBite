@@ -71,11 +71,16 @@ namespace FoodDeliveryyy.Controllers;
         return NoContent();
     }
     [HttpGet("kategori")]
-    public async Task<ActionResult<IEnumerable<string>>> GetCategories()
+    public async Task<ActionResult> GetCategories()
     {
-        var categories = await _context.Restaurants
-            .Select(r => r.Kategori)   
-            .Distinct()
+        var categories = await _context.Categories
+            .OrderBy(c => c.Name)
+            .Select(c => new
+            {
+                id = c.Id,
+                name = c.Name,
+                imageUrl = c.ImageUrl
+            })
             .ToListAsync();
 
         return Ok(categories);
