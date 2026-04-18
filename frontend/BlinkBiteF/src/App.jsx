@@ -5,6 +5,9 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
 import logo from "./assets/LogoBB.png";
 import locationImage from "./assets/location.png";
+import merchantImage from "./assets/Merchant.png";
+import courierImage from "./assets/Courier.png";
+import communityImage from "./assets/Community.png";
 
 const API_BASE = "http://localhost:5063/api";
 
@@ -538,11 +541,10 @@ function App() {
               </button>
 
               <div className="categories-row" ref={categoriesSliderRef}>
-              {categories.length === 0 ? (
-                <p>Loading categories...</p>
-              ) : (
-                categories.map((cat, index) => (
-                  (() => {
+                {categories.length === 0 ? (
+                  <p>Loading categories...</p>
+                ) : (
+                  categories.map((cat, index) => {
                     const catName = typeof cat === "string" ? cat : cat?.name || "Category";
                     const catImage =
                       typeof cat === "object" && cat?.image
@@ -550,26 +552,24 @@ function App() {
                         : `https://source.unsplash.com/300x200/?${encodeURIComponent(catName)}`;
 
                     return (
-                  <div
-                    key={typeof cat === "object" ? cat?.id || catName || index : catName || index}
-                    className={`category-card ${selectedCategory === catName ? "active-category" : ""}`}
-                    style={{
-                      flex: "1",
-                      backgroundImage: `url(${catImage})`,
-                      backgroundSize: "cover",
-                      backgroundPosition: "center",
-                    }}
-                    onClick={() => {
-                      window.location.hash = `/restaurants/${encodeURIComponent(catName)}`;
-                    }}
-                  >
-                    <span>{catName}</span>
-                  </div>
+                      <div
+                        key={typeof cat === "object" ? cat?.id || catName || index : catName || index}
+                        className={`category-card ${selectedCategory === catName ? "active-category" : ""}`}
+                        style={{
+                          flex: "1",
+                          backgroundImage: `url(${catImage})`,
+                          backgroundSize: "cover",
+                          backgroundPosition: "center",
+                        }}
+                        onClick={() => {
+                          window.location.hash = `/restaurants/${encodeURIComponent(catName)}`;
+                        }}
+                      >
+                        <span>{catName}</span>
+                      </div>
                     );
-                  })()
-                ))
-              )}
-
+                  })
+                )}
               </div>
 
               <button
@@ -580,6 +580,71 @@ function App() {
               >
                 <i className="bi bi-chevron-right"></i>
               </button>
+            </div>
+          </section>
+
+          <section className="join-columns-section">
+            <h2 className="partners-growth-title">Grow with BlinkBite</h2>
+
+            <div className="feature-panel merchant-panel">
+              <img
+                src={merchantImage}
+                alt="Restaurant team preparing meals for delivery"
+              />
+              <div className="feature-panel-content">
+                <h4>Become a Merchant - Let's grow your business together!</h4>
+                <ul className="feature-points">
+                  <li>Add your menu to BlinkBite and enjoy more orders with fast delivery support.</li>
+                  <li>Reach more customers and increase visibility across your city.</li>
+                  <li>Get clear insights on popular menu items and order trends.</li>
+                </ul>
+                <button type="button" className="btn btn-outline-dark">Join Us</button>
+              </div>
+            </div>
+
+            <div className="feature-panel courier-panel reverse-panel">
+              <img
+                src={courierImage}
+                alt="BlinkBite courier delivering an order"
+              />
+              <div className="feature-panel-content">
+                <h4>Earn flexibly as a courier</h4>
+                <ul className="feature-points">
+                  <li>Choose your schedule and deliver when it works for you.</li>
+                  <li>Increase your income with each completed delivery.</li>
+                  <li>Move through the city with easy, reliable task flow.</li>
+                </ul>
+                <button type="button" className="btn btn-outline-dark">Join Us</button>
+              </div>
+            </div>
+
+            <div className="feature-panel community-panel">
+              <img
+                src={communityImage}
+                alt="Friends sharing food together"
+              />
+              <div className="feature-panel-content">
+                <h4>Build a stronger local community</h4>
+                <ul className="feature-points">
+                  <li>Connect people with local restaurants they love.</li>
+                  <li>Support neighborhood businesses with every order.</li>
+                  <li>Create shared moments through food, speed, and convenience.</li>
+                </ul>
+                <button type="button" className="btn btn-outline-dark">Join Us</button>
+              </div>
+            </div>
+          </section>
+
+          <section className="slogan-carousel-section" aria-label="BlinkBite slogans">
+            <div className="slogan-carousel-track">
+              <span>Let's grow your business together.</span>
+              <span>Become a courier and earn on the move.</span>
+              <span>Discover. Enjoy. Share BlinkBite.</span>
+              <span>Join BlinkBite - where flavor meets speed.</span>
+              <span>Let's grow your business together.</span>
+              <span>Become a courier and earn on the move.</span>
+              <span>Discover. Enjoy. Share BlinkBite.</span>
+              <span>Join BlinkBite - where flavor meets speed.</span>
             </div>
           </section>
 
