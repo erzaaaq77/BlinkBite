@@ -9,6 +9,9 @@ function BranchMenuPage({
   error,
   onBackToBranches,
   onBackHome,
+  onAddToCart,
+  onOpenCart,
+  cartCount,
 }) {
   const displayRestaurantName = restaurant?.name || "Restaurant";
   const hasBranch = Boolean(branch);
@@ -74,6 +77,12 @@ function BranchMenuPage({
   };
 
   const productTotal = selectedItem ? Number(selectedItem.price || 0) * selectedQuantity : 0;
+
+  const handleAddSelectedItem = () => {
+    if (!selectedItem || !onAddToCart) return;
+    onAddToCart(selectedItem, selectedQuantity);
+    closeProductPopup();
+  };
 
   const tryNextImageCandidate = (event, candidates = [], finalFallback = "") => {
     const img = event.currentTarget;
@@ -162,8 +171,14 @@ function BranchMenuPage({
             <section className="restaurant-menu">
               <div className="d-flex justify-content-between align-items-center mb-3">
                 <h4 className="mb-0">Menu</h4>
-                <button type="button" className="btn btn-primary" disabled={!branch.acceptsOrders || !branch.isActive}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  disabled={!branch.acceptsOrders || !branch.isActive}
+                  onClick={() => onOpenCart?.()}
+                >
                   {!branch.isActive || !branch.acceptsOrders ? "Ordering unavailable" : "Start Order"}
+                  {branch.isActive && branch.acceptsOrders ? ` (${cartCount || 0})` : ""}
                 </button>
               </div>
 
@@ -306,6 +321,7 @@ function BranchMenuPage({
                         type="button"
                         className="btn btn-primary product-quickview-order-btn"
                         disabled={!selectedItem.available || !branch?.isActive || !branch?.acceptsOrders}
+                        onClick={handleAddSelectedItem}
                       >
                         {!selectedItem.available || !branch?.isActive || !branch?.acceptsOrders
                           ? "Ordering unavailable"

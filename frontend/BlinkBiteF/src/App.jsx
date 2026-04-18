@@ -9,6 +9,7 @@ import locationImage from "./assets/location.png";
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
 const NEARBY_COORDS_KEY = "nearby_coords";
+const ORDER_CART_KEY = "blinkbite_cart_v1";
 const HomePage = lazy(() => import("./components/HomePage.jsx"));
 const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
 const RestaurantDetailsPage = lazy(() => import("./components/RestaurantDetailsPage.jsx"));
@@ -19,6 +20,19 @@ function App() {
   const searchInputRef = useRef(null);
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
+    if (hash.startsWith("#/cart")) {
+      const queryString = hash.includes("?") ? hash.split("?")[1] : "";
+      const params = new URLSearchParams(queryString);
+      const restaurantParam = Number(params.get("restaurantId"));
+      const branchParam = params.get("branchId") || "";
+      return {
+        page: "cart",
+        category: "",
+        restaurantId: Number.isFinite(restaurantParam) ? restaurantParam : null,
+        branchId: decodeURIComponent(branchParam),
+      };
+    }
+
     if (hash.startsWith("#/restaurant/") && hash.includes("/branch/")) {
       const afterPrefix = hash.replace("#/restaurant/", "");
       const [rawRestaurantId, rawBranchId] = afterPrefix.split("/branch/");
@@ -82,6 +96,12 @@ function App() {
   const [search, setSearch] = useState("");
   const [searchInputUnlocked, setSearchInputUnlocked] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [cartItems, setCartItems] = useState([]);
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("1");
+  const [orderNotes, setOrderNotes] = useState("");
+  const [orderSubmitting, setOrderSubmitting] = useState(false);
+  const [orderMessage, setOrderMessage] = useState("");
 
   const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
   const [token, setToken] = useState(getStoredToken());
@@ -118,15 +138,15 @@ function App() {
       if (described.length > 0) return described.join(" ");
     }
 
-    if (payload.message) return payload.message;
-    if (payload.title) return payload.title;
-
     if (payload.errors && typeof payload.errors === "object") {
       const messages = Object.values(payload.errors)
         .flat()
         .filter(Boolean);
       if (messages.length > 0) return messages.join(" ");
     }
+
+    if (payload.message) return payload.message;
+    if (payload.title) return payload.title;
 
     return fallbackMessage;
   };
@@ -229,6 +249,218 @@ function App() {
   const toAbsoluteAssetUrl = (pathOrUrl) => {
     const candidates = getAssetUrlCandidates(pathOrUrl);
     return candidates[0] || "";
+  };
+
+  const loadCartFromStorage = () => {
+    try {
+      const raw = localStorage.getItem(ORDER_CART_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      if (!Array.isArray(parsed)) return [];
+      return parsed;
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
+  const cartSubtotal = cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const cartDeliveryFee = Number(restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.deliveryFee || 0);
+  const cartTotal = cartSubtotal + cartDeliveryFee;
+
+  const addToCart = (menuItem, quantity) => {
+    if (!menuItem || !activeRestaurantId || !activeBranchId) return;
+    const nextQty = Math.max(1, Number(quantity || 1));
+
+    setCartItems((current) => {
+      const idx = current.findIndex(
+        (entry) =>
+          String(entry.menuItemId) === String(menuItem.id) &&
+          String(entry.branchId) === String(activeBranchId) &&
+          String(entry.restaurantId) === String(activeRestaurantId)
+      );
+
+      if (idx >= 0) {
+        const updated = [...current];
+        updated[idx] = {
+          ...updated[idx],
+          quantity: Number(updated[idx].quantity || 0) + nextQty,
+        };
+        return updated;
+      }
+
+      return [
+        ...current,
+        {
+          menuItemId: menuItem.id,
+          name: menuItem.name || "Item",
+          price: Number(menuItem.price || 0),
+          image: menuItem.image || "",
+          quantity: nextQty,
+          restaurantId: activeRestaurantId,
+          restaurantName: selectedRestaurant?.name || "Restaurant",
+          branchId: activeBranchId,
+          branchAddress: restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.address || "",
+        },
+      ];
+    });
+
+    setOrderMessage("");
+  };
+
+  const updateCartItemQuantity = (targetItem, quantity) => {
+    const nextQty = Math.max(1, Number(quantity || 1));
+    setCartItems((current) =>
+      current.map((item) =>
+        String(item.menuItemId) === String(targetItem.menuItemId) &&
+        String(item.branchId) === String(targetItem.branchId) &&
+        String(item.restaurantId) === String(targetItem.restaurantId)
+          ? { ...item, quantity: nextQty }
+          : item
+      )
+    );
+    setOrderMessage("");
+  };
+
+  const removeCartItem = (targetItem) => {
+    setCartItems((current) =>
+      current.filter(
+        (item) =>
+          !(
+            String(item.menuItemId) === String(targetItem.menuItemId) &&
+            String(item.branchId) === String(targetItem.branchId) &&
+            String(item.restaurantId) === String(targetItem.restaurantId)
+          )
+      )
+    );
+    setOrderMessage("");
+  };
+
+  const openCartPage = () => {
+    const params = new URLSearchParams();
+    if (activeRestaurantId) params.set("restaurantId", String(activeRestaurantId));
+    if (activeBranchId) params.set("branchId", String(activeBranchId));
+    const query = params.toString();
+    window.location.hash = query ? `/cart?${query}` : "/cart";
+  };
+
+  const normalizeAddressForBackend = (rawAddress) => {
+    const base = String(rawAddress || "").trim();
+    if (!base) return "";
+
+    const withoutDiacritics = base
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "");
+
+    const allowedOnly = withoutDiacritics
+      .replace(/[^a-zA-Z0-9\s,.-]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    return allowedOnly;
+  };
+
+  const handleSubmitOrder = async () => {
+    setOrderMessage("");
+
+    if (!token) {
+      setOrderMessage("Please login first to place an order.");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setOrderMessage("Your cart is empty.");
+      return;
+    }
+
+    if (!deliveryAddress.trim()) {
+      setOrderMessage("Please enter delivery address.");
+      return;
+    }
+
+    const normalizedDeliveryAddress = normalizeAddressForBackend(deliveryAddress);
+    if (normalizedDeliveryAddress.length < 5) {
+      setOrderMessage("Please enter a more specific delivery address.");
+      return;
+    }
+
+    const referenceItem = cartItems[0];
+    const sameRestaurant = cartItems.every((item) => String(item.restaurantId) === String(referenceItem.restaurantId));
+    if (!sameRestaurant) {
+      setOrderMessage("Cart currently supports items from one restaurant only.");
+      return;
+    }
+
+    const resolvedUserId =
+      currentUser?.id ??
+      currentUser?.Id ??
+      currentUser?.userId ??
+      currentUser?.UserId ??
+      "";
+
+    const payload = {
+      UserId: String(resolvedUserId || ""),
+      RestaurantId: Number(referenceItem.restaurantId),
+      AdresaDorezimit: normalizedDeliveryAddress,
+      TarifaDorezimit: Number(cartDeliveryFee || 0),
+      Zbritja: 0,
+      MetodaPageses: Number(paymentMethod),
+      Shenimet: orderNotes.trim(),
+      ShumaTotale: Number(cartTotal.toFixed(2)),
+      OrderItems: cartItems.map((item) => ({
+        MenuItemId: Number(item.menuItemId),
+        Sasia: Number(item.quantity),
+        Cmimi: Number(item.price),
+        Shenimet: "",
+      })),
+    };
+
+    setOrderSubmitting(true);
+    try {
+      const res = await authenticatedFetch(`${API_BASE}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      let data = null;
+      let rawBody = "";
+      try {
+        rawBody = await res.text();
+        if (rawBody) {
+          data = JSON.parse(rawBody);
+        }
+      } catch {
+        data = null;
+      }
+
+      if (!res.ok) {
+        const fallback = `Could not place order right now (HTTP ${res.status}).`;
+        console.error("Order submit failed", { status: res.status, data, rawBody });
+        setOrderMessage(extractErrorMessage(data, fallback));
+        return;
+      }
+
+      const createdOrderId = data?.id ?? data?.Id ?? "";
+      const addressAdjusted = normalizedDeliveryAddress !== deliveryAddress.trim();
+      setOrderMessage(
+        `Order placed successfully${createdOrderId ? ` (#${createdOrderId})` : ""}!${addressAdjusted ? " Address was normalized for validation." : ""}`
+      );
+      clearCart();
+      setOrderNotes("");
+      if (!addressStreet && !addressCity) {
+        setDeliveryAddress("");
+      }
+    } catch (err) {
+      console.error(err);
+      setOrderMessage("Could not place order right now.");
+    } finally {
+      setOrderSubmitting(false);
+    }
   };
 
   const fetchCategories = async () => {
@@ -791,14 +1023,15 @@ function App() {
   };
 
   const handleLogout = async () => {
-    // Do UI reset immediately so logout feels instant.
     persistToken("");
     setCurrentUser(null);
     setLoginUsername("");
     setLoginPassword("");
     setLoginMessage("");
     setSignupMessage("");
+    clearCart();
     setCartCount(0);
+    setOrderMessage("");
     setSearch("");
     setSelectedCategory("");
     setRestaurants([]);
@@ -861,7 +1094,6 @@ function App() {
     const modalInstance = window.bootstrap?.Modal.getInstance(el);
     if (modalInstance) {
       modalInstance.hide();
-      // Bootstrap hide animation can leave stale body styles in edge cases.
       window.setTimeout(resetModalUiState, 200);
     } else {
       el.classList.remove("show");
@@ -884,6 +1116,25 @@ function App() {
     fetchCategories();
     if (token) fetchCurrentUser();
   }, [token]);
+
+  useEffect(() => {
+    const stored = loadCartFromStorage();
+    setCartItems(stored);
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(ORDER_CART_KEY, JSON.stringify(cartItems));
+    const totalQty = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+    setCartCount(totalQty);
+  }, [cartItems]);
+
+  useEffect(() => {
+    if (deliveryAddress) return;
+    const combinedAddress = [addressStreet, addressCity, addressCountry].filter(Boolean).join(", ");
+    if (combinedAddress) {
+      setDeliveryAddress(combinedAddress);
+    }
+  }, [addressStreet, addressCity, addressCountry, deliveryAddress]);
 
   useEffect(() => {
     const scrubAutofilledEmail = () => {
@@ -921,6 +1172,13 @@ function App() {
         }
 
         window.location.hash = "/";
+        return;
+      }
+
+      if (route.page === "cart") {
+        if (route.restaurantId) {
+          await fetchRestaurantDetails(route.restaurantId);
+        }
         return;
       }
 
@@ -1044,7 +1302,7 @@ function App() {
               </ul>
             </div>
 
-            <button className="btn position-relative">
+            <button className="btn position-relative" onClick={openCartPage}>
               <i className="bi bi-cart3 fs-5"></i>
               <span className="cart-badge">{cartCount || 0}</span>
             </button>
@@ -1258,6 +1516,9 @@ function App() {
             offers={restaurantOffers}
             loading={restaurantDetailsLoading}
             error={restaurantDetailsError}
+            onAddToCart={addToCart}
+            onOpenCart={openCartPage}
+            cartCount={cartCount}
             onBackToBranches={() => {
               if (activeRestaurantId) {
                 window.location.hash = `/restaurant/${activeRestaurantId}`;
@@ -1275,6 +1536,149 @@ function App() {
               window.location.hash = "/";
             }}
           />
+        )}
+
+        {page === "cart" && (
+          <section className="container cart-page pb-5">
+            <div className="mb-4 restaurants-back-wrap d-flex gap-2 flex-wrap">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  if (activeRestaurantId && activeBranchId) {
+                    window.location.hash = `/restaurant/${activeRestaurantId}/branch/${encodeURIComponent(activeBranchId)}`;
+                    return;
+                  }
+                  if (activeRestaurantId) {
+                    window.location.hash = `/restaurant/${activeRestaurantId}`;
+                    return;
+                  }
+                  window.location.hash = "/";
+                }}
+              >
+                <i className="bi bi-arrow-left me-2"></i>Back
+              </button>
+            </div>
+
+            <h2 className="mb-3">Your Order</h2>
+
+            {orderMessage && (
+              <div className={`alert ${orderMessage.toLowerCase().includes("success") ? "alert-success" : "alert-warning"}`}>
+                {orderMessage}
+              </div>
+            )}
+
+            <div className="row g-4">
+              <div className="col-lg-8">
+                <div className="restaurant-menu">
+                  <h5 className="mb-3">Cart Items ({cartCount})</h5>
+                  {cartItems.length === 0 ? (
+                    <p className="text-muted mb-0">Cart is empty. Add products from the menu.</p>
+                  ) : (
+                    <div className="d-flex flex-column gap-3">
+                      {cartItems.map((item) => (
+                        <div className="menu-item-card" key={`${item.menuItemId}-${item.branchId}`}>
+                          <div className="d-flex justify-content-between align-items-start gap-3">
+                            <div>
+                              <h6 className="mb-1">{item.name}</h6>
+                              <p className="small text-muted mb-1">{item.restaurantName}</p>
+                              {item.branchAddress && <p className="small text-muted mb-2">{item.branchAddress}</p>}
+                              <div className="small fw-semibold">EUR {Number(item.price || 0).toFixed(2)}</div>
+                            </div>
+
+                            <div className="d-flex align-items-center gap-2">
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm"
+                                onClick={() => updateCartItemQuantity(item, Number(item.quantity || 1) - 1)}
+                              >
+                                -
+                              </button>
+                              <span className="fw-semibold">{item.quantity}</span>
+                              <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm"
+                                onClick={() => updateCartItemQuantity(item, Number(item.quantity || 1) + 1)}
+                              >
+                                +
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={() => removeCartItem(item)}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="col-lg-4">
+                <div className="restaurant-menu cart-summary-sticky">
+                  <h5 className="mb-3">Checkout</h5>
+
+                  <div className="mb-3">
+                    <label className="form-label">Delivery Address</label>
+                    <textarea
+                      className="form-control"
+                      rows="3"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Street, city, country"
+                    ></textarea>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Payment Method</label>
+                    <select className="form-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                      <option value="1">Cash</option>
+                      <option value="2">Credit Card</option>
+                      <option value="3">PayPal</option>
+                      <option value="4">Online</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-3">
+                    <label className="form-label">Order Notes (optional)</label>
+                    <textarea
+                      className="form-control"
+                      rows="2"
+                      value={orderNotes}
+                      onChange={(e) => setOrderNotes(e.target.value)}
+                      placeholder="No onion, extra spicy..."
+                    ></textarea>
+                  </div>
+
+                  <div className="d-flex justify-content-between mb-1 small">
+                    <span>Subtotal</span>
+                    <strong>EUR {cartSubtotal.toFixed(2)}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between mb-2 small">
+                    <span>Delivery</span>
+                    <strong>EUR {cartDeliveryFee.toFixed(2)}</strong>
+                  </div>
+                  <div className="d-flex justify-content-between mb-3">
+                    <span className="fw-semibold">Total</span>
+                    <strong>EUR {cartTotal.toFixed(2)}</strong>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="btn btn-primary w-100"
+                    disabled={orderSubmitting || cartItems.length === 0}
+                    onClick={handleSubmitOrder}
+                  >
+                    {orderSubmitting ? "Placing order..." : "Place Order"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
         )}
       </Suspense>
     </>

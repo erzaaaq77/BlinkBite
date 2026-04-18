@@ -212,12 +212,20 @@ public class OrdersController : ControllerBase
     [Authorize(Roles ="Customer")]
     public async Task<ActionResult<Orders>> CreateOrder(Orders order)
     {
-        
-        var userId= User.FindFirst(ClaimTypes.NameIdentifier)?.Value;  
+        var userId =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+            User.FindFirst("sub")?.Value ??
+            User.FindFirst("id")?.Value ??
+            User.FindFirst("userId")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId) && string.IsNullOrWhiteSpace(order.UserId))
+        {
+            return Unauthorized("User identity is missing for this order.");
+        }
 
         order.DataPorosis = DateTime.Now;
         order.Statusi = OrderStatus.Pending;
-        order.UserId = userId;
+        order.UserId = !string.IsNullOrWhiteSpace(userId) ? userId : order.UserId;
 
         var restaurant = await _context.Restaurants.FindAsync(order.RestaurantId);
         if(restaurant==null)
@@ -232,12 +240,29 @@ public class OrdersController : ControllerBase
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
-        var createdOrder = await _context.Orders
-            .Include(o => o.Restaurant)
-            .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.Id == order.Id);
+        var createdOrderResponse = new
+        {
+            id = order.Id,
+            userId = order.UserId,
+            restaurantId = order.RestaurantId,
+            adresaDorezimit = order.AdresaDorezimit,
+            shumaTotale = order.ShumaTotale,
+            tarifaDorezimit = order.TarifaDorezimit,
+            zbritja = order.Zbritja,
+            statusi = order.Statusi.ToString(),
+            metodaPageses = order.MetodaPageses.ToString(),
+            dataPorosis = order.DataPorosis,
+            shenimet = order.Shenimet,
+            orderItems = order.OrderItems.Select(oi => new
+            {
+                menuItemId = oi.MenuItemId,
+                sasia = oi.Sasia,
+                cmimi = oi.Cmimi,
+                shenimet = oi.Shenimet,
+            }).ToList(),
+        };
 
-        return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, createdOrder);
+        return CreatedAtAction(nameof(GetOrder), new { id = order.Id }, createdOrderResponse);
     }
 
     [HttpPut("{id}/status")]
