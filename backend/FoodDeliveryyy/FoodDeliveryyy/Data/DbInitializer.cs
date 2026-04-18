@@ -21,7 +21,7 @@ public static class DbInitializer
 
         await context.Database.MigrateAsync();
 
-        var roles = new[] { "Admin", "Merchant", "Courier", "Customer" };
+        var roles = new[] { AppRoles.Admin, AppRoles.Merchant, AppRoles.Courier, AppRoles.Customer };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -30,6 +30,9 @@ public static class DbInitializer
                 Console.WriteLine($"Role {role} created ✅");
             }
         }
+
+        await MigrateLegacyRoleAsync(roleManager, userManager, AppRoles.LegacyRestaurantOwner, AppRoles.Merchant);
+        await MigrateLegacyRoleAsync(roleManager, userManager, AppRoles.LegacyDriver, AppRoles.Courier);
 
         var adminUser = await userManager.FindByNameAsync("admin");
         if (adminUser == null)
@@ -43,7 +46,7 @@ public static class DbInitializer
             var result = await userManager.CreateAsync(admin, "Admin@1234");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(admin, "Admin");
+                await userManager.AddToRoleAsync(admin, AppRoles.Admin);
                 adminUser = admin;
                 Console.WriteLine("Admin user created ");
             }
@@ -61,7 +64,7 @@ public static class DbInitializer
             var result = await userManager.CreateAsync(merchant, "Merchant@1234");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(merchant, "Merchant");
+                await userManager.AddToRoleAsync(merchant, AppRoles.Merchant);
                 merchantUser = merchant;
                 Console.WriteLine("Merchant user created ");
             }
@@ -79,7 +82,7 @@ public static class DbInitializer
             var result = await userManager.CreateAsync(courier, "Courier@1234");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(courier, "Courier");
+                await userManager.AddToRoleAsync(courier, AppRoles.Courier);
                 courierUser = courier;
                 Console.WriteLine("Courier user created ");
             }
@@ -97,7 +100,7 @@ public static class DbInitializer
             var result = await userManager.CreateAsync(customer, "Customer@1234");
             if (result.Succeeded)
             {
-                await userManager.AddToRoleAsync(customer, "Customer");
+                await userManager.AddToRoleAsync(customer, AppRoles.Customer);
                 customerUser = customer;
                 Console.WriteLine("Customer user created ");
             }
@@ -10994,6 +10997,37 @@ public static class DbInitializer
 
 
         }
-    }
 
-    
+    private static async Task MigrateLegacyRoleAsync(
+        RoleManager<Role> roleManager,
+        UserManager<User> userManager,
+        string legacyRole,
+        string targetRole)
+    {
+        if (!await roleManager.RoleExistsAsync(legacyRole))
+        {
+            return;
+        }
+
+        var legacyUsers = await userManager.GetUsersInRoleAsync(legacyRole);
+        foreach (var user in legacyUsers)
+        {
+            if (!await userManager.IsInRoleAsync(user, targetRole))
+            {
+                await userManager.AddToRoleAsync(user, targetRole);
+            }
+
+            await userManager.RemoveFromRoleAsync(user, legacyRole);
+        }
+
+        var legacyRoleEntity = await roleManager.FindByNameAsync(legacyRole);
+        if (legacyRoleEntity != null)
+        {
+            await roleManager.DeleteAsync(legacyRoleEntity);
+        }
+
+        Console.WriteLine($"Migrated legacy role '{legacyRole}' to '{targetRole}'");
+    }
+}
+
+

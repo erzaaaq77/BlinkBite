@@ -1,15 +1,15 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
 import logo from "./assets/LogoBB.png";
 import locationImage from "./assets/location.png";
-import merchantImage from "./assets/Merchant.png";
-import courierImage from "./assets/Courier.png";
-import communityImage from "./assets/Community.png";
 
 const API_BASE = "http://localhost:5063/api";
+const ACCESS_TOKEN_KEY = "access_token";
+const HomePage = lazy(() => import("./components/HomePage.jsx"));
+const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
 
 function App() {
   const categoriesSliderRef = useRef(null);
@@ -39,7 +39,8 @@ function App() {
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
 
-  const [token, setToken] = useState(localStorage.getItem("token") || "");
+  const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+  const [token, setToken] = useState(getStoredToken());
   const [currentUser, setCurrentUser] = useState(null);
 
   const [loginMessage, setLoginMessage] = useState("");
@@ -61,10 +62,90 @@ function App() {
     (r.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
-  const authHeaders = () => {
-    const headers = { "Content-Type": "application/json" };
-    if (token) headers["Authorization"] = `Bearer ${token}`;
-    return headers;
+  const extractErrorMessage = (payload, fallbackMessage) => {
+    if (!payload) return fallbackMessage;
+
+    if (typeof payload === "string") return payload;
+
+    if (Array.isArray(payload)) {
+      const described = payload
+        .map((item) => item?.description || item?.Description || item?.message || item?.Message)
+        .filter(Boolean);
+      if (described.length > 0) return described.join(" ");
+    }
+
+    if (payload.message) return payload.message;
+    if (payload.title) return payload.title;
+
+    if (payload.errors && typeof payload.errors === "object") {
+      const messages = Object.values(payload.errors)
+        .flat()
+        .filter(Boolean);
+      if (messages.length > 0) return messages.join(" ");
+    }
+
+    return fallbackMessage;
+  };
+
+  const persistToken = (nextToken) => {
+    if (nextToken) {
+      localStorage.setItem(ACCESS_TOKEN_KEY, nextToken);
+      setToken(nextToken);
+      return;
+    }
+
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+    setToken("");
+  };
+
+  const refreshAccessToken = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        persistToken("");
+        return false;
+      }
+
+      const data = await res.json();
+      if (!data?.token) {
+        persistToken("");
+        return false;
+      }
+
+      persistToken(data.token);
+      return true;
+    } catch (err) {
+      console.error(err);
+      persistToken("");
+      return false;
+    }
+  };
+
+  const authenticatedFetch = async (url, options = {}, canRetry = true) => {
+    const headers = { ...(options.headers || {}) };
+    const currentToken = getStoredToken();
+    if (currentToken) {
+      headers.Authorization = `Bearer ${currentToken}`;
+    }
+
+    const res = await fetch(url, {
+      ...options,
+      headers,
+      credentials: "include",
+    });
+
+    if (res.status === 401 && canRetry) {
+      const refreshed = await refreshAccessToken();
+      if (refreshed) {
+        return authenticatedFetch(url, options, false);
+      }
+    }
+
+    return res;
   };
 
   const toAbsoluteAssetUrl = (pathOrUrl) => {
@@ -78,7 +159,7 @@ function App() {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`${API_BASE}/restaurants/kategori`, { headers: authHeaders() });
+      const res = await authenticatedFetch(`${API_BASE}/restaurants/kategori`);
       if (!res.ok) throw new Error("Failed to load categories");
       const data = await res.json();
       const normalizedCategories = (data || []).map((cat) => {
@@ -104,9 +185,7 @@ function App() {
   const fetchRestaurantsByCategory = async (categoryName) => {
     setRestaurantsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/restaurants/bykategori/${encodeURIComponent(categoryName)}`, {
-        headers: authHeaders(),
-      });
+      const res = await authenticatedFetch(`${API_BASE}/restaurants/bykategori/${encodeURIComponent(categoryName)}`);
       if (!res.ok) throw new Error("Failed to load restaurants by category");
       const data = await res.json();
 
@@ -131,9 +210,7 @@ function App() {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/auth/me`, {
-        headers: authHeaders(),
-      });
+      const res = await authenticatedFetch(`${API_BASE}/auth/me`);
       if (!res.ok) {
         setCurrentUser(null);
         return;
@@ -148,20 +225,34 @@ function App() {
 
   const handleSignup = async () => {
     setSignupMessage("");
+    const normalizedUsername = signupUsername.trim();
+    const normalizedEmail = signupEmail.trim();
+
+    if (!normalizedUsername || !normalizedEmail || !signupPassword) {
+      setSignupMessage("Please fill all signup fields.");
+      return;
+    }
+
+    if (signupPassword.length < 6) {
+      setSignupMessage("Password should be at least 6 characters.");
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          username: signupUsername,
-          email: signupEmail,
+          username: normalizedUsername,
+          email: normalizedEmail,
           password: signupPassword,
           role: "Customer",
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setSignupMessage(data?.title || JSON.stringify(data) || "Signup failed");
+        setSignupMessage(extractErrorMessage(data, "Signup failed"));
         return;
       }
       setSignupMessage("Signup successful! You can now login.");
@@ -180,23 +271,30 @@ function App() {
 
   const handleLogin = async () => {
     setLoginMessage("");
+    const normalizedCredential = loginUsername.trim();
+
+    if (!normalizedCredential || !loginPassword) {
+      setLoginMessage("Please enter username/email and password.");
+      return;
+    }
+
     try {
       const res = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
-          username: loginUsername,
+          username: normalizedCredential,
           password: loginPassword,
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       if (!res.ok) {
-        setLoginMessage(data?.message || "Login failed. Check your credentials.");
+        setLoginMessage(extractErrorMessage(data, "Login failed. Check your credentials."));
         return;
       }
       if (data.token) {
-        localStorage.setItem("token", data.token);
-        setToken(data.token);
+        persistToken(data.token);
         setLoginMessage("Login successful! Welcome back 👋");
         setTimeout(async () => {
           closeModal("#loginModal");
@@ -220,9 +318,17 @@ function App() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setToken("");
+  const handleLogout = async () => {
+    try {
+      await fetch(`${API_BASE}/auth/revoke`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error(err);
+    }
+
+    persistToken("");
     setCurrentUser(null);
     setLoginUsername("");
     setLoginPassword("");
@@ -233,9 +339,9 @@ function App() {
 
   const handleSaveAddress = async () => {
     try {
-      const res = await fetch(`${API_BASE}/addresses`, {
+      const res = await authenticatedFetch(`${API_BASE}/addresses`, {
         method: "POST",
-        headers: authHeaders(),
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           Country: addressCountry,
           City: addressCity,
@@ -282,7 +388,7 @@ function App() {
   useEffect(() => {
     fetchCategories();
     if (token) fetchCurrentUser();
-  }, []);
+  }, [token]);
 
   useEffect(() => {
     const syncRouteFromHash = async () => {
@@ -515,235 +621,24 @@ function App() {
         </div>
       </div>
 
-      {page === "home" && (
-        <div className="home-page-shell">
-          {/* HERO */}
-          <section className="hero">
-            <h1>Order your favorite food instantly</h1>
-            <p>Fast, simple and modern food delivery</p>
-            <div className="hero-search">
-              <input placeholder="Enter your address..." />
-              <button>Find Food</button>
-            </div>
-          </section>
+      <Suspense fallback={<div className="text-center py-5">Loading page...</div>}>
+        {page === "home" && (
+          <HomePage
+            categories={categories}
+            selectedCategory={selectedCategory}
+            categoriesSliderRef={categoriesSliderRef}
+            scrollCategories={scrollCategories}
+          />
+        )}
 
-          {/* CATEGORIES */}
-          <section className="container py-5 text-center categories">
-            <h2 className="text-center mb-3">Categories</h2>
-            <div className="categories-slider-wrap">
-              <button
-                type="button"
-                className="slider-arrow slider-arrow-left"
-                onClick={() => scrollCategories("left")}
-                aria-label="Scroll categories left"
-              >
-                <i className="bi bi-chevron-left"></i>
-              </button>
-
-              <div className="categories-row" ref={categoriesSliderRef}>
-                {categories.length === 0 ? (
-                  <p>Loading categories...</p>
-                ) : (
-                  categories.map((cat, index) => {
-                    const catName = typeof cat === "string" ? cat : cat?.name || "Category";
-                    const catImage =
-                      typeof cat === "object" && cat?.image
-                        ? cat.image
-                        : `https://source.unsplash.com/300x200/?${encodeURIComponent(catName)}`;
-
-                    return (
-                      <div
-                        key={typeof cat === "object" ? cat?.id || catName || index : catName || index}
-                        className={`category-card ${selectedCategory === catName ? "active-category" : ""}`}
-                        style={{
-                          flex: "1",
-                          backgroundImage: `url(${catImage})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }}
-                        onClick={() => {
-                          window.location.hash = `/restaurants/${encodeURIComponent(catName)}`;
-                        }}
-                      >
-                        <span>{catName}</span>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              <button
-                type="button"
-                className="slider-arrow slider-arrow-right"
-                onClick={() => scrollCategories("right")}
-                aria-label="Scroll categories right"
-              >
-                <i className="bi bi-chevron-right"></i>
-              </button>
-            </div>
-          </section>
-
-          <section className="join-columns-section">
-            <h2 className="partners-growth-title">Grow with BlinkBite</h2>
-
-            <div className="feature-panel merchant-panel">
-              <img
-                src={merchantImage}
-                alt="Restaurant team preparing meals for delivery"
-              />
-              <div className="feature-panel-content">
-                <h4>Become a Merchant - Let's grow your business together!</h4>
-                <ul className="feature-points">
-                  <li>Add your menu to BlinkBite and enjoy more orders with fast delivery support.</li>
-                  <li>Reach more customers and increase visibility across your city.</li>
-                  <li>Get clear insights on popular menu items and order trends.</li>
-                </ul>
-                <button type="button" className="btn btn-outline-dark">Join Us</button>
-              </div>
-            </div>
-
-            <div className="feature-panel courier-panel reverse-panel">
-              <img
-                src={courierImage}
-                alt="BlinkBite courier delivering an order"
-              />
-              <div className="feature-panel-content">
-                <h4>Earn flexibly as a courier</h4>
-                <ul className="feature-points">
-                  <li>Choose your schedule and deliver when it works for you.</li>
-                  <li>Increase your income with each completed delivery.</li>
-                  <li>Move through the city with easy, reliable task flow.</li>
-                </ul>
-                <button type="button" className="btn btn-outline-dark">Join Us</button>
-              </div>
-            </div>
-
-            <div className="feature-panel community-panel">
-              <img
-                src={communityImage}
-                alt="Friends sharing food together"
-              />
-              <div className="feature-panel-content">
-                <h4>Build a stronger local community</h4>
-                <ul className="feature-points">
-                  <li>Connect people with local restaurants they love.</li>
-                  <li>Support neighborhood businesses with every order.</li>
-                  <li>Create shared moments through food, speed, and convenience.</li>
-                </ul>
-                <button type="button" className="btn btn-outline-dark">Join Us</button>
-              </div>
-            </div>
-          </section>
-
-          <section className="slogan-carousel-section" aria-label="BlinkBite slogans">
-            <div className="slogan-carousel-track">
-              <span>Let's grow your business together.</span>
-              <span>Become a courier and earn on the move.</span>
-              <span>Discover. Enjoy. Share BlinkBite.</span>
-              <span>Join BlinkBite - where flavor meets speed.</span>
-              <span>Let's grow your business together.</span>
-              <span>Become a courier and earn on the move.</span>
-              <span>Discover. Enjoy. Share BlinkBite.</span>
-              <span>Join BlinkBite - where flavor meets speed.</span>
-            </div>
-          </section>
-
-          <footer className="restaurants-footer mt-auto">
-            <div className="container py-4">
-              <div className="row g-3 align-items-start text-start">
-                <div className="col-md-4">
-                  <h6 className="mb-2">BlinkBite</h6>
-                  <p className="mb-0 small">Fast, simple and modern food delivery platform for your daily cravings and favorite local restaurants.</p>
-                </div>
-                <div className="col-md-4">
-                  <h6 className="mb-2">Quick Links</h6>
-                  <p className="mb-1 small">Categories</p>
-                  <p className="mb-1 small">Top Restaurants</p>
-                  <p className="mb-0 small">Support & Help Center</p>
-                </div>
-                <div className="col-md-4">
-                  <h6 className="mb-2">Contact</h6>
-                  <p className="mb-1 small">Prishtina, Kosovo</p>
-                  <p className="mb-1 small">support@blinkbite.com</p>
-                  <p className="mb-0 small">+383 49 000 000</p>
-                </div>
-              </div>
-              <div className="pt-3 mt-3 border-top text-center small">
-                © {new Date().getFullYear()} BlinkBite. All rights reserved.
-              </div>
-            </div>
-          </footer>
-        </div>
-      )}
-
-      {/* RESTAURANTS */}
-      {page === "restaurants" && (
-        <div className="restaurants-page-shell">
-          <section className="container pb-5 restaurants-page">
-            <h2 className="text-center mb-3 restaurants-title">{selectedCategory ? `Restaurants - ${selectedCategory}` : "Restaurants"}</h2>
-
-            <div className="mb-4 restaurants-back-wrap">
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => {
-                  window.location.hash = "/";
-                }}
-              >
-                <i className="bi bi-arrow-left me-2"></i>Back to categories
-              </button>
-            </div>
-
-            {!selectedCategory ? (
-              <p className="text-center text-muted">Choose a category to load restaurants.</p>
-            ) : restaurantsLoading ? (
-              <p className="text-center text-muted">Loading restaurants...</p>
-            ) : filtered.length === 0 ? (
-              <p className="text-center text-muted">No restaurants found for this category.</p>
-            ) : (
-              <div className="row g-4">
-                {filtered.map((r) => (
-                  <div className="col-md-3 col-6" key={r.id}>
-                    <div className="restaurant-card">
-                      <img src={r.image || `https://source.unsplash.com/300x200/?${r.name}`} alt={r.name} />
-                      <div className="p-2">
-                        <h6>{r.name}</h6>
-                        <p className="text-muted small">⭐ 4.5 • 30 min • FREE</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          <footer className="restaurants-footer mt-auto">
-            <div className="container py-4">
-              <div className="row g-3 align-items-start text-start">
-                <div className="col-md-4">
-                  <h6 className="mb-2">BlinkBite</h6>
-                  <p className="mb-0 small">Fast, simple and modern food delivery platform for your daily cravings and favorite local restaurants.</p>
-                </div>
-                <div className="col-md-4">
-                  <h6 className="mb-2">Quick Links</h6>
-                  <p className="mb-1 small">Categories</p>
-                  <p className="mb-1 small">Top Restaurants</p>
-                  <p className="mb-0 small">Support & Help Center</p>
-                </div>
-                <div className="col-md-4">
-                  <h6 className="mb-2">Contact</h6>
-                  <p className="mb-1 small">Prishtina, Kosovo</p>
-                  <p className="mb-1 small">support@blinkbite.com</p>
-                  <p className="mb-0 small">+383 49 000 000</p>
-                </div>
-              </div>
-              <div className="pt-3 mt-3 border-top text-center small">
-                © {new Date().getFullYear()} BlinkBite. All rights reserved.
-              </div>
-            </div>
-          </footer>
-        </div>
-      )}
+        {page === "restaurants" && (
+          <RestaurantsPage
+            selectedCategory={selectedCategory}
+            restaurantsLoading={restaurantsLoading}
+            filtered={filtered}
+          />
+        )}
+      </Suspense>
     </>
   );
 }

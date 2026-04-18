@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.SignalR;
 using FoodDeliveryyy.Hubs;
+using FoodDeliveryyy.Models.Identity;
 
 
 namespace FoodDeliveryyy.Services;
@@ -42,16 +43,16 @@ public class OrderService : IOrderService
             return false;
         }
 
-        if (role == "RestaurantOwner" && order.Restaurant.UserId != userId)
+        if (role == AppRoles.Merchant && order.Restaurant.UserId != userId)
             return false;
 
         bool isValidTransition = (order.Statusi, newStatus) switch
         {
-            (OrderStatus.Pending, OrderStatus.Accepted) => role == "RestaurantOwner",
-            (OrderStatus.Accepted, OrderStatus.Preparing) => role == "RestaurantOwner",
-            (OrderStatus.Preparing, OrderStatus.Ready) => role == "RestaurantOwner",
-            (OrderStatus.Ready, OrderStatus.Delivered) => role == "Driver",
-            (_, OrderStatus.Cancelled) => role == "Customer" || role == "RestaurantOwner",
+            (OrderStatus.Pending, OrderStatus.Accepted) => role == AppRoles.Merchant,
+            (OrderStatus.Accepted, OrderStatus.Preparing) => role == AppRoles.Merchant,
+            (OrderStatus.Preparing, OrderStatus.Ready) => role == AppRoles.Merchant,
+            (OrderStatus.Ready, OrderStatus.Delivered) => role == AppRoles.Courier,
+            (_, OrderStatus.Cancelled) => role == AppRoles.Customer || role == AppRoles.Merchant,
             _ => false
         };
 

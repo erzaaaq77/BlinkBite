@@ -1,10 +1,13 @@
 using FoodDeliveryyy.Models.Identity;
+using FoodDeliveryyy.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using FoodDeliveryyy.Models.DTOs; 
@@ -17,41 +20,222 @@ namespace FoodDeliveryyy.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
+        private readonly RoleManager<Role> _roleManager;
         private readonly IConfiguration _configuration;
+        private readonly AppDbContext _context;
+        private readonly IWebHostEnvironment _environment;
 
-        public AuthController(UserManager<User> userManager, SignInManager<User> signInManager, IConfiguration configuration)
+        public AuthController(
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            RoleManager<Role> roleManager,
+            IConfiguration configuration,
+            AppDbContext context,
+            IWebHostEnvironment environment)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _roleManager = roleManager;
             _configuration = configuration;
+            _context = context;
+            _environment = environment;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
-            var user = new User { UserName = dto.Username, Email = dto.Email };
+            var username = dto.Username.Trim();
+            var email = dto.Email.Trim();
+            var role = AppRoles.Normalize(dto.Role);
+
+            if (await _userManager.FindByNameAsync(username) != null)
+            {
+                return BadRequest(new { message = "Username is already taken." });
+            }
+
+            if (await _userManager.FindByEmailAsync(email) != null)
+            {
+                return BadRequest(new { message = "Email is already registered." });
+            }
+
+            if (!await _roleManager.RoleExistsAsync(role))
+            {
+                role = AppRoles.Customer;
+                if (!await _roleManager.RoleExistsAsync(role))
+                {
+                    await _roleManager.CreateAsync(new Role { Name = role });
+                }
+            }
+
+            var user = new User { UserName = username, Email = email };
             var result = await _userManager.CreateAsync(user, dto.Password);
 
             if (!result.Succeeded) return BadRequest(result.Errors);
 
-            await _userManager.AddToRoleAsync(user, dto.Role);
+            var roleResult = await _userManager.AddToRoleAsync(user, role);
+            if (!roleResult.Succeeded)
+            {
+                await _userManager.DeleteAsync(user);
+                return BadRequest(roleResult.Errors);
+            }
+
             var roles = await _userManager.GetRolesAsync(user);
             var token = GenerateJwtToken(user, roles);
+            var refreshToken = CreateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+            SetRefreshTokenCookie(refreshToken.Token, refreshToken.Expires);
             return Ok(new { message = "User registered", userId = user.Id, token });
+        }
+
+        [HttpPost("admin/set-role")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<IActionResult> SetUserRole([FromBody] SetUserRoleDto dto)
+        {
+            var normalizedCredential = dto.UsernameOrEmail.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedCredential))
+            {
+                return BadRequest(new { message = "Username or email is required." });
+            }
+
+            var requestedRole = AppRoles.Normalize(dto.Role);
+            if (!await _roleManager.RoleExistsAsync(requestedRole))
+            {
+                return BadRequest(new { message = $"Role '{requestedRole}' does not exist." });
+            }
+
+            User? user;
+            if (normalizedCredential.Contains("@"))
+            {
+                user = await _userManager.FindByEmailAsync(normalizedCredential);
+            }
+            else
+            {
+                user = await _userManager.FindByNameAsync(normalizedCredential);
+            }
+
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (currentRoles.Any())
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                if (!removeResult.Succeeded)
+                {
+                    return BadRequest(removeResult.Errors);
+                }
+            }
+
+            var addResult = await _userManager.AddToRoleAsync(user, requestedRole);
+            if (!addResult.Succeeded)
+            {
+                return BadRequest(addResult.Errors);
+            }
+
+            return Ok(new
+            {
+                message = "User role updated.",
+                userId = user.Id,
+                userName = user.UserName,
+                role = requestedRole
+            });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var user = await _userManager.FindByNameAsync(dto.Username);
-            if (user == null) return Unauthorized();
+            var credential = dto.Username.Trim();
+            User? user;
+
+            if (credential.Contains("@"))
+            {
+                user = await _userManager.FindByEmailAsync(credential);
+            }
+            else
+            {
+                user = await _userManager.FindByNameAsync(credential);
+            }
+
+            if (user == null)
+            {
+                return Unauthorized(new { message = "Invalid username/email or password." });
+            }
 
             var result = await _signInManager.CheckPasswordSignInAsync(user, dto.Password, false);
-            if (!result.Succeeded) return Unauthorized();
+            if (!result.Succeeded)
+            {
+                return Unauthorized(new { message = "Invalid username/email or password." });
+            }
 
             var roles = await _userManager.GetRolesAsync(user);
             var token = GenerateJwtToken(user, roles);
+            var refreshToken = CreateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
+            SetRefreshTokenCookie(refreshToken.Token, refreshToken.Expires);
             return Ok(new { message = "Login successful", userId = user.Id, token });
+        }
+
+        [HttpPost("refresh")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Refresh()
+        {
+            var refreshTokenValue = Request.Cookies["refreshToken"];
+            if (string.IsNullOrWhiteSpace(refreshTokenValue))
+            {
+                return Unauthorized(new { message = "Refresh token is missing." });
+            }
+
+            var currentRefreshToken = await _context.RefreshTokens
+                .Include(rt => rt.User)
+                .FirstOrDefaultAsync(rt => rt.Token == refreshTokenValue);
+
+            if (currentRefreshToken == null || currentRefreshToken.Revoked != null || currentRefreshToken.Expires <= DateTime.UtcNow)
+            {
+                return Unauthorized(new { message = "Refresh token is invalid or expired." });
+            }
+
+            var user = currentRefreshToken.User ?? await _userManager.FindByIdAsync(currentRefreshToken.UserId);
+            if (user == null)
+            {
+                return Unauthorized(new { message = "User not found." });
+            }
+
+            currentRefreshToken.Revoked = DateTime.UtcNow;
+
+            var newRefreshToken = CreateRefreshToken(user.Id);
+            _context.RefreshTokens.Add(newRefreshToken);
+
+            var roles = await _userManager.GetRolesAsync(user);
+            var newAccessToken = GenerateJwtToken(user, roles);
+
+            await _context.SaveChangesAsync();
+            SetRefreshTokenCookie(newRefreshToken.Token, newRefreshToken.Expires);
+
+            return Ok(new { token = newAccessToken });
+        }
+
+        [HttpPost("revoke")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Revoke()
+        {
+            var refreshTokenValue = Request.Cookies["refreshToken"];
+
+            if (!string.IsNullOrWhiteSpace(refreshTokenValue))
+            {
+                var refreshToken = await _context.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == refreshTokenValue);
+                if (refreshToken != null && refreshToken.Revoked == null)
+                {
+                    refreshToken.Revoked = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            Response.Cookies.Delete("refreshToken", BuildRefreshCookieOptions(DateTime.UtcNow.AddDays(-1)));
+            return Ok(new { message = "Session revoked." });
         }
 
         [Authorize]
@@ -116,6 +300,35 @@ namespace FoodDeliveryyy.Controllers
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        private RefreshToken CreateRefreshToken(string userId)
+        {
+            var tokenBytes = RandomNumberGenerator.GetBytes(64);
+            return new RefreshToken
+            {
+                Token = Convert.ToBase64String(tokenBytes),
+                Expires = DateTime.UtcNow.AddDays(7),
+                Created = DateTime.UtcNow,
+                UserId = userId
+            };
+        }
+
+        private void SetRefreshTokenCookie(string token, DateTime expires)
+        {
+            Response.Cookies.Append("refreshToken", token, BuildRefreshCookieOptions(expires));
+        }
+
+        private CookieOptions BuildRefreshCookieOptions(DateTime expires)
+        {
+            return new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = !_environment.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                Expires = expires,
+                IsEssential = true
+            };
         }
     }
 }
