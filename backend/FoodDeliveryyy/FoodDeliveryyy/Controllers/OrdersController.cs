@@ -6,6 +6,7 @@ using FoodDeliveryyy.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Data;
 using System.Security.Claims;
@@ -27,7 +28,12 @@ public class OrdersController : ControllerBase
 
     [HttpGet]
     [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
-    public async Task<ActionResult<IEnumerable<Orders>>> GetOrders()
+    public async Task<ActionResult<IEnumerable<Orders>>> GetOrders(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
+        )
+
+        
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
@@ -45,8 +51,22 @@ public class OrdersController : ControllerBase
                 query = query.Where(o => o.RestaurantId == restaurant.Id);
             }
         }
-        var orders = await query.OrderByDescending(o => o.DataPorosis).ToListAsync();
-        return Ok(orders);
+        var totalCount= await query.CountAsync();
+        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+        var orders = await query.OrderByDescending(o => o.DataPorosis).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
+        return Ok(
+            new { 
+            Data = orders,
+            Pagination=new { 
+            CurrentPage=page,
+            PageSize=pageSize,
+            TotalCount=totalCount,
+            TotalPages=totalPages,
+            HasPrevious = page >1,
+            HasNext = page < totalPages
+            }
+            });
 
 
     }
@@ -139,7 +159,10 @@ public class OrdersController : ControllerBase
 
     [HttpGet("by-status/{status}")]
     [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
-    public async Task<ActionResult<IEnumerable<Orders>>> GetOrdersByStatus(string status)
+    public async Task<ActionResult<IEnumerable<Orders>>> GetOrdersByStatus(string status,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10
+        )
     {
         if (!Enum.TryParse<OrderStatus>(status, true, out var parsedStatus))
         {
@@ -169,8 +192,20 @@ public class OrdersController : ControllerBase
             }
         }
 
-        var orders = await query.ToListAsync();
-        return Ok(orders);
+        var totalCount = await query.CountAsync();
+        var orders=await query.Skip((page -1)*pageSize).Take(pageSize).ToListAsync();
+        return Ok(
+            new { 
+            Data = orders,
+            Pagination =new { 
+            
+            CurrentPage= page,
+            PageSize=pageSize,
+            totalCount=totalCount,
+            TotalPages=(int)Math.Ceiling(totalCount/(double)pageSize)
+            }
+            }
+            );
     }
 
     [HttpPost]
@@ -393,7 +428,7 @@ public class OrdersController : ControllerBase
 
         if (order == null) return NotFound();
 
-        if (role != "Admin" && order.UserId != userId && role != "RestaurantOwner" && role != "Driver")
+        if (role != AppRoles.Admin && order.UserId != userId && role != AppRoles.Merchant && role != AppRoles.Courier)
         {
             return Forbid();
         }
