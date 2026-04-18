@@ -340,6 +340,320 @@ body {
   padding-top: 116px;
 }
 
+.restaurant-details-page {
+  padding-top: 116px;
+}
+
+.restaurant-summary-card {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #e7dcc7;
+  box-shadow: 0 10px 24px rgba(38, 30, 12, 0.08);
+}
+
+.restaurant-summary-media img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+}
+
+.branch-hero-image {
+  object-fit: contain !important;
+  object-position: center;
+  background: #fff;
+  padding: 14px;
+}
+
+.restaurant-summary-content {
+  padding: 18px;
+}
+
+.restaurant-branches,
+.restaurant-menu {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid #e7dcc7;
+  box-shadow: 0 8px 20px rgba(38, 30, 12, 0.07);
+  padding: 18px;
+}
+
+.branch-card {
+  border: 1px solid #eee2cc;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fffcf5;
+}
+
+.menu-category-title {
+  font-weight: 700;
+  color: #3a2f17;
+}
+
+.menu-item-card {
+  border: 1px solid #eee2cc;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fffdfa;
+}
+
+.menu-item-clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.menu-item-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(34, 25, 8, 0.1);
+}
+
+.menu-item-image {
+  width:90px;
+  height: 90px;
+  object-fit: contain;
+  object-position: center;
+  border-radius: 10px;
+  border: 1px solid #eadfc8;
+  background: #fff;
+  padding: 6px;
+}
+
+.menu-item-thumb-wrap {
+  width: 156px;
+  height: 156px;
+  flex: 0 0 156px;
+  border-radius: 12px;
+  border: 1px solid #eadfc8;
+  background: #fff;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-item-thumb {
+  width: 220px;
+  height: 220px;
+  border: none;
+  border-radius: 0;
+  padding: 8px;
+  object-fit: contain;
+  object-position: center;
+  transform: scale(1.08);
+}
+
+.menu-item-price {
+  font-weight: 700;
+  color: #8c6827;
+}
+
+.menu-item-copy {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-item-title {
+  font-size: 1.06rem;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: #222d3d;
+  transition: color 0.22s ease;
+}
+
+.menu-item-desc {
+  margin: 0;
+  font-size: 0.96rem;
+  line-height: 1.45;
+  color: #566173;
+  max-width: 56ch;
+}
+
+.menu-item-meta .badge {
+  border-radius: 999px;
+  padding: 0.37rem 0.62rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.menu-kcal-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #eadfc8;
+  background: #fff8ea;
+  color: #7b5a20;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 0.35rem 0.66rem;
+}
+
+.menu-allergen-dropdown {
+  position: relative;
+}
+
+.menu-allergen-dropdown summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  border: 1px solid #dce3ee;
+  background: #f8fbff;
+  color: #435067;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.34rem 0.64rem;
+}
+
+.menu-allergen-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.menu-allergen-dropdown summary::after {
+  content: "+";
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.menu-allergen-dropdown[open] summary::after {
+  content: "-";
+}
+
+.menu-allergen-content {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 190px;
+  max-width: 270px;
+  z-index: 5;
+  border: 1px solid #e3d8bf;
+  border-radius: 10px;
+  background: #fffdf7;
+  box-shadow: 0 10px 18px rgba(41, 31, 12, 0.12);
+  color: #4f5a6d;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  padding: 8px 10px;
+}
+
+.menu-item-price {
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+
+.menu-item-hint {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #7b8494;
+  letter-spacing: 0.01em;
+  transition: color 0.22s ease;
+}
+
+.menu-item-clickable:hover .menu-item-title {
+  color: #875f1e;
+}
+
+.menu-item-clickable:hover .menu-item-hint {
+  color: #5f6a7e;
+}
+
+.branch-restaurant-card img {
+  height: 150px;
+}
+
+.branch-restaurant-card h6 {
+  font-weight: 700;
+}
+
+.branch-restaurant-card {
+  height: 100%;
+}
+
+.product-quickview-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 12, 18, 0.52);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.product-quickview-modal {
+  width: min(900px, 96vw);
+  max-height: 92vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid #e9dcc5;
+  box-shadow: 0 30px 70px rgba(15, 10, 2, 0.35);
+  position: relative;
+  padding: 16px;
+}
+
+.product-quickview-close {
+  position: sticky;
+  top: 6px;
+  left: calc(100% - 30px);
+  z-index: 3;
+}
+
+.product-quickview-content {
+  display: grid;
+  grid-template-columns: minmax(340px, 52%) 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.product-quickview-media img {
+  width: 100%;
+  height: 390px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 14px;
+  border: 1px solid #eadfc8;
+  background: #fff;
+  padding: 0;
+}
+
+.product-quickview-info {
+  padding: 4px 2px;
+}
+
+.product-quickview-price {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #8c6827;
+}
+
+.product-quickview-qty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.product-quickview-qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.product-quickview-qty-controls span {
+  min-width: 24px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.product-quickview-order-btn {
+  border-radius: 12px;
+  font-weight: 700;
+}
+
 .restaurants-page-shell {
   min-height: 100vh;
   display: flex;
@@ -623,6 +937,61 @@ body {
 
   .restaurants-page {
     padding-top: 98px;
+  }
+
+  .restaurant-details-page {
+    padding-top: 98px;
+  }
+
+  .restaurant-summary-media img {
+    height: 190px;
+  }
+
+  .branch-restaurant-card img {
+    height: 130px;
+  }
+
+  .menu-item-image {
+    width: 84px;
+    height: 84px;
+    padding: 4px;
+  }
+
+  .menu-item-title {
+    font-size: 0.98rem;
+  }
+
+  .menu-item-desc {
+    font-size: 0.87rem;
+    line-height: 1.35;
+  }
+
+  .menu-item-price {
+    font-size: 0.98rem;
+  }
+
+  .menu-item-hint {
+    font-size: 0.78rem;
+  }
+
+  .menu-allergen-content {
+    min-width: 160px;
+    max-width: 220px;
+    font-size: 0.74rem;
+  }
+
+  .menu-item-thumb-wrap {
+    width: 116px;
+    height: 116px;
+    flex-basis: 116px;
+  }
+
+  .product-quickview-content {
+    grid-template-columns: 1fr;
+  }
+
+  .product-quickview-media img {
+    height: 320px;
   }
 
   .restaurants-page-shell {

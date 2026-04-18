@@ -45,6 +45,42 @@ namespace FoodDeliveryyy.Controllers;
         return restaurant;
     }
 
+    [HttpGet("{id:int}/addresses")]
+    public async Task<ActionResult> GetRestaurantAddresses(int id)
+    {
+        var restaurant = await _context.Restaurants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (restaurant == null)
+        {
+            return NotFound("Restaurant not found.");
+        }
+
+        var addresses = await _context.RestaurantAddresses
+            .AsNoTracking()
+            .Where(a => a.RestaurantId == id)
+            .OrderByDescending(a => a.IsMain)
+            .ThenByDescending(a => a.IsActive)
+            .ThenBy(a => a.Qyteti)
+            .ThenBy(a => a.Adresa)
+            .Select(a => new
+            {
+                id = a.Id,
+                restaurantId = a.RestaurantId,
+                adresa = a.Adresa,
+                qyteti = a.Qyteti,
+                zona = a.Zona,
+                isMain = a.IsMain,
+                isActive = a.IsActive,
+                latitude = a.Latitude,
+                longitude = a.Longitude
+            })
+            .ToListAsync();
+
+        return Ok(addresses);
+    }
+
     [HttpPost]
     public async Task<ActionResult<Restaurant>> CreateRestaurant(Restaurant restaurant)
     {

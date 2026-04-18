@@ -8,24 +8,55 @@ import locationImage from "./assets/location.png";
 
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
+const NEARBY_COORDS_KEY = "nearby_coords";
 const HomePage = lazy(() => import("./components/HomePage.jsx"));
 const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
+const RestaurantDetailsPage = lazy(() => import("./components/RestaurantDetailsPage.jsx"));
+const BranchMenuPage = lazy(() => import("./components/BranchMenuPage.jsx"));
 
 function App() {
   const categoriesSliderRef = useRef(null);
+  const searchInputRef = useRef(null);
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
+    if (hash.startsWith("#/restaurant/") && hash.includes("/branch/")) {
+      const afterPrefix = hash.replace("#/restaurant/", "");
+      const [rawRestaurantId, rawBranchId] = afterPrefix.split("/branch/");
+      const parsedId = Number(rawRestaurantId);
+      return {
+        page: "branchMenu",
+        category: "",
+        restaurantId: Number.isFinite(parsedId) ? parsedId : null,
+        branchId: decodeURIComponent(rawBranchId || ""),
+      };
+    }
+
+    if (hash.startsWith("#/restaurant/")) {
+      const rawRestaurantId = hash.replace("#/restaurant/", "").split("/")[0];
+      const parsedId = Number(rawRestaurantId);
+      return {
+        page: "restaurantDetails",
+        category: "",
+        restaurantId: Number.isFinite(parsedId) ? parsedId : null,
+        branchId: "",
+      };
+    }
+
     if (hash.startsWith("#/restaurants/")) {
       const rawCategory = hash.replace("#/restaurants/", "");
       return {
         page: "restaurants",
         category: decodeURIComponent(rawCategory || ""),
+        restaurantId: null,
+        branchId: "",
       };
     }
 
     return {
       page: "home",
       category: "",
+      restaurantId: null,
+      branchId: "",
     };
   };
 
@@ -34,11 +65,22 @@ function App() {
   const [restaurants, setRestaurants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
+  const [activeRestaurantId, setActiveRestaurantId] = useState(initialRoute.restaurantId);
+  const [activeBranchId, setActiveBranchId] = useState(initialRoute.branchId || "");
   const [page, setPage] = useState(initialRoute.page);
   const [restaurantsLoading, setRestaurantsLoading] = useState(false);
+  const [restaurantDetailsLoading, setRestaurantDetailsLoading] = useState(false);
+  const [restaurantDetailsError, setRestaurantDetailsError] = useState("");
+  const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+  const [restaurantBranches, setRestaurantBranches] = useState([]);
+  const [restaurantMenuItems, setRestaurantMenuItems] = useState([]);
+  const [restaurantOffers, setRestaurantOffers] = useState([]);
+  const [brandRestaurantCount, setBrandRestaurantCount] = useState(1);
   const [findingFood, setFindingFood] = useState(false);
   const [locationQuery, setLocationQuery] = useState("");
+  const [nearbyError, setNearbyError] = useState("");
   const [search, setSearch] = useState("");
+  const [searchInputUnlocked, setSearchInputUnlocked] = useState(false);
   const [cartCount, setCartCount] = useState(0);
 
   const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
@@ -150,13 +192,43 @@ function App() {
     return res;
   };
 
-  const toAbsoluteAssetUrl = (pathOrUrl) => {
-    if (!pathOrUrl || typeof pathOrUrl !== "string") return "";
-    if (pathOrUrl.startsWith("http://") || pathOrUrl.startsWith("https://")) return pathOrUrl;
+  const getAssetUrlCandidates = (pathOrUrl) => {
+    if (!pathOrUrl || typeof pathOrUrl !== "string") return [];
+
+    let raw = pathOrUrl.trim();
+    if (!raw) return [];
+
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+      return [encodeURI(raw)];
+    }
+
+    raw = raw.replace(/^~\/?/, "");
+    raw = raw.replace(/\\+/g, "/");
+
+    const uploadsMatch = raw.match(/(?:^|\/)(uploads\/.*)$/i);
+    if (uploadsMatch?.[1]) {
+      raw = uploadsMatch[1];
+    }
+
+    const cleaned = raw.replace(/^\/+/, "");
+    if (!cleaned) return [];
 
     const apiOrigin = API_BASE.replace(/\/api\/?$/, "");
-    const normalizedPath = pathOrUrl.startsWith("/") ? pathOrUrl : `/${pathOrUrl}`;
-    return `${apiOrigin}${normalizedPath}`;
+    const candidates = new Set();
+
+    candidates.add(encodeURI(`${apiOrigin}/${cleaned}`));
+    candidates.add(encodeURI(`${apiOrigin}/uploads/${cleaned}`));
+
+    if (/^(menuitems|logos|categories)\//i.test(cleaned)) {
+      candidates.add(encodeURI(`${apiOrigin}/uploads/${cleaned}`));
+    }
+
+    return Array.from(candidates);
+  };
+
+  const toAbsoluteAssetUrl = (pathOrUrl) => {
+    const candidates = getAssetUrlCandidates(pathOrUrl);
+    return candidates[0] || "";
   };
 
   const fetchCategories = async () => {
@@ -208,6 +280,7 @@ function App() {
 
   const fetchNearbyRestaurants = async (latitude, longitude) => {
     setRestaurantsLoading(true);
+    setNearbyError("");
     try {
       const query = new URLSearchParams({
         latitude: String(latitude),
@@ -219,30 +292,367 @@ function App() {
 
       const data = await res.json();
       const normalized = (data || []).map((r) => ({
-        id: r?.id,
-        name: r?.name || "Restaurant",
-        image: toAbsoluteAssetUrl(r?.image || ""),
-        distanceKm: typeof r?.distanceKm === "number" ? r.distanceKm : Number(r?.distanceKm),
-        nearestAddress: r?.nearestAddress || "",
-        city: r?.city || "",
+        id: r?.id ?? r?.Id ?? r?.restaurantId ?? `${r?.name || "restaurant"}-${Math.random().toString(36).slice(2, 8)}`,
+        name: r?.name ?? r?.Name ?? "Restaurant",
+        image: toAbsoluteAssetUrl(r?.image ?? r?.Image ?? ""),
+        distanceKm: Number.isFinite(Number(r?.distanceKm)) ? Number(r.distanceKm) : undefined,
+        nearestAddress: r?.nearestAddress ?? r?.NearestAddress ?? "",
+        city: r?.city ?? r?.City ?? "",
       }));
+
+      localStorage.setItem(
+        NEARBY_COORDS_KEY,
+        JSON.stringify({ latitude, longitude, savedAt: Date.now() })
+      );
 
       setSelectedCategory("Nearby");
       setRestaurants(normalized);
       setPage("restaurants");
-      window.location.hash = "/restaurants/Nearby";
+      if (window.location.hash !== "#/restaurants/Nearby") {
+        window.location.hash = "/restaurants/Nearby";
+      }
     } catch (err) {
       console.error(err);
       setRestaurants([]);
-      alert("Could not load nearby restaurants right now.");
+      setNearbyError("Could not load nearby restaurants right now.");
     } finally {
       setRestaurantsLoading(false);
     }
   };
 
+  const normalizeRestaurant = (r) => ({
+    id: r?.id ?? r?.Id,
+    name: r?.name ?? r?.Name ?? r?.emertimi ?? r?.Emertimi ?? "Restaurant",
+    image: toAbsoluteAssetUrl(r?.image ?? r?.Image ?? r?.logo ?? r?.Logo ?? r?.foto ?? r?.Foto ?? ""),
+    imageCandidates: getAssetUrlCandidates(r?.image ?? r?.Image ?? r?.logo ?? r?.Logo ?? r?.foto ?? r?.Foto ?? ""),
+    category: r?.category ?? r?.Category ?? r?.kategori ?? r?.Kategori ?? "",
+    description: r?.description ?? r?.Description ?? r?.pershkrimi ?? r?.Pershkrimi ?? "",
+  });
+
+  const normalizeBranch = (branch, ownerRestaurantId) => ({
+    id:
+      branch?.id ??
+      branch?.Id ??
+      `${ownerRestaurantId || branch?.restaurantId || branch?.RestaurantId || "r"}-${branch?.adresa || branch?.Adresa || "branch"}`,
+    restaurantId: branch?.restaurantId ?? branch?.RestaurantId ?? ownerRestaurantId ?? null,
+    address: branch?.adresa ?? branch?.Adresa ?? branch?.address ?? branch?.Address ?? "",
+    city: branch?.qyteti ?? branch?.Qyteti ?? branch?.city ?? branch?.City ?? "",
+    zone: branch?.zona ?? branch?.Zona ?? branch?.zone ?? branch?.Zone ?? "",
+    isMain: Boolean(branch?.isMain ?? branch?.IsMain),
+    isActive: Boolean(branch?.isActive ?? branch?.IsActive ?? true),
+    acceptsOrders: Boolean(branch?.acceptsOrders ?? branch?.AcceptsOrders ?? branch?.pranonPorosi ?? branch?.PranonPorosi ?? branch?.isActive ?? branch?.IsActive ?? true),
+    deliveryFee: Number.isFinite(Number(branch?.deliveryFee ?? branch?.DeliveryFee ?? branch?.tarifaDorezimit ?? branch?.TarifaDorezimit))
+      ? Number(branch?.deliveryFee ?? branch?.DeliveryFee ?? branch?.tarifaDorezimit ?? branch?.TarifaDorezimit)
+      : null,
+    offersText: branch?.offers ?? branch?.Offers ?? branch?.menuOffers ?? branch?.MenuOffers ?? "",
+  });
+
+  const fetchRestaurantBranches = async (restaurantId, restaurantPayload = null) => {
+    const embedded = restaurantPayload?.adresat ?? restaurantPayload?.Adresat;
+    if (Array.isArray(embedded) && embedded.length > 0) {
+      return embedded.map((b) => normalizeBranch(b, restaurantId));
+    }
+
+    const branchEndpoints = [
+      `${API_BASE}/restaurantaddresses/by-restaurant/${restaurantId}`,
+      `${API_BASE}/restaurantaddresses/byrestaurant/${restaurantId}`,
+      `${API_BASE}/restaurantaddresses/restaurant/${restaurantId}`,
+      `${API_BASE}/restaurantaddresses?restaurantId=${restaurantId}`,
+      `${API_BASE}/restaurants/${restaurantId}/addresses`,
+    ];
+
+    let bestResult = [];
+
+    for (const endpoint of branchEndpoints) {
+      try {
+        const res = await authenticatedFetch(endpoint);
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          const normalized = data.map((b) => normalizeBranch(b, restaurantId));
+          if (normalized.length > 0) {
+            return normalized;
+          }
+
+          if (bestResult.length === 0) {
+            bestResult = normalized;
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    return bestResult;
+  };
+
+  const fetchRestaurantMenuItems = async (restaurantId) => {
+    try {
+      const [categoriesRes, itemsRes] = await Promise.all([
+        authenticatedFetch(`${API_BASE}/menucategories/by-restaurant/${restaurantId}`),
+        authenticatedFetch(`${API_BASE}/menuitems`),
+      ]);
+
+      const categoriesData = categoriesRes.ok ? await categoriesRes.json() : [];
+      const itemsData = itemsRes.ok ? await itemsRes.json() : [];
+
+      const normalizedCategories = (Array.isArray(categoriesData) ? categoriesData : []).map((c) => ({
+        id: c?.id ?? c?.Id,
+        name: c?.emertimi ?? c?.Emertimi ?? c?.name ?? c?.Name ?? "Menu",
+        order: c?.renditja ?? c?.Renditja ?? 0,
+      }));
+
+      const categoryIds = new Set(normalizedCategories.map((c) => c.id));
+      const categoryById = new Map(normalizedCategories.map((c) => [c.id, c]));
+
+      const filteredItems = (Array.isArray(itemsData) ? itemsData : []).filter((item) => {
+        if (categoryIds.size === 0) return false;
+        const categoryId = item?.categoryId ?? item?.CategoryId;
+        return categoryIds.has(categoryId);
+      });
+
+      return filteredItems
+        .map((item) => {
+          const categoryId = item?.categoryId ?? item?.CategoryId;
+          const category = categoryById.get(categoryId);
+          return {
+            id: item?.id ?? item?.Id,
+            name: item?.emertimi ?? item?.Emertimi ?? item?.name ?? item?.Name ?? "Item",
+            description: item?.pershkrimi ?? item?.Pershkrimi ?? item?.description ?? item?.Description ?? "",
+            price: Number(item?.cmimi ?? item?.Cmimi ?? item?.price ?? item?.Price ?? 0),
+            image: toAbsoluteAssetUrl(item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? ""),
+            imageCandidates: getAssetUrlCandidates(item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? ""),
+            available: Boolean(item?.disponueshme ?? item?.Disponueshme ?? true),
+            calories: item?.kalori ?? item?.Kalori ?? null,
+            allergens: item?.alergjene ?? item?.Alergjene ?? "",
+            categoryName: category?.name || "Menu",
+            categoryOrder: category?.order ?? 0,
+          };
+        })
+        .sort((a, b) => {
+          if (a.categoryOrder !== b.categoryOrder) return a.categoryOrder - b.categoryOrder;
+          return a.name.localeCompare(b.name);
+        });
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
+  const fetchRestaurantOffers = async (restaurantId) => {
+    try {
+      const endpoints = [
+        `${API_BASE}/promotions/active/by-restaurant/${restaurantId}`,
+        `${API_BASE}/promotions/by-restaurant/${restaurantId}`,
+      ];
+
+      for (const endpoint of endpoints) {
+        const res = await authenticatedFetch(endpoint);
+        if (!res.ok) continue;
+
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          return data.map((offer) => ({
+            id: offer?.id ?? offer?.Id,
+            code: offer?.kodi ?? offer?.Kodi ?? offer?.code ?? offer?.Code ?? "",
+            discountPercent: Number(offer?.zbritjaPerqind ?? offer?.ZbritjaPerqind ?? offer?.discountPercent ?? offer?.DiscountPercent ?? 0),
+          }));
+        }
+      }
+
+      return [];
+    } catch (err) {
+      console.error(err);
+      return [];
+    }
+  };
+
+  const fetchRestaurantDetails = async (restaurantId) => {
+    setRestaurantDetailsLoading(true);
+    setRestaurantDetailsError("");
+
+    try {
+      const res = await authenticatedFetch(`${API_BASE}/restaurants/${restaurantId}`);
+      if (!res.ok) throw new Error("Failed to load restaurant details");
+
+      const payload = await res.json();
+      const normalizedRestaurant = normalizeRestaurant(payload);
+
+      let restaurantIdsForBrand = [restaurantId];
+      try {
+        const searchRes = await authenticatedFetch(
+          `${API_BASE}/restaurants?search=${encodeURIComponent(normalizedRestaurant.name)}`
+        );
+        if (searchRes.ok) {
+          const candidates = await searchRes.json();
+          const normalizeName = (value) => String(value || "").trim().toLowerCase();
+          const targetName = normalizeName(normalizedRestaurant.name);
+          const sameBrandIds = (Array.isArray(candidates) ? candidates : [])
+            .filter((r) => normalizeName(r?.name ?? r?.Name ?? r?.emertimi ?? r?.Emertimi) === targetName)
+            .map((r) => Number(r?.id ?? r?.Id))
+            .filter((id) => Number.isFinite(id));
+
+          restaurantIdsForBrand = Array.from(new Set([restaurantId, ...sameBrandIds]));
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      const [allBranchesByRestaurant, menuItems, offers] = await Promise.all([
+        Promise.all(
+          restaurantIdsForBrand.map((id) =>
+            fetchRestaurantBranches(id, id === restaurantId ? payload : null)
+          )
+        ),
+        fetchRestaurantMenuItems(restaurantId),
+        fetchRestaurantOffers(restaurantId),
+      ]);
+
+      const mergedBranches = allBranchesByRestaurant.flat();
+      const branchMap = new Map();
+      for (const branch of mergedBranches) {
+        const key = `${String(branch.address || "").trim().toLowerCase()}|${String(branch.city || "").trim().toLowerCase()}|${String(branch.zone || "").trim().toLowerCase()}`;
+        if (!key.replace(/\|/g, "")) continue;
+        if (!branchMap.has(key)) {
+          branchMap.set(key, branch);
+          continue;
+        }
+
+        const existing = branchMap.get(key);
+        if (!existing.isMain && branch.isMain) {
+          branchMap.set(key, branch);
+        }
+      }
+
+      const branches = Array.from(branchMap.values()).sort((a, b) => {
+        if (a.isMain !== b.isMain) return a.isMain ? -1 : 1;
+        if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+        return `${a.city} ${a.address}`.localeCompare(`${b.city} ${b.address}`);
+      });
+
+      setSelectedRestaurant(normalizedRestaurant);
+      setBrandRestaurantCount(restaurantIdsForBrand.length);
+      setRestaurantBranches(branches);
+      setRestaurantMenuItems(menuItems);
+      setRestaurantOffers(offers);
+
+      return {
+        restaurant: normalizedRestaurant,
+        branches,
+        menuItems,
+        offers,
+      };
+    } catch (err) {
+      console.error(err);
+      setSelectedRestaurant(null);
+      setBrandRestaurantCount(1);
+      setRestaurantBranches([]);
+      setRestaurantMenuItems([]);
+      setRestaurantOffers([]);
+      setRestaurantDetailsError("Could not load this restaurant right now.");
+      return null;
+    } finally {
+      setRestaurantDetailsLoading(false);
+    }
+  };
+
+  const handleRestaurantSelect = (restaurant) => {
+    const restaurantId = restaurant?.id;
+    if (!restaurantId) return;
+    window.location.hash = `/restaurant/${restaurantId}`;
+  };
+
+  const handleBranchSelect = (restaurantId, branchId) => {
+    if (!restaurantId || branchId === undefined || branchId === null || branchId === "") return;
+    window.location.hash = `/restaurant/${restaurantId}/branch/${encodeURIComponent(String(branchId))}`;
+  };
+
+  const getStoredNearbyCoords = () => {
+    try {
+      const raw = localStorage.getItem(NEARBY_COORDS_KEY);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      const latitude = Number(parsed?.latitude);
+      const longitude = Number(parsed?.longitude);
+
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return null;
+      }
+
+      return { latitude, longitude };
+    } catch (err) {
+      console.error(err);
+      return null;
+    }
+  };
+
+  const resolveLocationCoordinates = async (query) => {
+    const trimmed = (query || "").trim();
+    if (!trimmed) return null;
+
+    const params = new URLSearchParams({
+      q: trimmed,
+      format: "jsonv2",
+      limit: "1",
+    });
+
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?${params.toString()}`, {
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to geocode address");
+    }
+
+    const results = await response.json();
+    if (!Array.isArray(results) || results.length === 0) {
+      return null;
+    }
+
+    const first = results[0];
+    const latitude = Number(first?.lat);
+    const longitude = Number(first?.lon);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+
+    return {
+      latitude,
+      longitude,
+      displayName: first?.display_name || trimmed,
+    };
+  };
+
   const handleFindFood = async () => {
+    setNearbyError("");
+
+    const queryInput = locationQuery.trim();
+    if (queryInput) {
+      setFindingFood(true);
+      try {
+        const resolved = await resolveLocationCoordinates(queryInput);
+        if (!resolved) {
+          setNearbyError("Address not found. Try a more specific location.");
+          return;
+        }
+
+        setLocationQuery(resolved.displayName);
+        await fetchNearbyRestaurants(resolved.latitude, resolved.longitude);
+      } catch (err) {
+        console.error(err);
+        setNearbyError("Could not locate that address right now.");
+      } finally {
+        setFindingFood(false);
+      }
+      return;
+    }
+
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported in this browser.");
+      setNearbyError("Geolocation is not supported in this browser.");
       return;
     }
 
@@ -251,12 +661,13 @@ function App() {
       async (position) => {
         const { latitude, longitude } = position.coords;
         await fetchNearbyRestaurants(latitude, longitude);
+        setLocationQuery("Current location");
         setFindingFood(false);
       },
       (geoErr) => {
         console.error(geoErr);
         setFindingFood(false);
-        alert("Please allow location access to find nearby restaurants.");
+        setNearbyError("Please allow location access to find nearby restaurants.");
       },
       {
         enableHighAccuracy: true,
@@ -391,6 +802,11 @@ function App() {
     setSearch("");
     setSelectedCategory("");
     setRestaurants([]);
+    setSelectedRestaurant(null);
+    setRestaurantBranches([]);
+    setRestaurantMenuItems([]);
+    setRestaurantOffers([]);
+    setRestaurantDetailsError("");
     setPage("home");
     window.location.hash = "/";
 
@@ -470,19 +886,83 @@ function App() {
   }, [token]);
 
   useEffect(() => {
+    const scrubAutofilledEmail = () => {
+      const el = searchInputRef.current;
+      if (!el) return;
+      const candidate = (el.value || "").trim();
+      const looksLikeEmail = /\S+@\S+\.\S+/.test(candidate);
+      if (looksLikeEmail) {
+        setSearch("");
+        el.value = "";
+      }
+    };
+
+    const timer = window.setTimeout(scrubAutofilledEmail, 250);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     const syncRouteFromHash = async () => {
       const route = getRouteState();
       setPage(route.page);
+      setActiveRestaurantId(route.restaurantId);
+      setActiveBranchId(route.branchId || "");
+
+      if (route.page === "branchMenu") {
+        if (route.restaurantId && route.branchId) {
+          const data = await fetchRestaurantDetails(route.restaurantId);
+          if (data) {
+            const matchedBranch = data.branches.find((branch) => String(branch.id) === String(route.branchId));
+            if (!matchedBranch && data.branches.length > 0) {
+              setActiveBranchId(String(data.branches[0].id));
+            }
+          }
+          return;
+        }
+
+        window.location.hash = "/";
+        return;
+      }
+
+      if (route.page === "restaurantDetails") {
+        if (route.restaurantId) {
+          await fetchRestaurantDetails(route.restaurantId);
+          return;
+        }
+
+        window.location.hash = "/";
+        return;
+      }
 
       if (route.page === "restaurants" && route.category) {
         setSelectedCategory(route.category);
+        setSelectedRestaurant(null);
+        setBrandRestaurantCount(1);
+        setRestaurantBranches([]);
+        setRestaurantMenuItems([]);
+        setRestaurantOffers([]);
+        setRestaurantDetailsError("");
         if (route.category.toLowerCase() === "nearby") {
+          const coords = getStoredNearbyCoords();
+          if (coords) {
+            await fetchNearbyRestaurants(coords.latitude, coords.longitude);
+          } else {
+            setRestaurants([]);
+            setNearbyError("Use Find Food to load nearby restaurants.");
+          }
           return;
         }
         await fetchRestaurantsByCategory(route.category);
       } else {
         setSelectedCategory("");
+        setNearbyError("");
         setRestaurants([]);
+        setSelectedRestaurant(null);
+        setBrandRestaurantCount(1);
+        setRestaurantBranches([]);
+        setRestaurantMenuItems([]);
+        setRestaurantOffers([]);
+        setRestaurantDetailsError("");
       }
     };
 
@@ -506,11 +986,20 @@ function App() {
 
           <div className="search-box d-none d-md-block">
             <input
-              type="text"
-              autoComplete="off"
+              ref={searchInputRef}
+              type="search"
+              name="restaurant-search"
+              autoComplete="new-password"
+              autoCorrect="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              data-lpignore="true"
+              readOnly={!searchInputUnlocked}
               placeholder="Search restaurants..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onFocus={() => setSearchInputUnlocked(true)}
+              onPointerDown={() => setSearchInputUnlocked(true)}
             />
           </div>
 
@@ -638,6 +1127,8 @@ function App() {
               )}
               <input
                 type="text"
+                name="login-credential"
+                autoComplete="username"
                 className="form-control mb-3"
                 placeholder="Username or Email"
                 value={loginUsername}
@@ -645,6 +1136,8 @@ function App() {
               />
               <input
                 type="password"
+                name="login-password"
+                autoComplete="current-password"
                 className="form-control mb-3"
                 placeholder="Password"
                 value={loginPassword}
@@ -676,6 +1169,8 @@ function App() {
               )}
               <input
                 type="text"
+                name="signup-username"
+                autoComplete="username"
                 className="form-control mb-3"
                 placeholder="Username"
                 value={signupUsername}
@@ -683,6 +1178,8 @@ function App() {
               />
               <input
                 type="email"
+                name="signup-email"
+                autoComplete="email"
                 className="form-control mb-3"
                 placeholder="Email"
                 value={signupEmail}
@@ -690,6 +1187,8 @@ function App() {
               />
               <input
                 type="password"
+                name="signup-password"
+                autoComplete="new-password"
                 className="form-control mb-3"
                 placeholder="Password"
                 value={signupPassword}
@@ -715,6 +1214,7 @@ function App() {
             onLocationQueryChange={setLocationQuery}
             onFindFood={handleFindFood}
             findingFood={findingFood}
+            nearbyError={nearbyError}
           />
         )}
 
@@ -723,6 +1223,57 @@ function App() {
             selectedCategory={selectedCategory}
             restaurantsLoading={restaurantsLoading}
             filtered={filtered}
+            nearbyError={nearbyError}
+            locationQuery={locationQuery}
+            onRestaurantSelect={handleRestaurantSelect}
+          />
+        )}
+
+        {page === "restaurantDetails" && (
+          <RestaurantDetailsPage
+            restaurant={selectedRestaurant}
+            branches={restaurantBranches}
+            menuItems={restaurantMenuItems}
+            brandRestaurantCount={brandRestaurantCount}
+            loading={restaurantDetailsLoading}
+            error={restaurantDetailsError}
+            onSelectBranch={(branch) => handleBranchSelect(activeRestaurantId, branch?.id)}
+            onBack={() => {
+              if (selectedCategory) {
+                window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
+                return;
+              }
+
+              window.location.hash = "/";
+            }}
+            restaurantId={activeRestaurantId}
+          />
+        )}
+
+        {page === "branchMenu" && (
+          <BranchMenuPage
+            restaurant={selectedRestaurant}
+            branch={restaurantBranches.find((b) => String(b.id) === String(activeBranchId)) || null}
+            menuItems={restaurantMenuItems}
+            offers={restaurantOffers}
+            loading={restaurantDetailsLoading}
+            error={restaurantDetailsError}
+            onBackToBranches={() => {
+              if (activeRestaurantId) {
+                window.location.hash = `/restaurant/${activeRestaurantId}`;
+                return;
+              }
+
+              window.location.hash = "/";
+            }}
+            onBackHome={() => {
+              if (selectedCategory) {
+                window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
+                return;
+              }
+
+              window.location.hash = "/";
+            }}
           />
         )}
       </Suspense>

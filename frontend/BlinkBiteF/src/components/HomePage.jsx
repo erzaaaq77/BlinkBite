@@ -12,6 +12,7 @@ function HomePage({
   onLocationQueryChange,
   onFindFood,
   findingFood,
+  nearbyError,
 }) {
   return (
     <div className="home-page-shell">
@@ -28,6 +29,7 @@ function HomePage({
             {findingFood ? "Finding..." : "Find Food"}
           </button>
         </div>
+        {nearbyError && <p className="mt-3 text-warning-emphasis">{nearbyError}</p>}
       </section>
 
       <section className="container py-5 text-center categories">

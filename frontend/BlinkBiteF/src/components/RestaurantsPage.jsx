@@ -1,10 +1,15 @@
 import React from "react";
 
-function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered }) {
+function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearbyError, locationQuery, onRestaurantSelect }) {
+  const isNearby = (selectedCategory || "").toLowerCase() === "nearby";
+
   return (
     <div className="restaurants-page-shell">
       <section className="container pb-5 restaurants-page">
         <h2 className="text-center mb-3 restaurants-title">{selectedCategory ? `Restaurants - ${selectedCategory}` : "Restaurants"}</h2>
+        {isNearby && locationQuery && (
+          <p className="text-center text-muted mb-3">Showing results around: {locationQuery}</p>
+        )}
 
         <div className="mb-4 restaurants-back-wrap">
           <button
@@ -22,13 +27,31 @@ function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered }) {
           <p className="text-center text-muted">Choose a category to load restaurants.</p>
         ) : restaurantsLoading ? (
           <p className="text-center text-muted">Loading restaurants...</p>
+        ) : isNearby && nearbyError ? (
+          <p className="text-center text-muted">{nearbyError}</p>
         ) : filtered.length === 0 ? (
-          <p className="text-center text-muted">No restaurants found for this category.</p>
+          <p className="text-center text-muted">
+            {isNearby
+              ? "No nearby restaurants found around your current location."
+              : "No restaurants found for this category."}
+          </p>
         ) : (
           <div className="row g-4">
             {filtered.map((r) => (
               <div className="col-md-3 col-6" key={r.id}>
-                <div className="restaurant-card">
+                <div
+                  className="restaurant-card"
+                  onClick={() => onRestaurantSelect?.(r)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onRestaurantSelect?.(r);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Open ${r.name}`}
+                >
                   <img src={r.image || `https://source.unsplash.com/300x200/?${r.name}`} alt={r.name} />
                   <div className="p-2">
                     <h6>{r.name}</h6>
