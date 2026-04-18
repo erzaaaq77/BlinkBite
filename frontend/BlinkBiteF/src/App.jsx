@@ -36,6 +36,8 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
   const [page, setPage] = useState(initialRoute.page);
   const [restaurantsLoading, setRestaurantsLoading] = useState(false);
+  const [findingFood, setFindingFood] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
   const [search, setSearch] = useState("");
   const [cartCount, setCartCount] = useState(0);
 
@@ -138,7 +140,7 @@ function App() {
       credentials: "include",
     });
 
-    if (res.status === 401 && canRetry) {
+    if (res.status === 401 && canRetry && currentToken) {
       const refreshed = await refreshAccessToken();
       if (refreshed) {
         return authenticatedFetch(url, options, false);
@@ -202,6 +204,65 @@ function App() {
     } finally {
       setRestaurantsLoading(false);
     }
+  };
+
+  const fetchNearbyRestaurants = async (latitude, longitude) => {
+    setRestaurantsLoading(true);
+    try {
+      const query = new URLSearchParams({
+        latitude: String(latitude),
+        longitude: String(longitude),
+        take: "30",
+      });
+      const res = await authenticatedFetch(`${API_BASE}/restaurants/nearby?${query.toString()}`);
+      if (!res.ok) throw new Error("Failed to load nearby restaurants");
+
+      const data = await res.json();
+      const normalized = (data || []).map((r) => ({
+        id: r?.id,
+        name: r?.name || "Restaurant",
+        image: toAbsoluteAssetUrl(r?.image || ""),
+        distanceKm: typeof r?.distanceKm === "number" ? r.distanceKm : Number(r?.distanceKm),
+        nearestAddress: r?.nearestAddress || "",
+        city: r?.city || "",
+      }));
+
+      setSelectedCategory("Nearby");
+      setRestaurants(normalized);
+      setPage("restaurants");
+      window.location.hash = "/restaurants/Nearby";
+    } catch (err) {
+      console.error(err);
+      setRestaurants([]);
+      alert("Could not load nearby restaurants right now.");
+    } finally {
+      setRestaurantsLoading(false);
+    }
+  };
+
+  const handleFindFood = async () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported in this browser.");
+      return;
+    }
+
+    setFindingFood(true);
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        await fetchNearbyRestaurants(latitude, longitude);
+        setFindingFood(false);
+      },
+      (geoErr) => {
+        console.error(geoErr);
+        setFindingFood(false);
+        alert("Please allow location access to find nearby restaurants.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+      }
+    );
   };
 
   const fetchCurrentUser = async () => {
@@ -319,6 +380,20 @@ function App() {
   };
 
   const handleLogout = async () => {
+    // Do UI reset immediately so logout feels instant.
+    persistToken("");
+    setCurrentUser(null);
+    setLoginUsername("");
+    setLoginPassword("");
+    setLoginMessage("");
+    setSignupMessage("");
+    setCartCount(0);
+    setSearch("");
+    setSelectedCategory("");
+    setRestaurants([]);
+    setPage("home");
+    window.location.hash = "/";
+
     try {
       await fetch(`${API_BASE}/auth/revoke`, {
         method: "POST",
@@ -327,14 +402,6 @@ function App() {
     } catch (err) {
       console.error(err);
     }
-
-    persistToken("");
-    setCurrentUser(null);
-    setLoginUsername("");
-    setLoginPassword("");
-    setLoginMessage("");
-    setSignupMessage("");
-    setCartCount(0);
   };
 
   const handleSaveAddress = async () => {
@@ -362,16 +429,28 @@ function App() {
   };
 
   const closeModal = (selector) => {
+    const resetModalUiState = () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.removeProperty("overflow");
+      document.body.style.removeProperty("padding-right");
+      document.querySelectorAll(".modal-backdrop").forEach((backdrop) => backdrop.remove());
+    };
+
     const el = document.querySelector(selector);
-    if (!el) return;
+    if (!el) {
+      resetModalUiState();
+      return;
+    }
+
     const modalInstance = window.bootstrap?.Modal.getInstance(el);
-    if (modalInstance) modalInstance.hide();
-    else {
+    if (modalInstance) {
+      modalInstance.hide();
+      // Bootstrap hide animation can leave stale body styles in edge cases.
+      window.setTimeout(resetModalUiState, 200);
+    } else {
       el.classList.remove("show");
       el.style.display = "none";
-      document.body.classList.remove("modal-open");
-      const backdrop = document.querySelector(".modal-backdrop");
-      if (backdrop) backdrop.remove();
+      resetModalUiState();
     }
   };
 
@@ -397,6 +476,9 @@ function App() {
 
       if (route.page === "restaurants" && route.category) {
         setSelectedCategory(route.category);
+        if (route.category.toLowerCase() === "nearby") {
+          return;
+        }
         await fetchRestaurantsByCategory(route.category);
       } else {
         setSelectedCategory("");
@@ -425,6 +507,7 @@ function App() {
           <div className="search-box d-none d-md-block">
             <input
               type="text"
+              autoComplete="off"
               placeholder="Search restaurants..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -628,6 +711,10 @@ function App() {
             selectedCategory={selectedCategory}
             categoriesSliderRef={categoriesSliderRef}
             scrollCategories={scrollCategories}
+            locationQuery={locationQuery}
+            onLocationQueryChange={setLocationQuery}
+            onFindFood={handleFindFood}
+            findingFood={findingFood}
           />
         )}
 

@@ -33,6 +33,12 @@ function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered }) {
                   <div className="p-2">
                     <h6>{r.name}</h6>
                     <p className="text-muted small">⭐ 4.5 • 30 min • FREE</p>
+                    {typeof r.distanceKm === "number" && (
+                      <p className="text-muted small mb-1">📍 {r.distanceKm.toFixed(2)} km away</p>
+                    )}
+                    {r.nearestAddress && (
+                      <p className="text-muted small mb-0">{r.nearestAddress}</p>
+                    )}
                   </div>
                 </div>
               </div>

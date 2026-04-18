@@ -3,15 +3,30 @@ import merchantImage from "../assets/Merchant.png";
 import courierImage from "../assets/Courier.png";
 import communityImage from "../assets/Community.png";
 
-function HomePage({ categories, selectedCategory, categoriesSliderRef, scrollCategories }) {
+function HomePage({
+  categories,
+  selectedCategory,
+  categoriesSliderRef,
+  scrollCategories,
+  locationQuery,
+  onLocationQueryChange,
+  onFindFood,
+  findingFood,
+}) {
   return (
     <div className="home-page-shell">
       <section className="hero">
         <h1>Order your favorite food instantly</h1>
         <p>Fast, simple and modern food delivery</p>
         <div className="hero-search">
-          <input placeholder="Enter your address..." />
-          <button>Find Food</button>
+          <input
+            placeholder="Enter your address..."
+            value={locationQuery}
+            onChange={(e) => onLocationQueryChange(e.target.value)}
+          />
+          <button type="button" onClick={onFindFood} disabled={findingFood}>
+            {findingFood ? "Finding..." : "Find Food"}
+          </button>
         </div>
       </section>
 

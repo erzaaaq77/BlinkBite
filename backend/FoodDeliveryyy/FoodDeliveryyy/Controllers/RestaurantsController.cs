@@ -4,6 +4,7 @@ using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -36,7 +37,7 @@ namespace FoodDeliveryyy.Controllers;
     }
 
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:int}")]
     public async Task<ActionResult<Restaurant>> GetRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FindAsync(id);
@@ -95,6 +96,73 @@ namespace FoodDeliveryyy.Controllers;
 
         return Ok(restaurants);
     }
+
+    [HttpGet("nearby")]
+    public async Task<ActionResult> GetNearbyRestaurants([FromQuery] double latitude, [FromQuery] double longitude, [FromQuery] int take = 20)
+    {
+        if (latitude is < -90 or > 90 || longitude is < -180 or > 180)
+        {
+            return BadRequest("Invalid coordinates.");
+        }
+
+        if (take <= 0) take = 20;
+        if (take > 100) take = 100;
+
+        var restaurants = await _context.Restaurants
+            .Include(r => r.Adresat)
+            .ToListAsync();
+
+        var nearby = restaurants
+            .Select(r =>
+            {
+                var activeAddresses = r.Adresat
+                    .Where(a => a.IsActive && a.Latitude.HasValue && a.Longitude.HasValue)
+                    .ToList();
+
+                if (!activeAddresses.Any()) return null;
+
+                var closestAddress = activeAddresses
+                    .OrderBy(a => DistanceKm(latitude, longitude, a.Latitude!.Value, a.Longitude!.Value))
+                    .First();
+
+                var distanceKm = DistanceKm(latitude, longitude, closestAddress.Latitude!.Value, closestAddress.Longitude!.Value);
+
+                return new
+                {
+                    id = r.Id,
+                    name = r.Emertimi,
+                    image = r.Logo,
+                    category = r.Kategori,
+                    distanceKm = Math.Round(distanceKm, 2),
+                    nearestAddress = closestAddress.Adresa,
+                    city = closestAddress.Qyteti,
+                    latitude = closestAddress.Latitude,
+                    longitude = closestAddress.Longitude
+                };
+            })
+            .Where(x => x != null)
+            .OrderBy(x => x!.distanceKm)
+            .Take(take)
+            .ToList();
+
+        return Ok(nearby);
+    }
+
+    private static double DistanceKm(double lat1, double lon1, double lat2, double lon2)
+    {
+        const double earthRadiusKm = 6371.0;
+        var dLat = DegreesToRadians(lat2 - lat1);
+        var dLon = DegreesToRadians(lon2 - lon1);
+
+        var a = Math.Pow(Math.Sin(dLat / 2), 2) +
+                Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                Math.Pow(Math.Sin(dLon / 2), 2);
+
+        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+        return earthRadiusKm * c;
+    }
+
+    private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180.0;
 
 
 }
