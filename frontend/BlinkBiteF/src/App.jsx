@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import * as signalR from "@microsoft/signalr";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -18,8 +19,21 @@ const BranchMenuPage = lazy(() => import("./components/BranchMenuPage.jsx"));
 function App() {
   const categoriesSliderRef = useRef(null);
   const searchInputRef = useRef(null);
+  const menuItemsLookupRef = useRef(new Map());
+  const menuItemsLookupPromiseRef = useRef(null);
+  const orderHubConnectionRef = useRef(null);
+  const subscribedOrderGroupsRef = useRef(new Set());
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
+    if (hash.startsWith("#/my-orders")) {
+      return {
+        page: "myOrders",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
     if (hash.startsWith("#/cart")) {
       const queryString = hash.includes("?") ? hash.split("?")[1] : "";
       const params = new URLSearchParams(queryString);
@@ -102,6 +116,9 @@ function App() {
   const [orderNotes, setOrderNotes] = useState("");
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderMessage, setOrderMessage] = useState("");
+  const [myOrders, setMyOrders] = useState([]);
+  const [myOrdersLoading, setMyOrdersLoading] = useState(false);
+  const [myOrdersError, setMyOrdersError] = useState("");
 
   const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
   const [token, setToken] = useState(getStoredToken());
@@ -116,6 +133,7 @@ function App() {
   const [signupUsername, setSignupUsername] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupRole, setSignupRole] = useState("Customer");
 
   const [addressCountry, setAddressCountry] = useState("");
   const [addressCity, setAddressCity] = useState("");
@@ -125,6 +143,51 @@ function App() {
   const filtered = (restaurants || []).filter(r =>
     (r.name || "").toLowerCase().includes(search.toLowerCase())
   );
+
+  const getRoleFromJwt = () => {
+    try {
+      const jwt = getStoredToken();
+      if (!jwt || !jwt.includes(".")) return "";
+
+      const payloadBase64 = jwt.split(".")[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      const decoded = decodeURIComponent(
+        atob(payloadBase64)
+          .split("")
+          .map((c) => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+          .join("")
+      );
+
+      const payload = JSON.parse(decoded);
+
+      const directRole = payload?.role ?? payload?.Role;
+      if (typeof directRole === "string" && directRole.trim()) return directRole;
+
+      const roleClaim = payload?.["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      if (typeof roleClaim === "string" && roleClaim.trim()) return roleClaim;
+
+      const roles = payload?.roles ?? payload?.Roles;
+      if (Array.isArray(roles) && roles.length > 0) {
+        return String(roles[0] || "");
+      }
+
+      return "";
+    } catch (err) {
+      console.error(err);
+      return "";
+    }
+  };
+
+  const currentUserRole =
+    currentUser?.role ??
+    currentUser?.Role ??
+    (Array.isArray(currentUser?.roles) && currentUser.roles.length > 0 ? currentUser.roles[0] : "") ??
+    (Array.isArray(currentUser?.Roles) && currentUser.Roles.length > 0 ? currentUser.Roles[0] : "") ??
+    getRoleFromJwt() ??
+    "";
+  const normalizedCurrentUserRole = String(currentUserRole || "").trim().toLowerCase();
 
   const extractErrorMessage = (payload, fallbackMessage) => {
     if (!payload) return fallbackMessage;
@@ -189,6 +252,32 @@ function App() {
     }
   };
 
+  const getUserIdFromJwt = () => {
+    try {
+      const jwt = getStoredToken();
+      if (!jwt || !jwt.includes(".")) return "";
+
+      const payloadBase64 = jwt.split(".")[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+
+      const padded = payloadBase64 + "=".repeat((4 - (payloadBase64.length % 4)) % 4);
+      const payload = JSON.parse(window.atob(padded));
+
+      return (
+        payload?.nameid ||
+        payload?.sub ||
+        payload?.id ||
+        payload?.userId ||
+        payload?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        ""
+      );
+    } catch (err) {
+      console.error(err);
+      return "";
+    }
+  };
+
   const authenticatedFetch = async (url, options = {}, canRetry = true) => {
     const headers = { ...(options.headers || {}) };
     const currentToken = getStoredToken();
@@ -218,8 +307,28 @@ function App() {
     let raw = pathOrUrl.trim();
     if (!raw) return [];
 
+    const apiOrigin = API_BASE.replace(/\/api\/?$/, "");
+
     if (raw.startsWith("http://") || raw.startsWith("https://")) {
-      return [encodeURI(raw)];
+      try {
+        const parsed = new URL(raw);
+        const pathname = String(parsed.pathname || "").replace(/^\/+/, "");
+        const candidates = new Set([encodeURI(raw)]);
+
+        if (pathname) {
+          if (/^uploads\//i.test(pathname)) {
+            candidates.add(encodeURI(`${apiOrigin}/${pathname}`));
+          } else {
+            candidates.add(encodeURI(`${apiOrigin}/uploads/${pathname}`));
+            candidates.add(encodeURI(`${apiOrigin}/${pathname}`));
+            candidates.add(encodeURI(`${apiOrigin}/uploads/menuitems/${pathname}`));
+          }
+        }
+
+        return Array.from(candidates);
+      } catch {
+        return [encodeURI(raw)];
+      }
     }
 
     raw = raw.replace(/^~\/?/, "");
@@ -233,13 +342,19 @@ function App() {
     const cleaned = raw.replace(/^\/+/, "");
     if (!cleaned) return [];
 
-    const apiOrigin = API_BASE.replace(/\/api\/?$/, "");
     const candidates = new Set();
 
-    candidates.add(encodeURI(`${apiOrigin}/${cleaned}`));
-    candidates.add(encodeURI(`${apiOrigin}/uploads/${cleaned}`));
+    // Prefer uploads-hosted paths first, then root path.
+    if (/^uploads\//i.test(cleaned)) {
+      candidates.add(encodeURI(`${apiOrigin}/${cleaned}`));
+    } else {
+      candidates.add(encodeURI(`${apiOrigin}/uploads/${cleaned}`));
+      candidates.add(encodeURI(`${apiOrigin}/${cleaned}`));
+      candidates.add(encodeURI(`${apiOrigin}/uploads/menuitems/${cleaned}`));
+      candidates.add(encodeURI(`${apiOrigin}/menuitems/${cleaned}`));
+    }
 
-    if (/^(menuitems|logos|categories)\//i.test(cleaned)) {
+    if (/^(menuitems|logos|categories|gjiks)\//i.test(cleaned)) {
       candidates.add(encodeURI(`${apiOrigin}/uploads/${cleaned}`));
     }
 
@@ -251,13 +366,99 @@ function App() {
     return candidates[0] || "";
   };
 
+  const getFoodFallbackImage = (label = "Food") => {
+    const safeLabel = String(label || "Food").trim().slice(0, 18) || "Food";
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#f7ead2"/><stop offset="100%" stop-color="#e7c98f"/></linearGradient></defs><rect width="140" height="140" rx="16" fill="url(#g)"/><circle cx="70" cy="56" r="22" fill="#fff7e6"/><rect x="34" y="88" width="72" height="18" rx="9" fill="#fff7e6"/><text x="70" y="132" text-anchor="middle" font-size="12" font-family="Segoe UI, Arial, sans-serif" fill="#6f581d">${safeLabel}</text></svg>`;
+    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+  };
+
+  const applyImageFallbackCandidate = (event, candidates = [], fallbackSrc = "") => {
+    const img = event.currentTarget;
+    const currentIndex = Number(img.dataset.candidateIndex || "0");
+    const nextIndex = currentIndex + 1;
+
+    if (Array.isArray(candidates) && nextIndex < candidates.length) {
+      img.dataset.candidateIndex = String(nextIndex);
+      img.src = candidates[nextIndex];
+      return;
+    }
+
+    img.onerror = null;
+    if (fallbackSrc) {
+      img.src = fallbackSrc;
+    }
+  };
+
+  const fetchMenuItemsLookup = async () => {
+    if (menuItemsLookupRef.current.size > 0) {
+      return menuItemsLookupRef.current;
+    }
+
+    if (menuItemsLookupPromiseRef.current) {
+      return menuItemsLookupPromiseRef.current;
+    }
+
+    menuItemsLookupPromiseRef.current = (async () => {
+      try {
+        const res = await authenticatedFetch(`${API_BASE}/menuitems`);
+        if (!res.ok) {
+          return new Map();
+        }
+
+        const data = await res.json();
+        const list = Array.isArray(data) ? data : [];
+        const lookup = new Map();
+
+        list.forEach((item) => {
+          const menuItemId = item?.id ?? item?.Id;
+          if (menuItemId === undefined || menuItemId === null) return;
+
+          const imageRaw = item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? "";
+          const imageCandidates = getAssetUrlCandidates(imageRaw);
+          const imageUrl = imageCandidates[0] || "";
+          const name =
+            item?.emertimi ?? item?.Emertimi ?? item?.name ?? item?.Name ?? "Item";
+
+          lookup.set(String(menuItemId), {
+            name: String(name || "Item"),
+            image: imageUrl,
+            imageCandidates,
+          });
+        });
+
+        menuItemsLookupRef.current = lookup;
+        return lookup;
+      } catch (err) {
+        console.error(err);
+        return new Map();
+      } finally {
+        menuItemsLookupPromiseRef.current = null;
+      }
+    })();
+
+    return menuItemsLookupPromiseRef.current;
+  };
+
   const loadCartFromStorage = () => {
     try {
       const raw = localStorage.getItem(ORDER_CART_KEY);
       if (!raw) return [];
       const parsed = JSON.parse(raw);
       if (!Array.isArray(parsed)) return [];
-      return parsed;
+      return parsed.map((item) => {
+        const rawImagePath = item?.rawImagePath ?? item?.imagePath ?? item?.image ?? item?.Image ?? "";
+        const imageCandidates =
+          Array.isArray(item?.imageCandidates) && item.imageCandidates.length > 0
+            ? item.imageCandidates
+            : getAssetUrlCandidates(rawImagePath);
+
+        return {
+          ...item,
+          rawImagePath,
+          imageCandidates,
+          image: item?.image || imageCandidates[0] || "",
+        };
+      });
     } catch (err) {
       console.error(err);
       return [];
@@ -295,17 +496,27 @@ function App() {
 
       return [
         ...current,
-        {
+        (() => {
+          const rawImagePath = menuItem?.rawImagePath ?? menuItem?.foto ?? menuItem?.Foto ?? menuItem?.image ?? menuItem?.Image ?? "";
+          const imageCandidates =
+            Array.isArray(menuItem?.imageCandidates) && menuItem.imageCandidates.length > 0
+              ? menuItem.imageCandidates
+              : getAssetUrlCandidates(rawImagePath);
+
+          return {
           menuItemId: menuItem.id,
           name: menuItem.name || "Item",
           price: Number(menuItem.price || 0),
-          image: menuItem.image || "",
+          rawImagePath,
+          imageCandidates,
+          image: menuItem?.image || imageCandidates[0] || "",
           quantity: nextQty,
           restaurantId: activeRestaurantId,
           restaurantName: selectedRestaurant?.name || "Restaurant",
           branchId: activeBranchId,
           branchAddress: restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.address || "",
-        },
+          };
+        })(),
       ];
     });
 
@@ -364,11 +575,77 @@ function App() {
     return allowedOnly;
   };
 
+  const ORDER_STATUS_LABELS = {
+    1: "Pending",
+    2: "Accepted",
+    3: "Preparing",
+    4: "Ready",
+    5: "Delivered",
+    6: "Cancelled",
+  };
+
+  const PAYMENT_METHOD_LABELS = {
+    1: "Cash",
+    2: "Credit Card",
+    3: "PayPal",
+    4: "Online",
+  };
+
+  const getStatusBadgeClass = (statusLabel) => {
+    const key = String(statusLabel || "").toLowerCase();
+    if (key === "delivered") return "text-bg-success";
+    if (key === "cancelled") return "text-bg-danger";
+    if (key === "ready") return "text-bg-info";
+    if (key === "preparing") return "text-bg-warning";
+    if (key === "accepted") return "text-bg-primary";
+    return "text-bg-secondary";
+  };
+
+  const syncOrderHubGroups = async (connection, orders) => {
+    if (!connection || connection.state !== signalR.HubConnectionState.Connected) {
+      return;
+    }
+
+    const nextOrderIds = new Set(
+      (orders || [])
+        .map((order) => Number(order?.id))
+        .filter((id) => Number.isFinite(id) && id > 0)
+    );
+
+    const currentOrderIds = subscribedOrderGroupsRef.current;
+
+    for (const orderId of nextOrderIds) {
+      if (currentOrderIds.has(orderId)) continue;
+      try {
+        await connection.invoke("JoinOrderGroup", orderId);
+        currentOrderIds.add(orderId);
+      } catch (err) {
+        console.error("Failed to join order group", orderId, err);
+      }
+    }
+
+    for (const orderId of Array.from(currentOrderIds)) {
+      if (nextOrderIds.has(orderId)) continue;
+      try {
+        await connection.invoke("LeaveOrderGroup", orderId);
+      } catch (err) {
+        console.error("Failed to leave order group", orderId, err);
+      } finally {
+        currentOrderIds.delete(orderId);
+      }
+    }
+  };
+
   const handleSubmitOrder = async () => {
     setOrderMessage("");
 
     if (!token) {
       setOrderMessage("Please login first to place an order.");
+      return;
+    }
+
+    if (normalizedCurrentUserRole && normalizedCurrentUserRole !== "customer") {
+      setOrderMessage("Only Customer accounts can place orders. Please login with a Customer account.");
       return;
     }
 
@@ -400,6 +677,7 @@ function App() {
       currentUser?.Id ??
       currentUser?.userId ??
       currentUser?.UserId ??
+      getUserIdFromJwt() ??
       "";
 
     const payload = {
@@ -655,6 +933,7 @@ function App() {
             price: Number(item?.cmimi ?? item?.Cmimi ?? item?.price ?? item?.Price ?? 0),
             image: toAbsoluteAssetUrl(item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? ""),
             imageCandidates: getAssetUrlCandidates(item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? ""),
+            rawImagePath: item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? "",
             available: Boolean(item?.disponueshme ?? item?.Disponueshme ?? true),
             calories: item?.kalori ?? item?.Kalori ?? null,
             allergens: item?.alergjene ?? item?.Alergjene ?? "",
@@ -911,19 +1190,204 @@ function App() {
   const fetchCurrentUser = async () => {
     if (!token) {
       setCurrentUser(null);
-      return;
+      return null;
     }
     try {
       const res = await authenticatedFetch(`${API_BASE}/auth/me`);
       if (!res.ok) {
         setCurrentUser(null);
-        return;
+        return null;
       }
       const data = await res.json();
       setCurrentUser(data);
+      return data;
     } catch (err) {
       console.error(err);
       setCurrentUser(null);
+      return null;
+    }
+  };
+
+  const fetchMyOrders = async () => {
+    if (!token) {
+      setMyOrders([]);
+      setMyOrdersError("Please login to see your orders.");
+      return;
+    }
+
+    const ensuredUser = currentUser || (await fetchCurrentUser());
+
+    const userId =
+      ensuredUser?.id ??
+      ensuredUser?.Id ??
+      ensuredUser?.userId ??
+      ensuredUser?.UserId ??
+      getUserIdFromJwt() ??
+      "";
+
+    setMyOrdersLoading(true);
+    setMyOrdersError("");
+    try {
+      let data = null;
+
+      const myRes = await authenticatedFetch(`${API_BASE}/orders/my`);
+      if (myRes.ok) {
+        data = await myRes.json();
+      } else {
+        if (!userId) {
+          const errData = await myRes.json().catch(() => null);
+          setMyOrders([]);
+          setMyOrdersError(extractErrorMessage(errData, "Could not identify your account."));
+          return;
+        }
+
+        const fallbackRes = await authenticatedFetch(`${API_BASE}/orders/by-user/${encodeURIComponent(String(userId))}`);
+        if (!fallbackRes.ok) {
+          const errData = await fallbackRes.json().catch(() => null);
+          setMyOrders([]);
+          setMyOrdersError(extractErrorMessage(errData, "Could not load your orders."));
+          return;
+        }
+        data = await fallbackRes.json();
+      }
+
+      const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+
+      const normalized = list.map((order) => {
+        const rawStatus = order?.statusi ?? order?.Statusi ?? "Pending";
+        const rawPayment = order?.metodaPageses ?? order?.MetodaPageses ?? "";
+
+        const statusLabel =
+          typeof rawStatus === "number"
+            ? ORDER_STATUS_LABELS[rawStatus] || `Status ${rawStatus}`
+            : String(rawStatus || "Pending");
+
+        const paymentLabel =
+          typeof rawPayment === "number"
+            ? PAYMENT_METHOD_LABELS[rawPayment] || `Method ${rawPayment}`
+            : String(rawPayment || "");
+
+        const items = Array.isArray(order?.orderItems)
+          ? order.orderItems
+          : Array.isArray(order?.OrderItems)
+            ? order.OrderItems
+            : [];
+
+        const normalizedItems = items.map((item, index) => {
+          const nestedMenuItem = item?.menuItem ?? item?.MenuItem ?? {};
+          const menuItemId = item?.menuItemId ?? item?.MenuItemId ?? nestedMenuItem?.id ?? nestedMenuItem?.Id ?? null;
+
+          const itemName =
+            item?.menuItemName ??
+            item?.MenuItemName ??
+            item?.itemName ??
+            item?.ItemName ??
+            item?.name ??
+            item?.Name ??
+            nestedMenuItem?.name ??
+            nestedMenuItem?.Name ??
+            nestedMenuItem?.emertimi ??
+            nestedMenuItem?.Emertimi ??
+            `Item ${index + 1}`;
+
+          const itemImage = toAbsoluteAssetUrl(
+            item?.menuItemImage ??
+              item?.MenuItemImage ??
+              item?.image ??
+              item?.Image ??
+              item?.foto ??
+              item?.Foto ??
+              nestedMenuItem?.image ??
+              nestedMenuItem?.Image ??
+              nestedMenuItem?.foto ??
+              nestedMenuItem?.Foto ??
+              ""
+          );
+          const rawImagePath =
+            item?.menuItemImage ??
+            item?.MenuItemImage ??
+            item?.image ??
+            item?.Image ??
+            item?.foto ??
+            item?.Foto ??
+            nestedMenuItem?.image ??
+            nestedMenuItem?.Image ??
+            nestedMenuItem?.foto ??
+            nestedMenuItem?.Foto ??
+            "";
+          const imageCandidates = getAssetUrlCandidates(rawImagePath);
+
+          return {
+            id: item?.id ?? item?.Id ?? item?.menuItemId ?? item?.MenuItemId ?? index,
+            menuItemId,
+            name: String(itemName || "Item"),
+            rawImagePath,
+            imageCandidates,
+            image: itemImage || imageCandidates[0] || "",
+            quantity: Number(item?.sasia ?? item?.Sasia ?? item?.quantity ?? item?.Quantity ?? 1),
+          };
+        });
+
+        const totalItemsCount = normalizedItems.reduce(
+          (sum, item) => sum + Math.max(1, Number(item.quantity || 1)),
+          0
+        );
+
+        return {
+          id: order?.id ?? order?.Id,
+          statusLabel,
+          paymentLabel,
+          total: Number(order?.shumaTotale ?? order?.ShumaTotale ?? 0),
+          deliveryFee: Number(order?.tarifaDorezimit ?? order?.TarifaDorezimit ?? 0),
+          address: order?.adresaDorezimit ?? order?.AdresaDorezimit ?? "",
+          note: order?.shenimet ?? order?.Shenimet ?? "",
+          createdAt: order?.dataPorosis ?? order?.DataPorosis ?? "",
+          restaurantName:
+            order?.restaurant?.name ??
+            order?.restaurant?.Name ??
+            order?.restaurant?.emertimi ??
+            order?.restaurant?.Emertimi ??
+            "Restaurant",
+          itemsCount: totalItemsCount,
+          items: normalizedItems,
+        };
+      });
+
+      const hasItemsMissingDetails = normalized.some((order) =>
+        (order.items || []).some(
+          (item) => item?.menuItemId && (!item.image || !item.name || /^Item\s\d+$/i.test(String(item.name || "")))
+        )
+      );
+
+      if (!hasItemsMissingDetails) {
+        setMyOrders(normalized);
+        return;
+      }
+
+      const menuLookup = await fetchMenuItemsLookup();
+      const enrichedOrders = normalized.map((order) => ({
+        ...order,
+        items: (order.items || []).map((item) => {
+          const menuMatch = item?.menuItemId ? menuLookup.get(String(item.menuItemId)) : null;
+          return {
+            ...item,
+            name: item.name && !/^Item\s\d+$/i.test(String(item.name)) ? item.name : menuMatch?.name || item.name,
+            imageCandidates:
+              Array.isArray(item?.imageCandidates) && item.imageCandidates.length > 0
+                ? item.imageCandidates
+                : menuMatch?.imageCandidates || getAssetUrlCandidates(item?.rawImagePath || item?.image || ""),
+            image: item.image || menuMatch?.image || "",
+          };
+        }),
+      }));
+
+      setMyOrders(enrichedOrders);
+    } catch (err) {
+      console.error(err);
+      setMyOrders([]);
+      setMyOrdersError("Could not load your orders.");
+    } finally {
+      setMyOrdersLoading(false);
     }
   };
 
@@ -942,6 +1406,8 @@ function App() {
       return;
     }
 
+    const normalizedRole = ["Customer", "Merchant", "Courier"].includes(signupRole) ? signupRole : "Customer";
+
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
@@ -951,7 +1417,7 @@ function App() {
           username: normalizedUsername,
           email: normalizedEmail,
           password: signupPassword,
-          role: "Customer",
+          role: normalizedRole,
         }),
       });
       const data = await res.json().catch(() => null);
@@ -966,6 +1432,7 @@ function App() {
         setSignupUsername("");
         setSignupEmail("");
         setSignupPassword("");
+        setSignupRole("Customer");
       }, 1500);
     } catch (err) {
       console.error(err);
@@ -1029,6 +1496,7 @@ function App() {
     setLoginPassword("");
     setLoginMessage("");
     setSignupMessage("");
+    setSignupRole("Customer");
     clearCart();
     setCartCount(0);
     setOrderMessage("");
@@ -1129,6 +1597,40 @@ function App() {
   }, [cartItems]);
 
   useEffect(() => {
+    const hydrateCartItemsFromMenu = async () => {
+      const hasMissingImage = cartItems.some((item) => item?.menuItemId && !item?.image);
+      if (!hasMissingImage) return;
+
+      const menuLookup = await fetchMenuItemsLookup();
+      if (!menuLookup.size) return;
+
+      setCartItems((current) => {
+        let changed = false;
+        const next = current.map((item) => {
+          if (item?.image || !item?.menuItemId) return item;
+          const menuMatch = menuLookup.get(String(item.menuItemId));
+          if (!menuMatch?.image) return item;
+          changed = true;
+
+          return {
+            ...item,
+            name: item?.name || menuMatch.name,
+            imageCandidates:
+              Array.isArray(item?.imageCandidates) && item.imageCandidates.length > 0
+                ? item.imageCandidates
+                : menuMatch.imageCandidates || [],
+            image: menuMatch.image,
+          };
+        });
+
+        return changed ? next : current;
+      });
+    };
+
+    hydrateCartItemsFromMenu();
+  }, [cartItems]);
+
+  useEffect(() => {
     if (deliveryAddress) return;
     const combinedAddress = [addressStreet, addressCity, addressCountry].filter(Boolean).join(", ");
     if (combinedAddress) {
@@ -1158,6 +1660,11 @@ function App() {
       setPage(route.page);
       setActiveRestaurantId(route.restaurantId);
       setActiveBranchId(route.branchId || "");
+
+      if (route.page === "myOrders") {
+        await fetchMyOrders();
+        return;
+      }
 
       if (route.page === "branchMenu") {
         if (route.restaurantId && route.branchId) {
@@ -1231,6 +1738,92 @@ function App() {
       window.removeEventListener("hashchange", syncRouteFromHash);
     };
   }, [token]);
+
+  useEffect(() => {
+    const shouldUseRealtime = page === "myOrders" && Boolean(token);
+    if (!shouldUseRealtime) {
+      const existing = orderHubConnectionRef.current;
+      orderHubConnectionRef.current = null;
+      subscribedOrderGroupsRef.current = new Set();
+
+      if (existing) {
+        existing.stop().catch((err) => console.error("Failed to stop order hub connection", err));
+      }
+      return undefined;
+    }
+
+    let isDisposed = false;
+
+    const setupRealtimeConnection = async () => {
+      if (orderHubConnectionRef.current) {
+        await syncOrderHubGroups(orderHubConnectionRef.current, myOrders);
+        return;
+      }
+
+      const apiOrigin = API_BASE.replace(/\/api\/?$/, "");
+      const connection = new signalR.HubConnectionBuilder()
+        .withUrl(`${apiOrigin}/orderHub`, {
+          accessTokenFactory: () => getStoredToken(),
+          withCredentials: true,
+        })
+        .withAutomaticReconnect()
+        .build();
+
+      connection.on("OrderStatusUpdated", (payload) => {
+        const payloadOrderId = Number(payload?.OrderId ?? payload?.orderId);
+        const nextStatus = payload?.NewStatus ?? payload?.newStatus;
+
+        if (!Number.isFinite(payloadOrderId) || !nextStatus) {
+          return;
+        }
+
+        setMyOrders((current) =>
+          current.map((order) =>
+            Number(order?.id) === payloadOrderId
+              ? {
+                  ...order,
+                  statusLabel: String(nextStatus),
+                }
+              : order
+          )
+        );
+      });
+
+      connection.onreconnected(async () => {
+        if (isDisposed) return;
+        subscribedOrderGroupsRef.current = new Set();
+        await syncOrderHubGroups(connection, myOrders);
+      });
+
+      try {
+        await connection.start();
+        if (isDisposed) {
+          await connection.stop();
+          return;
+        }
+
+        orderHubConnectionRef.current = connection;
+        await syncOrderHubGroups(connection, myOrders);
+      } catch (err) {
+        console.error("Failed to connect order hub", err);
+      }
+    };
+
+    setupRealtimeConnection();
+
+    return () => {
+      isDisposed = true;
+    };
+  }, [page, token]);
+
+  useEffect(() => {
+    if (page !== "myOrders" || !token) return;
+
+    const connection = orderHubConnectionRef.current;
+    if (!connection) return;
+
+    syncOrderHubGroups(connection, myOrders);
+  }, [myOrders, page, token]);
 
   return (
     <>
@@ -1309,9 +1902,22 @@ function App() {
 
             {token ? (
               <>
+                <button
+                  className="btn btn-outline-primary"
+                  onClick={() => {
+                    window.location.hash = "/my-orders";
+                  }}
+                >
+                  My Orders
+                </button>
                 {/* ✅ Username i rregulluar */}
                 <div className="me-2">
                   <span className="small text-muted">Hi, {currentUser?.userName || "User"}</span>
+                  {currentUserRole && (
+                    <div>
+                      <span className="badge text-bg-light border">{currentUserRole}</span>
+                    </div>
+                  )}
                 </div>
                 <button className="btn btn-outline-danger" onClick={handleLogout}>
                   Logout
@@ -1452,6 +2058,16 @@ function App() {
                 value={signupPassword}
                 onChange={(e) => setSignupPassword(e.target.value)}
               />
+              <select
+                className="form-select mb-2"
+                value={signupRole}
+                onChange={(e) => setSignupRole(e.target.value)}
+              >
+                <option value="Customer">Customer</option>
+                <option value="Merchant">Merchant</option>
+                <option value="Courier">Courier</option>
+              </select>
+              <p className="small text-muted mb-0">Choose role during signup to test role-based APIs directly from browser.</p>
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -1485,6 +2101,106 @@ function App() {
             locationQuery={locationQuery}
             onRestaurantSelect={handleRestaurantSelect}
           />
+        )}
+
+        {page === "myOrders" && (
+          <section className="container cart-page pb-5">
+            <div className="mb-4 restaurants-back-wrap d-flex gap-2 flex-wrap">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => {
+                  if (selectedCategory) {
+                    window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
+                    return;
+                  }
+                  window.location.hash = "/";
+                }}
+              >
+                <i className="bi bi-arrow-left me-2"></i>Back
+              </button>
+            </div>
+
+            <h2 className="mb-3">My Orders</h2>
+
+            {myOrdersError && <div className="alert alert-warning">{myOrdersError}</div>}
+
+            {myOrdersLoading ? (
+              <div className="text-muted">Loading your orders...</div>
+            ) : myOrders.length === 0 ? (
+              <div className="restaurant-menu">
+                <p className="text-muted mb-0">You have no orders yet.</p>
+              </div>
+            ) : (
+              <div className="d-flex flex-column gap-3">
+                {myOrders.map((order) => (
+                  <div className="restaurant-menu" key={order.id}>
+                    <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                      <div>
+                        <h5 className="mb-1">Order #{order.id}</h5>
+                        <p className="text-muted small mb-0">{order.restaurantName}</p>
+                      </div>
+                      <span className={`badge ${getStatusBadgeClass(order.statusLabel)}`}>{order.statusLabel}</span>
+                    </div>
+
+                    <div className="row g-2 small">
+                      <div className="col-md-4">
+                        <strong>Total:</strong> EUR {Number(order.total || 0).toFixed(2)}
+                      </div>
+                      <div className="col-md-4">
+                        <strong>Delivery Fee:</strong> EUR {Number(order.deliveryFee || 0).toFixed(2)}
+                      </div>
+                      <div className="col-md-4">
+                        <strong>Items:</strong> {order.itemsCount}
+                      </div>
+                    </div>
+
+                    <div className="row g-2 small mt-1">
+                      <div className="col-md-6">
+                        <strong>Address:</strong> {order.address || "-"}
+                      </div>
+                      <div className="col-md-3">
+                        <strong>Payment:</strong> {order.paymentLabel || "-"}
+                      </div>
+                      <div className="col-md-3">
+                        <strong>Date:</strong> {order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}
+                      </div>
+                    </div>
+
+                    {order.note && (
+                      <p className="small text-muted mt-2 mb-0">
+                        <strong>Note:</strong> {order.note}
+                      </p>
+                    )}
+
+                    {Array.isArray(order.items) && order.items.length > 0 && (
+                      <div className="order-items-preview mt-3">
+                        {order.items.map((item) => (
+                          <div className="order-item-chip" key={`${order.id}-${item.id}-${item.name}`}>
+                            <img
+                              className="order-item-chip-image"
+                              src={item.image || item?.imageCandidates?.[0] || getFoodFallbackImage(item.name)}
+                              alt={item.name}
+                              data-candidate-index="0"
+                              onError={(event) => {
+                                applyImageFallbackCandidate(event, item?.imageCandidates, getFoodFallbackImage(item.name));
+                              }}
+                            />
+                            <div className="order-item-chip-copy">
+                              <span className="order-item-chip-name">{item.name}</span>
+                              {Number(item.quantity || 1) > 1 && (
+                                <span className="small text-muted">x{Number(item.quantity)}</span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         )}
 
         {page === "restaurantDetails" && (
@@ -1579,11 +2295,22 @@ function App() {
                       {cartItems.map((item) => (
                         <div className="menu-item-card" key={`${item.menuItemId}-${item.branchId}`}>
                           <div className="d-flex justify-content-between align-items-start gap-3">
-                            <div>
-                              <h6 className="mb-1">{item.name}</h6>
-                              <p className="small text-muted mb-1">{item.restaurantName}</p>
-                              {item.branchAddress && <p className="small text-muted mb-2">{item.branchAddress}</p>}
-                              <div className="small fw-semibold">EUR {Number(item.price || 0).toFixed(2)}</div>
+                            <div className="d-flex align-items-start gap-3 cart-item-main">
+                              <img
+                                className="cart-item-image"
+                                src={item.image || item?.imageCandidates?.[0] || getFoodFallbackImage(item.name)}
+                                alt={item.name || "Cart item"}
+                                data-candidate-index="0"
+                                onError={(event) => {
+                                  applyImageFallbackCandidate(event, item?.imageCandidates, getFoodFallbackImage(item.name));
+                                }}
+                              />
+                              <div>
+                                <h6 className="mb-1">{item.name}</h6>
+                                <p className="small text-muted mb-1">{item.restaurantName}</p>
+                                {item.branchAddress && <p className="small text-muted mb-2">{item.branchAddress}</p>}
+                                <div className="small fw-semibold">EUR {Number(item.price || 0).toFixed(2)}</div>
+                              </div>
                             </div>
 
                             <div className="d-flex align-items-center gap-2">
@@ -1670,11 +2397,14 @@ function App() {
                   <button
                     type="button"
                     className="btn btn-primary w-100"
-                    disabled={orderSubmitting || cartItems.length === 0}
+                    disabled={orderSubmitting || cartItems.length === 0 || (normalizedCurrentUserRole && normalizedCurrentUserRole !== "customer")}
                     onClick={handleSubmitOrder}
                   >
                     {orderSubmitting ? "Placing order..." : "Place Order"}
                   </button>
+                  {normalizedCurrentUserRole && normalizedCurrentUserRole !== "customer" && (
+                    <p className="small text-muted mt-2 mb-0">Place Order is available only for Customer accounts.</p>
+                  )}
                 </div>
               </div>
             </div>

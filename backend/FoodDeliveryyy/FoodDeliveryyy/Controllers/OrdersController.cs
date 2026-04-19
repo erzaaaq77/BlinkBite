@@ -111,8 +111,15 @@ public class OrdersController : ControllerBase
     [Authorize]
     public async Task<ActionResult<IEnumerable<Orders>>> GetOrdersByUser(string userId)
     {
-        var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var currentUserId =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+            User.FindFirst("sub")?.Value ??
+            User.FindFirst("id")?.Value ??
+            User.FindFirst("userId")?.Value;
+
+        var role =
+            User.FindFirst(ClaimTypes.Role)?.Value ??
+            User.FindFirst("role")?.Value;
 
         if (role != AppRoles.Admin && currentUserId != userId)
         {
@@ -121,9 +128,84 @@ public class OrdersController : ControllerBase
 
         var orders = await _context.Orders
             .Where(o => o.UserId == userId)
-            .Include(o => o.Restaurant)
-            .Include(o => o.OrderItems)
             .OrderByDescending(o => o.DataPorosis)
+            .Select(o => new
+            {
+                id = o.Id,
+                userId = o.UserId,
+                restaurantId = o.RestaurantId,
+                adresaDorezimit = o.AdresaDorezimit,
+                shumaTotale = o.ShumaTotale,
+                tarifaDorezimit = o.TarifaDorezimit,
+                zbritja = o.Zbritja,
+                statusi = o.Statusi.ToString(),
+                metodaPageses = o.MetodaPageses.ToString(),
+                dataPorosis = o.DataPorosis,
+                shenimet = o.Shenimet,
+                restaurant = o.Restaurant == null ? null : new
+                {
+                    id = o.Restaurant.Id,
+                    emertimi = o.Restaurant.Emertimi,
+                },
+                orderItems = o.OrderItems.Select(oi => new
+                {
+                    id = oi.Id,
+                    menuItemId = oi.MenuItemId,
+                    sasia = oi.Sasia,
+                    cmimi = oi.Cmimi,
+                    shenimet = oi.Shenimet,
+                }).ToList(),
+            })
+            .ToListAsync();
+
+        return Ok(orders);
+    }
+
+    [HttpGet("my")]
+    [Authorize]
+    public async Task<ActionResult<IEnumerable<Orders>>> GetMyOrders()
+    {
+        var userId =
+            User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+            User.FindFirst("sub")?.Value ??
+            User.FindFirst("id")?.Value ??
+            User.FindFirst("userId")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Unauthorized("User identity is missing.");
+        }
+
+        var orders = await _context.Orders
+            .Where(o => o.UserId == userId)
+            .OrderByDescending(o => o.DataPorosis)
+            .Select(o => new
+            {
+                id = o.Id,
+                userId = o.UserId,
+                restaurantId = o.RestaurantId,
+                adresaDorezimit = o.AdresaDorezimit,
+                shumaTotale = o.ShumaTotale,
+                tarifaDorezimit = o.TarifaDorezimit,
+                zbritja = o.Zbritja,
+                statusi = o.Statusi.ToString(),
+                metodaPageses = o.MetodaPageses.ToString(),
+                dataPorosis = o.DataPorosis,
+                shenimet = o.Shenimet,
+                restaurant = o.Restaurant == null ? null : new
+                {
+                    id = o.Restaurant.Id,
+                    emertimi = o.Restaurant.Emertimi,
+                },
+                orderItems = o.OrderItems.Select(oi => new
+                {
+                    id = oi.Id,
+                    menuItemId = oi.MenuItemId,
+                    sasia = oi.Sasia,
+                    cmimi = oi.Cmimi,
+                    shenimet = oi.Shenimet,
+                }).ToList(),
+            })
             .ToListAsync();
 
         return Ok(orders);
