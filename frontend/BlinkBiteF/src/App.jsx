@@ -119,6 +119,11 @@ function App() {
   const [myOrders, setMyOrders] = useState([]);
   const [myOrdersLoading, setMyOrdersLoading] = useState(false);
   const [myOrdersError, setMyOrdersError] = useState("");
+  const [roleOrders, setRoleOrders] = useState([]);
+  const [roleOrdersLoading, setRoleOrdersLoading] = useState(false);
+  const [roleOrdersError, setRoleOrdersError] = useState("");
+  const [roleActionMessage, setRoleActionMessage] = useState("");
+  const [roleActionOrderId, setRoleActionOrderId] = useState(null);
 
   const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
   const [token, setToken] = useState(getStoredToken());
@@ -188,6 +193,48 @@ function App() {
     getRoleFromJwt() ??
     "";
   const normalizedCurrentUserRole = String(currentUserRole || "").trim().toLowerCase();
+  const isCustomerRole = ["customer", "user"].includes(normalizedCurrentUserRole);
+  const isAdminRole = normalizedCurrentUserRole === "admin";
+  const isMerchantRole = normalizedCurrentUserRole === "merchant";
+  const isCourierRole = normalizedCurrentUserRole === "courier";
+  const canManageOperationalOrders = isAdminRole || isMerchantRole || isCourierRole;
+  const [merchantRestaurantIdForUi, setMerchantRestaurantIdForUi] = useState("");
+
+  useEffect(() => {
+    const tryAssignMerchantRestaurantId = async () => {
+      if (!isMerchantRole || !currentUser?.id) return;
+      if (
+        currentUser?.restaurantId ||
+        currentUser?.RestaurantId ||
+        currentUser?.merchantRestaurantId ||
+        currentUser?.MerchantRestaurantId ||
+        currentUser?.branchRestaurantId ||
+        currentUser?.BranchRestaurantId
+      ) {
+        setMerchantRestaurantIdForUi(
+          currentUser?.restaurantId ??
+          currentUser?.RestaurantId ??
+          currentUser?.merchantRestaurantId ??
+          currentUser?.MerchantRestaurantId ??
+          currentUser?.branchRestaurantId ??
+          currentUser?.BranchRestaurantId ??
+          ""
+        );
+        return;
+      }
+      // Fetch all restaurants and find the one for this merchant
+      try {
+        const res = await fetch("/api/restaurants");
+        if (!res.ok) return;
+        const data = await res.json();
+        const myRestaurant = (Array.isArray(data) ? data : []).find(r => (r.userId ?? r.UserId) === currentUser.id);
+        if (myRestaurant && (myRestaurant.id || myRestaurant.Id)) {
+          setMerchantRestaurantIdForUi(myRestaurant.id ?? myRestaurant.Id);
+        }
+      } catch {}
+    };
+    tryAssignMerchantRestaurantId();
+  }, [isMerchantRole, currentUser]);
 
   const extractErrorMessage = (payload, fallbackMessage) => {
     if (!payload) return fallbackMessage;
@@ -589,6 +636,70 @@ function App() {
     2: "Credit Card",
     3: "PayPal",
     4: "Online",
+  };
+
+  const ORDER_STATUS_CODES = {
+    pending: 1,
+    accepted: 2,
+    preparing: 3,
+    ready: 4,
+    delivered: 5,
+    cancelled: 6,
+  };
+
+  const normalizeStatusLabel = (statusValue) => {
+    if (typeof statusValue === "number") {
+      return ORDER_STATUS_LABELS[statusValue] || `Status ${statusValue}`;
+    }
+
+    const normalized = String(statusValue || "Pending").trim().toLowerCase();
+    if (normalized === "accepted") return "Accepted";
+    if (normalized === "preparing") return "Preparing";
+    if (normalized === "ready") return "Ready";
+    if (normalized === "delivered") return "Delivered";
+    if (normalized === "cancelled" || normalized === "canceled") return "Cancelled";
+    if (normalized === "pending") return "Pending";
+
+    return String(statusValue || "Pending");
+  };
+
+  const getRoleCapabilitiesLabel = () => {
+    if (isAdminRole) {
+      return "Admin: can monitor all orders and move statuses across all stages.";
+    }
+    if (isMerchantRole) {
+      return "Merchant: can process own orders from Pending to Accepted, Preparing, and Ready.";
+    }
+    if (isCourierRole) {
+      return "Courier: can view Ready orders and complete delivery.";
+    }
+    if (isCustomerRole || !normalizedCurrentUserRole) {
+      return "Customer/User: can place orders and track personal order statuses.";
+    }
+    return `Role ${currentUserRole}: permissions depend on backend policy.`;
+  };
+
+  const getAvailableActionsForOrder = (order) => {
+    const currentStatus = normalizeStatusLabel(order?.statusLabel).toLowerCase();
+    const actions = [];
+
+    if (isAdminRole || isMerchantRole) {
+      if (currentStatus === "pending") {
+        actions.push({ nextStatus: "Accepted", buttonClass: "btn btn-sm btn-primary", label: "Accept" });
+      }
+      if (currentStatus === "accepted") {
+        actions.push({ nextStatus: "Preparing", buttonClass: "btn btn-sm btn-warning", label: "Preparing" });
+      }
+      if (currentStatus === "preparing") {
+        actions.push({ nextStatus: "Ready", buttonClass: "btn btn-sm btn-info", label: "Ready" });
+      }
+    }
+
+    if ((isAdminRole || isCourierRole) && currentStatus === "ready") {
+      actions.push({ nextStatus: "Delivered", buttonClass: "btn btn-sm btn-success", label: "Deliver" });
+    }
+
+    return actions;
   };
 
   const getStatusBadgeClass = (statusLabel) => {
@@ -1257,10 +1368,7 @@ function App() {
         const rawStatus = order?.statusi ?? order?.Statusi ?? "Pending";
         const rawPayment = order?.metodaPageses ?? order?.MetodaPageses ?? "";
 
-        const statusLabel =
-          typeof rawStatus === "number"
-            ? ORDER_STATUS_LABELS[rawStatus] || `Status ${rawStatus}`
-            : String(rawStatus || "Pending");
+        const statusLabel = normalizeStatusLabel(rawStatus);
 
         const paymentLabel =
           typeof rawPayment === "number"
@@ -1391,6 +1499,257 @@ function App() {
     }
   };
 
+  const fetchOperationalOrders = async () => {
+    if (!token) {
+      setRoleOrders([]);
+      setRoleOrdersError("Please login to manage operational orders.");
+      return;
+    }
+
+    if (!canManageOperationalOrders) {
+      setRoleOrders([]);
+      setRoleOrdersError("This role cannot manage operational orders.");
+      return;
+    }
+
+    setRoleOrdersLoading(true);
+    setRoleOrdersError("");
+    setRoleActionMessage("");
+
+    try {
+      const resolvedMerchantRestaurantId =
+        currentUser?.restaurantId ??
+        currentUser?.RestaurantId ??
+        currentUser?.merchantRestaurantId ??
+        currentUser?.MerchantRestaurantId ??
+        currentUser?.branchRestaurantId ??
+        currentUser?.BranchRestaurantId ??
+        null;
+
+      const merchantRestaurantId = Number(resolvedMerchantRestaurantId);
+      const merchantRestaurantEndpoints = Number.isFinite(merchantRestaurantId) && merchantRestaurantId > 0
+        ? [
+            `${API_BASE}/orders/by-restaurant/${merchantRestaurantId}`,
+            `${API_BASE}/orders/restaurant/${merchantRestaurantId}`,
+            `${API_BASE}/orders?restaurantId=${merchantRestaurantId}`,
+          ]
+        : [];
+
+      const endpoints = isCourierRole
+        ? [
+            `${API_BASE}/orders/ready`,
+            `${API_BASE}/orders/status/ready`,
+            `${API_BASE}/orders?status=ready`,
+            `${API_BASE}/orders/courier`,
+            `${API_BASE}/orders/available-for-courier`,
+            `${API_BASE}/orders/all`,
+            `${API_BASE}/orders`,
+          ]
+        : isMerchantRole
+          ? [
+              ...merchantRestaurantEndpoints,
+              `${API_BASE}/orders/merchant`,
+              `${API_BASE}/orders/for-merchant`,
+              `${API_BASE}/orders/my-restaurant`,
+              `${API_BASE}/orders/pending`,
+              `${API_BASE}/orders/in-progress`,
+              `${API_BASE}/orders/my`,
+              `${API_BASE}/orders/all`,
+              `${API_BASE}/orders`,
+            ]
+          : [
+              `${API_BASE}/orders/pending`,
+              `${API_BASE}/orders/in-progress`,
+              `${API_BASE}/orders/all`,
+              `${API_BASE}/orders`,
+              `${API_BASE}/orders/admin`,
+            ];
+
+      let list = [];
+      let loaded = false;
+      const failedEndpoints = [];
+
+      for (const endpoint of endpoints) {
+        const res = await authenticatedFetch(endpoint);
+        if (!res.ok) {
+          failedEndpoints.push(`${endpoint} (HTTP ${res.status})`);
+          continue;
+        }
+
+        const data = await res.json().catch(() => null);
+        const candidate = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+        loaded = true;
+
+        if (candidate.length > 0 || endpoint === endpoints[endpoints.length - 1]) {
+          list = candidate;
+          break;
+        }
+      }
+
+      if (!loaded) {
+        setRoleOrders([]);
+        setRoleOrdersError(
+          failedEndpoints.length > 0
+            ? `Could not load operational orders for this role. Tried endpoints: ${failedEndpoints.join(" | ")}`
+            : "Could not load operational orders for this role."
+        );
+        return;
+      }
+
+      const normalized = list.map((order) => {
+        const rawStatus = order?.statusi ?? order?.Statusi ?? "Pending";
+        const rawPayment = order?.metodaPageses ?? order?.MetodaPageses ?? "";
+        const statusLabel = normalizeStatusLabel(rawStatus);
+
+        const paymentLabel =
+          typeof rawPayment === "number"
+            ? PAYMENT_METHOD_LABELS[rawPayment] || `Method ${rawPayment}`
+            : String(rawPayment || "");
+
+        const items = Array.isArray(order?.orderItems)
+          ? order.orderItems
+          : Array.isArray(order?.OrderItems)
+            ? order.OrderItems
+            : [];
+
+        const normalizedItems = items.map((item, index) => ({
+          id: item?.id ?? item?.Id ?? item?.menuItemId ?? item?.MenuItemId ?? index,
+          name:
+            item?.menuItemName ??
+            item?.MenuItemName ??
+            item?.itemName ??
+            item?.ItemName ??
+            item?.name ??
+            item?.Name ??
+            `Item ${index + 1}`,
+          quantity: Number(item?.sasia ?? item?.Sasia ?? item?.quantity ?? item?.Quantity ?? 1),
+        }));
+
+        const totalItemsCount = normalizedItems.reduce(
+          (sum, item) => sum + Math.max(1, Number(item.quantity || 1)),
+          0
+        );
+
+        return {
+          id: order?.id ?? order?.Id,
+          statusLabel,
+          paymentLabel,
+          total: Number(order?.shumaTotale ?? order?.ShumaTotale ?? 0),
+          deliveryFee: Number(order?.tarifaDorezimit ?? order?.TarifaDorezimit ?? 0),
+          address: order?.adresaDorezimit ?? order?.AdresaDorezimit ?? "",
+          note: order?.shenimet ?? order?.Shenimet ?? "",
+          createdAt: order?.dataPorosis ?? order?.DataPorosis ?? "",
+          restaurantName:
+            order?.restaurant?.name ??
+            order?.restaurant?.Name ??
+            order?.restaurant?.emertimi ??
+            order?.restaurant?.Emertimi ??
+            "Restaurant",
+          itemsCount: totalItemsCount,
+          items: normalizedItems,
+        };
+      });
+
+      const filteredByRole = normalized.filter((order) => {
+        const statusKey = String(order?.statusLabel || "").toLowerCase();
+        if (isCourierRole) {
+          return ["ready", "delivered"].includes(statusKey);
+        }
+        return true;
+      });
+
+      setRoleOrders(filteredByRole);
+    } catch (err) {
+      console.error(err);
+      setRoleOrders([]);
+      setRoleOrdersError("Could not load operational orders.");
+    } finally {
+      setRoleOrdersLoading(false);
+    }
+  };
+
+  const handleRoleOrderStatusUpdate = async (order, nextStatus) => {
+    const orderId = Number(order?.id);
+    if (!Number.isFinite(orderId) || !nextStatus) return;
+
+    const normalizedNextStatus = normalizeStatusLabel(nextStatus);
+    const statusCode = ORDER_STATUS_CODES[String(normalizedNextStatus).toLowerCase()] || null;
+
+    setRoleActionOrderId(orderId);
+    setRoleActionMessage("");
+
+    const payloadVariants = [
+      { status: normalizedNextStatus },
+      { Status: normalizedNextStatus },
+      { newStatus: normalizedNextStatus },
+      { NewStatus: normalizedNextStatus },
+      ...(statusCode ? [{ status: statusCode }, { Status: statusCode }, { statusi: statusCode }, { Statusi: statusCode }] : []),
+      ...(statusCode ? [{ status: normalizedNextStatus, statusCode }] : []),
+    ];
+
+    const requestCandidates = [
+      { method: "PUT", url: `${API_BASE}/orders/${orderId}/status` },
+      { method: "PATCH", url: `${API_BASE}/orders/${orderId}/status` },
+      { method: "POST", url: `${API_BASE}/orders/${orderId}/status` },
+      { method: "PUT", url: `${API_BASE}/orders/${orderId}/update-status` },
+      { method: "PATCH", url: `${API_BASE}/orders/${orderId}/update-status` },
+      { method: "POST", url: `${API_BASE}/orders/${orderId}/update-status` },
+      { method: "PUT", url: `${API_BASE}/orders/update-status/${orderId}` },
+      { method: "PATCH", url: `${API_BASE}/orders/update-status/${orderId}` },
+      { method: "POST", url: `${API_BASE}/orders/update-status/${orderId}` },
+    ];
+
+    try {
+      let updated = false;
+
+      for (const candidate of requestCandidates) {
+        for (const payload of payloadVariants) {
+          const res = await authenticatedFetch(candidate.url, {
+            method: candidate.method,
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            updated = true;
+            break;
+          }
+
+          if (![400, 404, 405].includes(res.status)) {
+            const errPayload = await res.json().catch(() => null);
+            setRoleActionMessage(extractErrorMessage(errPayload, `Failed to update order (HTTP ${res.status}).`));
+            setRoleActionOrderId(null);
+            return;
+          }
+        }
+
+        if (updated) break;
+      }
+
+      if (!updated) {
+        setRoleActionMessage("Order status endpoint not found. Check backend route for status update.");
+        return;
+      }
+
+      setRoleActionMessage(`Order #${orderId} moved to ${normalizedNextStatus}.`);
+      setRoleOrders((current) =>
+        current.map((entry) =>
+          Number(entry?.id) === orderId
+            ? {
+                ...entry,
+                statusLabel: normalizedNextStatus,
+              }
+            : entry
+        )
+      );
+    } catch (err) {
+      console.error(err);
+      setRoleActionMessage("Could not update order status right now.");
+    } finally {
+      setRoleActionOrderId(null);
+    }
+  };
+
   const handleSignup = async () => {
     setSignupMessage("");
     const normalizedUsername = signupUsername.trim();
@@ -1406,7 +1765,7 @@ function App() {
       return;
     }
 
-    const normalizedRole = ["Customer", "Merchant", "Courier"].includes(signupRole) ? signupRole : "Customer";
+    const normalizedRole = ["Customer", "Merchant", "Courier", "Admin"].includes(signupRole) ? signupRole : "Customer";
 
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
@@ -1662,7 +2021,11 @@ function App() {
       setActiveBranchId(route.branchId || "");
 
       if (route.page === "myOrders") {
-        await fetchMyOrders();
+        if (canManageOperationalOrders) {
+          await fetchOperationalOrders();
+        } else {
+          await fetchMyOrders();
+        }
         return;
       }
 
@@ -1737,7 +2100,7 @@ function App() {
     return () => {
       window.removeEventListener("hashchange", syncRouteFromHash);
     };
-  }, [token]);
+  }, [token, normalizedCurrentUserRole]);
 
   useEffect(() => {
     const shouldUseRealtime = page === "myOrders" && Boolean(token);
@@ -1771,13 +2134,24 @@ function App() {
 
       connection.on("OrderStatusUpdated", (payload) => {
         const payloadOrderId = Number(payload?.OrderId ?? payload?.orderId);
-        const nextStatus = payload?.NewStatus ?? payload?.newStatus;
+        const nextStatus = normalizeStatusLabel(payload?.NewStatus ?? payload?.newStatus);
 
         if (!Number.isFinite(payloadOrderId) || !nextStatus) {
           return;
         }
 
         setMyOrders((current) =>
+          current.map((order) =>
+            Number(order?.id) === payloadOrderId
+              ? {
+                  ...order,
+                  statusLabel: String(nextStatus),
+                }
+              : order
+          )
+        );
+
+        setRoleOrders((current) =>
           current.map((order) =>
             Number(order?.id) === payloadOrderId
               ? {
@@ -1908,7 +2282,7 @@ function App() {
                     window.location.hash = "/my-orders";
                   }}
                 >
-                  My Orders
+                  {canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}
                 </button>
                 {/* ✅ Username i rregulluar */}
                 <div className="me-2">
@@ -2066,6 +2440,7 @@ function App() {
                 <option value="Customer">Customer</option>
                 <option value="Merchant">Merchant</option>
                 <option value="Courier">Courier</option>
+                <option value="Admin">Admin</option>
               </select>
               <p className="small text-muted mb-0">Choose role during signup to test role-based APIs directly from browser.</p>
             </div>
@@ -2121,11 +2496,98 @@ function App() {
               </button>
             </div>
 
-            <h2 className="mb-3">My Orders</h2>
+            <h2 className="mb-2">{canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}</h2>
+            <p className="small text-muted mb-3">{getRoleCapabilitiesLabel()}</p>
 
-            {myOrdersError && <div className="alert alert-warning">{myOrdersError}</div>}
+            {!canManageOperationalOrders && myOrdersError && <div className="alert alert-warning">{myOrdersError}</div>}
+            {canManageOperationalOrders && roleOrdersError && <div className="alert alert-warning">{roleOrdersError}</div>}
+            {canManageOperationalOrders && roleActionMessage && (
+              <div className={`alert ${roleActionMessage.toLowerCase().includes("moved") ? "alert-success" : "alert-warning"}`}>
+                {roleActionMessage}
+              </div>
+            )}
 
-            {myOrdersLoading ? (
+            {canManageOperationalOrders ? (
+              roleOrdersLoading ? (
+                <div className="text-muted">Loading operational orders...</div>
+              ) : roleOrders.length === 0 ? (
+                <div className="restaurant-menu">
+                  <p className="text-muted mb-0">No operational orders found for this role.</p>
+                  {isMerchantRole && (
+                    <div className="small text-muted mt-2">
+                      <div>
+                        Merchant debug: RestaurantId on your account is {merchantRestaurantIdForUi ? String(merchantRestaurantIdForUi) : "not assigned"}.
+                      </div>
+                      <div>
+                        To test merchant flow, place an order as Customer in the same restaurant/branch assigned to this Merchant account.
+                      </div>
+                    </div>
+                  )}
+                  {isCourierRole && (
+                    <p className="small text-muted mt-2 mb-0">
+                      Courier sees orders when they reach Ready status.
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="d-flex flex-column gap-3">
+                  {roleOrders.map((order) => {
+                    const actions = getAvailableActionsForOrder(order);
+
+                    return (
+                      <div className="restaurant-menu" key={order.id}>
+                        <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                          <div>
+                            <h5 className="mb-1">Order #{order.id}</h5>
+                            <p className="text-muted small mb-0">{order.restaurantName}</p>
+                          </div>
+                          <span className={`badge ${getStatusBadgeClass(order.statusLabel)}`}>{order.statusLabel}</span>
+                        </div>
+
+                        <div className="row g-2 small">
+                          <div className="col-md-4">
+                            <strong>Total:</strong> EUR {Number(order.total || 0).toFixed(2)}
+                          </div>
+                          <div className="col-md-4">
+                            <strong>Items:</strong> {order.itemsCount}
+                          </div>
+                          <div className="col-md-4">
+                            <strong>Date:</strong> {order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}
+                          </div>
+                        </div>
+
+                        <div className="row g-2 small mt-1">
+                          <div className="col-md-8">
+                            <strong>Address:</strong> {order.address || "-"}
+                          </div>
+                          <div className="col-md-4">
+                            <strong>Payment:</strong> {order.paymentLabel || "-"}
+                          </div>
+                        </div>
+
+                        {actions.length > 0 ? (
+                          <div className="d-flex flex-wrap gap-2 mt-3">
+                            {actions.map((action) => (
+                              <button
+                                key={`${order.id}-${action.nextStatus}`}
+                                type="button"
+                                className={action.buttonClass}
+                                disabled={Number(roleActionOrderId) === Number(order.id)}
+                                onClick={() => handleRoleOrderStatusUpdate(order, action.nextStatus)}
+                              >
+                                {Number(roleActionOrderId) === Number(order.id) ? "Updating..." : action.label}
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="small text-muted mt-3 mb-0">No available status action for this role at current state.</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ) : myOrdersLoading ? (
               <div className="text-muted">Loading your orders...</div>
             ) : myOrders.length === 0 ? (
               <div className="restaurant-menu">
