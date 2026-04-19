@@ -558,6 +558,49 @@ public class OrdersController : ControllerBase
         return Ok(history);
     }
 
+    [HttpGet ("dashboard/stats")]
+    [Authorize(Roles =AppRoles.Admin)]
+
+    public async Task<IActionResult> GetDashboardStats()
+    {
+        var today= DateTime.Today;
+        var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+        var startOfMonth = new DateTime(today.Year, today.Month, 1);
+
+        var stats = new
+
+        {
+            TodayOrders = await _context.Orders.CountAsync(o => o.DataPorosis.Date == today),
+
+            TodayRevenue = await _context.Orders.Where(o => o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
+
+            WeeklyOrders = await _context.Orders.CountAsync(o => o.DataPorosis.Date >= startOfWeek),
+
+            WeeklyRevenue = await _context.Orders.Where(o => o.DataPorosis.Date >= startOfWeek).SumAsync(o => o.ShumaTotale),
+
+            MonthlyOrders = await _context.Orders.CountAsync(o => o.DataPorosis.Date >= startOfMonth),
+
+            MonthlyRevenue = await _context.Orders.Where(o => o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
+
+            TotalOrders = await _context.Orders.CountAsync(),
+
+            TotalRevenue = await _context.Orders.SumAsync(o => o.ShumaTotale),
+
+            PendingOrders = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Pending),
+
+            AcceptedOrders = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Accepted),
+            
+            PreparingOrders = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Preparing),
+            
+            ReadyOrders = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Ready),
+            
+            DeliveredOrders = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Delivered),
+            
+            CancelledOrders = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Cancelled)
+        };
+        return Ok(stats);
+            }
+
 
 
 }
