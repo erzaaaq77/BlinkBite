@@ -601,6 +601,52 @@ public class OrdersController : ControllerBase
         return Ok(stats);
             }
 
+    [HttpGet("health")]
+    public IActionResult Health()
+    {
+        var isDbConnected = _context.Database.CanConnect();
+
+        return Ok(new
+        {
+            status = "Healthy",
+            timestamp = DateTime.Now,
+            database = isDbConnected ? "Connected" : "Disconnected",
+            message = "Food Delivery API is running!"
+        });
+    }
+
+    [HttpGet("{id}/eta")]
+    [Authorize]
+    public async Task<IActionResult> GetEstimatedDeliveryTime(int id)
+    {
+        var order = await _context.Orders.FindAsync(id);
+        if (order == null) return NotFound();
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (role != AppRoles.Admin && order.UserId != userId && role != AppRoles.Courier)
+            return Forbid();
+
+        int estimatedMinutes = order.Statusi switch
+        {
+            OrderStatus.Pending => 45,
+            OrderStatus.Accepted => 35,
+            OrderStatus.Preparing => 25,
+            OrderStatus.Ready => 15,
+            OrderStatus.Delivered => 0,
+            _ => 30
+        };
+
+        return Ok(new
+        {
+            OrderId = id,
+            Status = order.Statusi.ToString(),
+            EstimatedMinutes = estimatedMinutes,
+            EstimatedTime = DateTime.Now.AddMinutes(estimatedMinutes)
+        });
+    }
+
 
 
 }
