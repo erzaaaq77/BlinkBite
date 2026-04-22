@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using System.Data;
 using System.Security.Claims;
+using System.Security.Cryptography.X509Certificates;
 
 
 namespace FoodDeliveryyy.Controllers;
@@ -638,16 +639,32 @@ public class OrdersController : ControllerBase
             _ => 30
         };
 
+
+
         return Ok(new
         {
             OrderId = id,
             Status = order.Statusi.ToString(),
             EstimatedMinutes = estimatedMinutes,
             EstimatedTime = DateTime.Now.AddMinutes(estimatedMinutes)
-        });
+        }); 
     }
 
 
+    [HttpGet("top-restaurants")]
+
+    public async Task<ActionResult> GetTopRestaurants([FromQuery] int count = 5)
+    {
+        var topRestaurants = await _context.Orders.Where(o => o.Statusi == OrderStatus.Delivered).GroupBy(o => o.RestaurantId).Select(g => new
+        {
+            RestaurantId = g.Key,
+            RestaurantName = g.First().Restaurant.Emertimi,
+            TotalOrders = g.Count(),
+            TotalRevenue = g.Sum(o => o.ShumaTotale)
+        }).OrderByDescending(r => r.TotalOrders).Take(count).ToListAsync();
+
+        return Ok(topRestaurants);
+    }
 
 }
 
