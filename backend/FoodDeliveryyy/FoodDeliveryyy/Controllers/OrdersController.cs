@@ -666,6 +666,24 @@ public class OrdersController : ControllerBase
         return Ok(topRestaurants);
     }
 
+
+    public async Task<IActionResult> GetBusiestHours()
+    {
+        var busiesthours = await _context.Orders.Where(o => o.Statusi == OrderStatus.Delivered).GroupBy(o => o.DataPorosis.Hour).Select(g => new
+        {
+            Hour = g.Key,
+            OrderCount = g.Count(),
+            TimeRange= $"{g.Key}:00 - {g.Key + 1:00}:00"
+        }).OrderByDescending(h =>h.OrderCount).Take(5).ToListAsync();
+
+        return Ok(
+            new { 
+            Message="Busiest hours based on delivered orders",
+            Data= busiesthours
+            }
+            );
+    }
+
 }
 
 public class UpdateStatusRequest
