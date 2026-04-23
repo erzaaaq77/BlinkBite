@@ -676,12 +676,7 @@ public class OrdersController : ControllerBase
             TimeRange= $"{g.Key}:00 - {g.Key + 1:00}:00"
         }).OrderByDescending(h =>h.OrderCount).Take(5).ToListAsync();
 
-        return Ok(
-            new { 
-            Message="Busiest hours based on delivered orders",
-            Data= busiesthours
-            }
-            );
+        return Ok(busiesthours);
     }
 
 }
