@@ -666,7 +666,7 @@ public class OrdersController : ControllerBase
         return Ok(topRestaurants);
     }
 
-
+    [HttpGet("busiest-hours")]
     public async Task<IActionResult> GetBusiestHours()
     {
         var busiesthours = await _context.Orders.Where(o => o.Statusi == OrderStatus.Delivered).GroupBy(o => o.DataPorosis.Hour).Select(g => new
