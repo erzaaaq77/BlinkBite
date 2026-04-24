@@ -6,6 +6,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
 import logo from "./assets/LogoBB.png";
 import locationImage from "./assets/location.png";
+import MerchantDashboard from "./components/MerchantDashboard.jsx";
 
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
@@ -89,7 +90,7 @@ function App() {
   };
 
   const initialRoute = getRouteState();
-
+//qetu ke met 
   const [restaurants, setRestaurants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
