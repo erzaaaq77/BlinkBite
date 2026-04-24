@@ -26,6 +26,15 @@ function App() {
   const subscribedOrderGroupsRef = useRef(new Set());
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
+
+      if (hash.startsWith("#/merchant/dashboard")) {
+    return {
+      page: "merchantDashboard",
+      category: "",
+      restaurantId: null,
+      branchId: "",
+    };
+  }
     if (hash.startsWith("#/my-orders")) {
       return {
         page: "myOrders",
@@ -90,7 +99,6 @@ function App() {
   };
 
   const initialRoute = getRouteState();
-//qetu ke met 
   const [restaurants, setRestaurants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
@@ -2230,7 +2238,20 @@ function App() {
           </div>
 
           <div className="d-flex align-items-center gap-2">
+            {token && isMerchantRole && (
+           <button
+           className="btn btn-outline-info"
+            onClick={() => {
+           window.location.hash = "/merchant/dashboard";
+             }}
+    >
+                   Merchant Dashboard
+             </button>
+              )}
+           
             <button
+
+            
               className="btn btn-light"
               data-bs-toggle="modal"
               data-bs-target="#locationModal"
@@ -2467,7 +2488,14 @@ function App() {
             nearbyError={nearbyError}
           />
         )}
-
+         {page === "merchantDashboard" && (
+        <MerchantDashboard 
+          token={token} 
+          onBack={() => {
+            window.location.hash = "/";
+          }}
+        />
+      )}
         {page === "restaurants" && (
           <RestaurantsPage
             selectedCategory={selectedCategory}
