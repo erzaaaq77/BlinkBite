@@ -1834,13 +1834,13 @@ function App() {
       }
       if (data.token) {
         persistToken(data.token);
-        setLoginMessage("Login successful! Welcome back 👋");
+        setLoginMessage("Login successful! Welcome back");
+        await fetchCurrentUser();
         setTimeout(async () => {
           closeModal("#loginModal");
           setLoginMessage("");
           setLoginUsername("");
           setLoginPassword("");
-          await fetchCurrentUser();
           await fetchCategories();
           if (selectedCategory) {
             await fetchRestaurantsByCategory(selectedCategory);

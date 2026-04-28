@@ -213,14 +213,15 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("by-restaurant/{restaurantId}")]
-    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
+    [Authorize(Roles =$"{ AppRoles.Admin}, {AppRoles.Merchant}")]
     public async Task<ActionResult<IEnumerable<Orders>>> GetOrdersByRestaurant(int restaurantId)
     {
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var normalizedRole = AppRoles.Normalize(role);
 
-        if (role == AppRoles.Merchant)
+        if (normalizedRole == AppRoles.Merchant)
         {
             var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
             if (restaurant == null || restaurant.Id != restaurantId)

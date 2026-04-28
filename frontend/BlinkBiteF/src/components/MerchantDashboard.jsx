@@ -15,7 +15,7 @@ const MerchantDashboard = ({token,onBack}) =>{
     useEffect(()=>{
     const fetchDashboard=async()=>{
         try{
-            const response=await axios.get(`${API_BASE_URL}/merchant/dashboard`,{
+            const response=await axios.get(`${API_BASE_URL}/Dashboard/Merchant`,{
                 headers:{Authorization: `Bearer ${token}`}});
                 setDashboard(response.data);
 
