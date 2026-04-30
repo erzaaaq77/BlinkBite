@@ -7,6 +7,7 @@ import "./index.css";
 import logo from "./assets/LogoBB.png";
 import locationImage from "./assets/location.png";
 import MerchantDashboard from "./components/MerchantDashboard.jsx";
+import DriverDashboard from "./components/DriverDashboard";
 
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
@@ -27,7 +28,16 @@ function App() {
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
 
+    if (hash.startsWith("#/driver/dashboard")) {
+  return {
+    page: "driverDashboard",
+    category: "",
+    restaurantId: null,
+    branchId: "",
+  };
+}
       if (hash.startsWith("#/merchant/dashboard")) {
+
     return {
       page: "merchantDashboard",
       category: "",
@@ -35,6 +45,8 @@ function App() {
       branchId: "",
     };
   }
+
+
     if (hash.startsWith("#/my-orders")) {
       return {
         page: "myOrders",
@@ -2249,6 +2261,16 @@ function App() {
              </button>
               )}
            
+             {token && isCourierRole && (
+    <button
+      className="btn btn-outline-info"
+      onClick={() => {
+        window.location.hash = "/driver/dashboard";
+      }}
+    >
+      🚚 Driver Dashboard
+    </button>
+  )}
             <button
 
             
@@ -2473,6 +2495,7 @@ function App() {
           </div>
         </div>
       </div>
+
 
       <Suspense fallback={<div className="text-center py-5">Loading page...</div>}>
         {page === "home" && (
@@ -2901,6 +2924,12 @@ function App() {
             </div>
           </section>
         )}
+          {page === "driverDashboard" && (
+    <DriverDashboard 
+      token={token} 
+      onBack={() => { window.location.hash = "/"; }}
+    />
+  )}
       </Suspense>
     </>
   );
