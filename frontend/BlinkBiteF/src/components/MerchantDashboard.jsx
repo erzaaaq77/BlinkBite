@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import axios from "axios";
 
-const API_BASE_URL = "https://localhost:5063/api"; // 5053 porta per backend
+const API_BASE_URL = "https://localhost:5001/api"; // 5053 porta per backend
 
 const MerchantDashboard = ({token,onBack}) =>{
 
@@ -11,6 +11,8 @@ const MerchantDashboard = ({token,onBack}) =>{
     const [error,setError]=useState("");
     const [orders,setOrders]=useState([]);
     const [ordersLoading,setOrdersLoading]=useState(true);
+    const [selectedOrder, setSelectedOrder] = useState(null);
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(()=>{
     const fetchDashboard=async()=>{
@@ -46,32 +48,69 @@ try{
 
 if(token){
     fetchDashboard();
-    fetchOrders();
+    //fetchOrders();
 }},[token]);
 
 if(loading){
-    return (
-  <div className="container py-5 text-center">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="mt-3">Loading merchant dashboard...</p>
+   return (
+    <div className="container py-5 text-center">
+      <div className="alert alert-info">
+        <h4>Debug Info:</h4>
+        <p>Token: {token ? "Present (first 20 chars: " + token.substring(0, 20) + "...)" : "❌ Missing"}</p>
+        <p>Loading state: true</p>
+        <p>Waiting for API response...</p>
       </div>
-
-    );
+      <div className="spinner-border text-primary" role="status">
+        <span className="visually-hidden">Loading...</span>
+      </div>
+      <p className="mt-3">Loading merchant dashboard...</p>
+    </div>
+  );
 }
 
 if (error) {
     return (
-      <div className="container py-5">
-        <div className="alert alert-danger">{error}</div>
-        <button className="btn btn-outline-secondary" onClick={onBack}>
-          <i className="bi bi-arrow-left me-2"></i>Back
-        </button>
+    <div className="container py-5">
+      <div className="alert alert-danger">
+        <h4>Error Occurred</h4>
+        <p>Error message: {error}</p>
+        <p>Token present: {token ? "Yes" : "No"}</p>
+        <p>API URL: {API_BASE_URL}/Dashboard/Merchant</p>
       </div>
-    );
+      <button className="btn btn-outline-secondary" onClick={onBack}>
+        ← Back to Home
+      </button>
+    </div>
+  );
   }
 
+  if(!dashboard){
+    return (
+    <div className="container py-5">
+      <div className="alert alert-warning">
+        <h4> No Dashboard Data</h4>
+        <p>Token: {token ? " Present" : " Missing"}</p>
+        <p>Dashboard is null or undefined</p>
+        <p>API URL: {API_BASE_URL}/Dashboard/Merchant</p>
+        <button 
+          className="btn btn-primary mt-3"
+          onClick={async () => {
+            const res = await fetch(`${API_BASE_URL}/Dashboard/Merchant`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const text = await res.text();
+            alert("API Response: " + text.substring(0, 500));
+          }}
+        >
+          Test API Manually
+        </button>
+      </div>
+      <button className="btn btn-outline-secondary" onClick={onBack}>
+        ← Back to Home
+      </button>
+    </div>
+  );
+  }
   const restaurant = dashboard?.restaurant || {};
   const stats = dashboard?.orders || {};
   const revenue = dashboard?.revenue || {};
@@ -93,6 +132,29 @@ if (error) {
     return `badge bg-${color}`;
   };
 
+
+  const getStatusName=(statusCode)=>{
+    const statusMap={
+    1:"Pending",
+    2:"Accepted",
+    3:"Preparing",
+    4:"Ready",
+    5:"Delivered",
+    6:"Cancelled"
+    };
+    return statusMap[statusCode] || "Unknown";
+    };
+  const viewOrderDetails = async (orderId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/Orders/${orderId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    setSelectedOrder(response.data);
+    setShowModal(true);
+  } catch (err) {
+    alert("Could not load order details");
+  }
+};
    return (
     <section className="container py-4">
       {/* Back button */}
@@ -183,54 +245,191 @@ if (error) {
         </div>
       </div>
 
-       <div className="restaurant-menu p-4">
-        <h5 className="mb-3">📋 Recent Orders (Last 10)</h5>
-        {recentOrders.length === 0 ? (
-          <p className="text-muted">No orders yet.</p>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Customer</th>
-                  <th>Amount</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th>Actions</th>
-
-            </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id}>
-                    <td>#{order.id}</td>
-                    <td>{order.customerName || "-"}</td>
-                    <td>€{(order.shumaTotale || 0).toFixed(2)}</td>
-                    <td>
-                      <span className={getStatusBadgeClass(order.statusi)}>
-                        {order.statusi}
-                      </span>
-                    </td>
-                    <td>{new Date(order.dataPorosis).toLocaleString()}</td>
-                    <td>
-                        <button
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => window.location.hash = `/order/${order.id}`}
-                      >
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="card p-4">
+  <h5 className="mb-3">📋 Recent Orders (Last 10)</h5>
+  {recentOrders.length === 0 ? (
+    <p className="text-muted">No orders yet.</p>
+  ) : (
+    <div className="accordion" id="ordersAccordion">
+      {recentOrders.map((order, index) => (
+        <div className="accordion-item mb-2" key={order.id}>
+          <h2 className="accordion-header">
+            <button 
+              className="accordion-button collapsed" 
+              type="button" 
+              data-bs-toggle="collapse" 
+              data-bs-target={`#collapse-${order.id}`}
+            >
+              <div className="d-flex justify-content-between w-100 me-3">
+                <span><strong>Order #{order.id}</strong></span>
+                <span className="mx-3">{order.customerName || "Customer"}</span>
+                <span className="badge bg-primary me-2">€{order.shumaTotale?.toFixed(2)}</span>
+                <span className={`badge ${getStatusBadgeClass(getStatusName(order.statusi))}`}>
+                  {getStatusName(order.statusi)}
+                </span>
+              </div>
+            </button>
+          </h2>
+          <div 
+            id={`collapse-${order.id}`} 
+            className="accordion-collapse collapse" 
+            data-bs-parent="#ordersAccordion"
+          >
+            <div className="accordion-body">
+              <h6>Order Items:</h6>
+              {order.items && order.items.length > 0 ? (
+                <table className="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                      <th>Price</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {order.items.map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{item.name || `Item ${item.menuItemId}`}</td>
+                        <td>{item.quantity || 1}</td>
+                        <td>€{(item.price || 0).toFixed(2)}</td>
+                        <td>€{((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td colSpan="3" className="text-end"><strong>Total:</strong></td>
+                      <td><strong>€{order.shumaTotale?.toFixed(2)}</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              ) : (
+                <p className="text-muted">No items details available</p>
+              )}
+              
+              {order.address && (
+                <div className="mt-2">
+                  <small className="text-muted">
+                    <strong>Delivery Address:</strong> {order.address}
+                  </small>
+                </div>
+              )}
+              
+              {order.note && (
+                <div className="mt-1">
+                  <small className="text-muted">
+                    <strong>Note:</strong> {order.note}
+                  </small>
+                </div>
+              )}
+                  <button
+                className="btn btn-sm btn-outline-primary mt-2"
+                onClick={() => viewOrderDetails(order.id)}
+                >
+                📋 View Full Order Details
+                </button>
+              
+            </div>
+            
           </div>
-        )}
-      </div>
-    </section>
-    );
+          
+        </div>
+        
+      ))}
+      
+    </div>
+    
+  )}
+  
+</div>
 
+      {/* 🔥 MODAL PËR DETAJET E POROSISË */}
+      {showModal && selectedOrder && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Order #{selectedOrder.id} Details</h5>
+                <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <strong>Customer:</strong> {selectedOrder.user?.userName || "N/A"}
+                  </div>
+                  <div className="col-md-6">
+                    <strong>Date:</strong> {new Date(selectedOrder.dataPorosis).toLocaleString()}
+                  </div>
+                </div>
+                
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <strong>Status:</strong> {getStatusName(selectedOrder.statusi)}
+                  </div>
+                  <div className="col-md-6">
+                    <strong>Payment:</strong> {selectedOrder.metodaPageses === 1 ? "Cash" : "Other"}
+                  </div>
+                </div>
+                
+                <div className="mb-3">
+                  <strong>Delivery Address:</strong> {selectedOrder.adresaDorezimit}
+                </div>
+                
+                {selectedOrder.shenimet && (
+                  <div className="mb-3">
+                    <strong>Notes:</strong> {selectedOrder.shenimet}
+                  </div>
+                )}
+                
+                <h6>Order Items:</h6>
+                <table className="table table-sm table-bordered">
+                  <thead className="table-light">
+                    <tr>
+                      <th>Item</th>
+                      <th>Quantity</th>
+                      <th>Price</th>
+                      <th>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 ? (
+                      selectedOrder.orderItems.map((item, idx) => (
+                        <tr key={idx}>
+                          <td>{item.menuItem?.emertimi || item.name || `Item ${item.menuItemId}`}</td>
+                          <td>{item.sasia || item.quantity}</td>
+                          <td>€{(item.cmimi || item.price || 0).toFixed(2)}</td>
+                          <td>€{((item.sasia || item.quantity || 1) * (item.cmimi || item.price || 0)).toFixed(2)}</td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan="4" className="text-center">No items found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                  <tfoot className="table-active">
+                    <tr>
+                      <td colSpan="3" className="text-end"><strong>Total:</strong></td>
+                      <td><strong>€{selectedOrder.shumaTotale?.toFixed(2)}</strong></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+    
+    );
+    
 
 };
+
 export default MerchantDashboard;
