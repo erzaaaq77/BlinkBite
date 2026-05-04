@@ -128,4 +128,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<OrderHub>("/orderHub");
+app.MapHub<LocationHub>("/locationHub");
 app.Run();

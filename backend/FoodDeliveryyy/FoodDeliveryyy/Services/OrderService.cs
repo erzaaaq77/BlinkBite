@@ -30,6 +30,7 @@ public class OrderService : IOrderService
         var order = await _context.Orders
             .Include(o => o.Restaurant)
             .Include(o => o.User)
+            .Include(o => o.Delivery) 
             .FirstOrDefaultAsync(o => o.Id == orderId);
 
         if (order == null) return false;
@@ -94,8 +95,17 @@ public class OrderService : IOrderService
             Comment = comment ?? string.Empty,
             ChangedBy = role
         });
+        if (newStatus == OrderStatus.Ready)
+        {
+            await _hubContext.Clients.Group($"order-{orderId}")
+                .SendAsync("DriverAssigned", new
+                {
+                    OrderId = orderId,
+                    Message = "Your driver has been assigned and is on the way!"
+                });
+        }
 
- 
+
         try
         {
             if (order.User != null && !string.IsNullOrEmpty(order.User.Email))
