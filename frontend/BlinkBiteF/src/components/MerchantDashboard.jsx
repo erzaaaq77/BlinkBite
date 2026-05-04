@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 
 import axios from "axios";
 
-const API_BASE_URL = "https://localhost:5001/api"; // 5053 porta per backend
+const API_BASE_URL = "http://localhost:5063/api";
 
 const MerchantDashboard = ({token,onBack}) =>{
 

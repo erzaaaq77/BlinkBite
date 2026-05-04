@@ -169,7 +169,19 @@ public class DashboardController : ControllerBase
         var driver = await _context.DeliveryDrivers.FirstOrDefaultAsync(d => d.UserId == userId);
 
         if (driver == null)
-            return NotFound("Driver profile not found");
+        {
+            driver = new DeliveryDrivers
+            {
+                UserId = userId!,
+                Automjeti = "N/A",
+                Targa = "N/A",
+                Zona = "N/A",
+                Statusi = DriverStatus.Available,
+                Vlersimi = 0
+            };
+            _context.DeliveryDrivers.Add(driver);
+            await _context.SaveChangesAsync();
+        }
 
         var today = DateTime.Today;
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
@@ -193,7 +205,9 @@ public class DashboardController : ControllerBase
             },
 
             CurrentOrders = await _context.Orders
-                .Where(o => o.Delivery != null && o.Delivery.DriverId == driver.Id && o.Statusi != OrderStatus.Delivered)
+                .Where(o => _context.Deliveries.Any(d => d.OrderId == o.Id && d.DriverId == driver.Id)
+                         && o.Statusi != OrderStatus.Delivered
+                         && o.Statusi != OrderStatus.Cancelled)
                 .Include(o => o.Restaurant)
                 .Select(o => new
                 {
@@ -201,7 +215,40 @@ public class DashboardController : ControllerBase
                     o.AdresaDorezimit,
                     o.ShumaTotale,
                     RestaurantName = o.Restaurant.Emertimi,
-                    o.Statusi
+                    o.Statusi,
+                    o.DataPorosis
+                })
+                .ToListAsync(),
+
+            DeliveryHistory = await _context.Orders
+                .Where(o => _context.Deliveries.Any(d => d.OrderId == o.Id && d.DriverId == driver.Id)
+                         && o.Statusi == OrderStatus.Delivered)
+                .Include(o => o.Restaurant)
+                .Include(o => o.Delivery)
+                .OrderByDescending(o => o.DataPorosis)
+                .Take(50)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.AdresaDorezimit,
+                    o.ShumaTotale,
+                    RestaurantName = o.Restaurant.Emertimi,
+                    o.DataPorosis,
+                    DeliveredAt = o.Delivery != null ? o.Delivery.DataDorezimit : (DateTime?)null
+                })
+                .ToListAsync(),
+
+            AvailableOrders = await _context.Orders
+                .Where(o => o.Statusi == OrderStatus.Ready
+                         && !_context.Deliveries.Any(d => d.OrderId == o.Id))
+                .Include(o => o.Restaurant)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.AdresaDorezimit,
+                    o.ShumaTotale,
+                    RestaurantName = o.Restaurant.Emertimi,
+                    o.DataPorosis
                 })
                 .ToListAsync(),
 
@@ -210,9 +257,44 @@ public class DashboardController : ControllerBase
                 Rating = driver.Vlersimi,
                 TotalEarnings = await _context.Deliveries
                     .Where(d => d.DriverId == driver.Id && d.Statusi == DeliveryStatus.Delivered)
-                    .SumAsync(d => d.Order.TarifaDorezimit)
+                    .SelectMany(d => _context.Orders.Where(o => o.Id == d.OrderId).Select(o => o.ShumaTotale))
+                    .SumAsync()
             }
         };
         return Ok(dashboard);
+    }
+
+    [HttpPost("Driver/accept/{orderId}")]
+    [Authorize(Roles = AppRoles.Courier)]
+    public async Task<IActionResult> AcceptOrder(int orderId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var driver = await _context.DeliveryDrivers.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (driver == null)
+            return NotFound("Driver profile not found.");
+
+        var order = await _context.Orders
+            .Include(o => o.Delivery)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null)
+            return NotFound("Order not found.");
+        if (order.Statusi != OrderStatus.Ready)
+            return BadRequest("Order is not in Ready status.");
+        if (order.Delivery != null)
+            return BadRequest("Order already has a driver assigned.");
+
+        var delivery = new Deliveries
+        {
+            OrderId = orderId,
+            DriverId = driver.Id,
+            Statusi = DeliveryStatus.Pending,
+            DataMarrjes = DateTime.Now
+        };
+
+        _context.Deliveries.Add(delivery);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Order accepted.", deliveryId = delivery.Id });
     }
 }

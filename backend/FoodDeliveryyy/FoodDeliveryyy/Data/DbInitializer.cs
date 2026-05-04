@@ -53,26 +53,91 @@ public static class DbInitializer
         }
 
         var merchantUsers = new List<User>();
-        for (int i = 1; i <= 20; i++)
+        var merchantSeeds = new[]
         {
-            var username = $"merchant{i}";
-            var email = $"merchant{i}@example.com";
-            var user = await userManager.FindByNameAsync(username);
+            new { Legacy = "merchant1", Username = "sushico", Email = "sushico@example.com" },
+            new { Legacy = "merchant2", Username = "burgerking", Email = "burgerking@example.com" },
+            new { Legacy = "merchant3", Username = "pastafasta", Email = "pastafasta@example.com" },
+            new { Legacy = "merchant4", Username = "properpizza", Email = "properpizza@example.com" },
+            new { Legacy = "merchant5", Username = "kfc", Email = "kfc@example.com" },
+            new { Legacy = "merchant6", Username = "greenandprotein", Email = "greenandprotein@example.com" },
+            new { Legacy = "merchant7", Username = "myshawarma", Email = "myshawarma@example.com" },
+            new { Legacy = "merchant8", Username = "heavyhit", Email = "heavyhit@example.com" },
+            new { Legacy = "merchant9", Username = "popeyes", Email = "popeyes@example.com" },
+            new { Legacy = "merchant10", Username = "merchant10", Email = "merchant10@example.com" },
+            new { Legacy = "merchant11", Username = "agusholli", Email = "agusholli@example.com" },
+            new { Legacy = "merchant12", Username = "saraysweets", Email = "saraysweets@example.com" },
+            new { Legacy = "merchant13", Username = "capvin13", Email = "capvin13@example.com" },
+            new { Legacy = "merchant14", Username = "fikaeatery", Email = "fikaeatery@example.com" },
+            new { Legacy = "merchant15", Username = "mulliri", Email = "mulliri@example.com" },
+            new { Legacy = "merchant16", Username = "gjikschiks", Email = "gjikschiks@example.com" },
+            new { Legacy = "merchant17", Username = "smashburgerco", Email = "smashburgerco@example.com" },
+            new { Legacy = "merchant18", Username = "buffaloburgers", Email = "buffaloburgers@example.com" },
+            new { Legacy = "merchant19", Username = "hookfishchips", Email = "hookfishchips@example.com" },
+            new { Legacy = "merchant20", Username = "frix", Email = "frix@example.com" }
+        };
+
+        foreach (var seed in merchantSeeds)
+        {
+            var user = await userManager.FindByNameAsync(seed.Username);
+
+            if (user == null)
+            {
+                user = await userManager.FindByNameAsync(seed.Legacy);
+            }
+
             if (user == null)
             {
                 user = new User
                 {
-                    UserName = username,
-                    Email = email,
+                    UserName = seed.Username,
+                    Email = seed.Email,
                     EmailConfirmed = true
                 };
-                var result = await userManager.CreateAsync(user, "Merchant@1234");
-                if (result.Succeeded)
+                var createResult = await userManager.CreateAsync(user, "Merchant@1234");
+                if (!createResult.Succeeded)
                 {
-                    await userManager.AddToRoleAsync(user, AppRoles.Merchant);
-                    Console.WriteLine($"Merchant user {username} created");
+                    throw new InvalidOperationException($"Failed to create merchant user {seed.Username}");
+                }
+                Console.WriteLine($"Merchant user {seed.Username} created");
+            }
+            else
+            {
+                var changed = false;
+
+                if (!string.Equals(user.UserName, seed.Username, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.UserName = seed.Username;
+                    changed = true;
+                }
+
+                if (!string.Equals(user.Email, seed.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Email = seed.Email;
+                    changed = true;
+                }
+
+                if (!user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    var updateResult = await userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to update merchant user {seed.Username}");
+                    }
                 }
             }
+
+            if (!await userManager.IsInRoleAsync(user, AppRoles.Merchant))
+            {
+                await userManager.AddToRoleAsync(user, AppRoles.Merchant);
+            }
+
             merchantUsers.Add(user);
         }
 

@@ -10,7 +10,9 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using FoodDeliveryyy.Models.DTOs; 
+using FoodDeliveryyy.Models.DTOs;
+using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Enums;
 
 namespace FoodDeliveryyy.Controllers
 {
@@ -83,6 +85,20 @@ namespace FoodDeliveryyy.Controllers
             var token = GenerateJwtToken(user, roles);
             var refreshToken = CreateRefreshToken(user.Id);
             _context.RefreshTokens.Add(refreshToken);
+
+            if (role == AppRoles.Courier)
+            {
+                _context.DeliveryDrivers.Add(new DeliveryDrivers
+                {
+                    UserId = user.Id,
+                    Automjeti = "N/A",
+                    Targa = "N/A",
+                    Zona = "N/A",
+                    Statusi = DriverStatus.Available,
+                    Vlersimi = 0
+                });
+            }
+
             await _context.SaveChangesAsync();
             SetRefreshTokenCookie(refreshToken.Token, refreshToken.Expires);
             return Ok(new { message = "User registered", userId = user.Id, token });
