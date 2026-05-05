@@ -170,6 +170,11 @@ function App() {
   const [roleActionOrderId, setRoleActionOrderId] = useState(null);
   const [kanbanDetailOrder, setKanbanDetailOrder] = useState(null);
 
+  // New order notification state
+  const [newOrderCount, setNewOrderCount] = useState(0);
+  const knownOrderIdsRef = React.useRef(null); // null = not initialized yet
+  const pollingIntervalRef = React.useRef(null);
+
   const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
   const [token, setToken] = useState(getStoredToken());
   const [currentUser, setCurrentUser] = useState(null);
@@ -2122,6 +2127,8 @@ function App() {
 
       if (route.page === "myOrders") {
         if (canManageOperationalOrders) {
+          setNewOrderCount(0);
+          knownOrderIdsRef.current = null; // reset so next poll re-baselines
           await fetchOperationalOrders();
         } else {
           await fetchMyOrders();
@@ -2299,6 +2306,168 @@ function App() {
     syncOrderHubGroups(connection, myOrders);
   }, [myOrders, page, token]);
 
+  // ── MERCHANT POLLING: detect new Pending orders ──
+  const audioCtxRef = React.useRef(null);
+  const pageRef = React.useRef(page);
+  React.useEffect(() => { pageRef.current = page; }, [page]);
+
+  // Ensure AudioContext exists and is running. Must be called inside a user-gesture handler.
+  const ensureAudioCtx = React.useCallback(() => {
+    if (!audioCtxRef.current) {
+      try {
+        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (_) { return null; }
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  const doBeeps = React.useCallback((ctx) => {
+    // Urgent alarm — rising tone bursts, long and attention-grabbing
+    const beep = (freq, startSec, dur, vol = 0.7) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = "sawtooth"; // harsh buzzy alarm tone
+      osc.frequency.value = freq;
+      const t = ctx.currentTime + startSec;
+      gain.gain.setValueAtTime(0, t);
+      gain.gain.linearRampToValueAtTime(vol, t + 0.015);
+      gain.gain.setValueAtTime(vol, t + dur - 0.015);
+      gain.gain.linearRampToValueAtTime(0, t + dur);
+      osc.start(t);
+      osc.stop(t + dur + 0.02);
+    };
+    // Pattern: fast rising bursts x5, pause, x5 again
+    // Burst 1
+    beep(900,  0.00, 0.12);
+    beep(1100, 0.15, 0.12);
+    beep(900,  0.30, 0.12);
+    beep(1100, 0.45, 0.12);
+    beep(900,  0.60, 0.12);
+    beep(1100, 0.75, 0.12);
+    // pause 0.3s
+    // Burst 2 — louder
+    beep(950,  1.10, 0.13, 0.8);
+    beep(1150, 1.26, 0.13, 0.8);
+    beep(950,  1.42, 0.13, 0.8);
+    beep(1150, 1.58, 0.13, 0.8);
+    beep(950,  1.74, 0.13, 0.8);
+    beep(1150, 1.90, 0.13, 0.8);
+    // pause 0.3s
+    // Burst 3 — highest
+    beep(1000, 2.25, 0.14, 0.85);
+    beep(1250, 2.42, 0.14, 0.85);
+    beep(1000, 2.59, 0.14, 0.85);
+    beep(1250, 2.76, 0.14, 0.85);
+    beep(1000, 2.93, 0.14, 0.85);
+    beep(1250, 3.10, 0.18, 0.85);
+  }, []);
+
+  // Called from polling (outside user gesture) — resumes ctx then plays
+  const playNewOrderSound = React.useCallback(async () => {
+    const ctx = audioCtxRef.current;
+    if (!ctx) return; // no user gesture yet, skip
+    try {
+      if (ctx.state !== "running") await ctx.resume();
+      doBeeps(ctx);
+    } catch (_) {}
+  }, [doBeeps]);
+
+  // Called directly from button click — guaranteed to work
+  const playTestSound = React.useCallback(() => {
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+    // If suspended, resume() returns a promise but we can still schedule
+    // because the resume happens synchronously from the gesture context
+    if (ctx.state === "suspended") {
+      ctx.resume().then(() => doBeeps(ctx)).catch(() => {});
+    } else {
+      doBeeps(ctx);
+    }
+  }, [ensureAudioCtx, doBeeps]);
+
+  useEffect(() => {
+    if (!isMerchantRole || !token) {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+      knownOrderIdsRef.current = null;
+      setNewOrderCount(0);
+      return;
+    }
+
+    const poll = async () => {
+      try {
+        const resolvedId =
+          currentUser?.restaurantId ?? currentUser?.RestaurantId ??
+          currentUser?.merchantRestaurantId ?? currentUser?.MerchantRestaurantId ?? null;
+        const rid = Number(resolvedId);
+        const ridEndpoints = Number.isFinite(rid) && rid > 0
+          ? [`${API_BASE}/orders/by-restaurant/${rid}`, `${API_BASE}/orders/restaurant/${rid}`]
+          : [];
+        // Same fallback chain as fetchOperationalOrders so we always find data
+        const endpoints = [
+          ...ridEndpoints,
+          `${API_BASE}/orders/merchant`,
+          `${API_BASE}/orders/for-merchant`,
+          `${API_BASE}/orders/my-restaurant`,
+          `${API_BASE}/orders/my`,
+          `${API_BASE}/orders`,
+        ];
+
+        let orders = [];
+        for (const ep of endpoints) {
+          const res = await authenticatedFetch(ep);
+          if (!res.ok) continue;
+          const data = await res.json().catch(() => null);
+          const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
+          if (list.length > 0 || ep === endpoints[endpoints.length - 1]) { orders = list; break; }
+        }
+
+        const pendingIds = new Set(
+          orders
+            .filter(o => normalizeStatusLabel(o?.statusi ?? o?.Statusi ?? "").toLowerCase() === "pending")
+            .map(o => String(o?.id ?? o?.Id))
+        );
+
+        if (knownOrderIdsRef.current === null) {
+          // First load — just record, no notification
+          knownOrderIdsRef.current = pendingIds;
+          return;
+        }
+
+        const brandNew = [...pendingIds].filter(id => !knownOrderIdsRef.current.has(id));
+        if (brandNew.length > 0) {
+          knownOrderIdsRef.current = new Set([...knownOrderIdsRef.current, ...pendingIds]);
+          setNewOrderCount(c => c + brandNew.length);
+          playNewOrderSound();
+          setRoleActionMessage(`🔔 ${brandNew.length} new order${brandNew.length > 1 ? "s" : ""} arrived!`);
+          setRoleToastVisible(true);
+          clearTimeout(roleToastTimerRef.current);
+          roleToastTimerRef.current = setTimeout(() => setRoleToastVisible(false), 5000);
+          // Always refresh the board — use pageRef to avoid stale closure
+          fetchOperationalOrders();
+        } else {
+          // keep known set in sync with any resolved orders
+          knownOrderIdsRef.current = new Set([...knownOrderIdsRef.current, ...pendingIds]);
+          // Also silently refresh board every poll if on myOrders
+          if (pageRef.current === "myOrders") {
+            fetchOperationalOrders();
+          }
+        }
+      } catch (_) {}
+    };
+
+    // Run once immediately, then every 5s
+    poll();
+    pollingIntervalRef.current = setInterval(poll, 5000);
+
+    return () => {
+      clearInterval(pollingIntervalRef.current);
+      pollingIntervalRef.current = null;
+    };
+  }, [isMerchantRole, token, currentUser, page]);
+
   return (
     <>
       {/* NAVBAR */}
@@ -2400,12 +2569,16 @@ function App() {
             {token ? (
               <>
                 <button
-                  className="btn btn-outline-primary"
+                  className="btn btn-outline-primary nav-orders-btn"
                   onClick={() => {
+                    setNewOrderCount(0);
                     window.location.hash = "/my-orders";
                   }}
                 >
                   {canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}
+                  {newOrderCount > 0 && (
+                    <span className="nav-new-order-badge">{newOrderCount}</span>
+                  )}
                 </button>
                 {/* ✅ Username i rregulluar */}
                 <div className="me-2">
@@ -2629,6 +2802,16 @@ function App() {
 
             <h2 className="mb-2">{canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}</h2>
             <p className="small text-muted mb-3">{getRoleCapabilitiesLabel()}</p>
+            {isMerchantRole && (
+              <button
+                type="button"
+                className="btn btn-sm btn-outline-secondary mb-3"
+                onClick={playTestSound}
+                style={{ fontSize: "0.78rem" }}
+              >
+                <i className="bi bi-volume-up me-1"></i>Test Sound
+              </button>
+            )}
 
             {!canManageOperationalOrders && myOrdersError && <div className="alert alert-warning">{myOrdersError}</div>}
             {canManageOperationalOrders && roleOrdersError && <div className="alert alert-warning">{roleOrdersError}</div>}
