@@ -124,6 +124,7 @@ public class DashboardController : ControllerBase
                     ThisWeek = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date >= startOfWeek),
                     ThisMonth = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date >= startOfMonth),
                     Pending = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Pending),
+                    Accepted = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Accepted),
                     Preparing = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Preparing),
                     Ready = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Ready),
                     Delivered = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Delivered)

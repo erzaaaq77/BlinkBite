@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 
 import axios from "axios";
+import "./MerchantDashboard.css";
 
 const API_BASE_URL = "http://localhost:5063/api";
 
@@ -9,8 +10,6 @@ const MerchantDashboard = ({token,onBack}) =>{
     const [dashboard,setDashboard]=useState(null);
     const [loading,setLoading]=useState(true);
     const [error,setError]=useState("");
-    const [orders,setOrders]=useState([]);
-    const [ordersLoading,setOrdersLoading]=useState(true);
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
@@ -31,84 +30,49 @@ const MerchantDashboard = ({token,onBack}) =>{
     }
 };
 
-const fetchOrders=async() =>{
-try{
-    const response = await axios.get(`${API_BASE_URL}/orders/merchant`,{
-        headers : {Authorization: `Bearer ${token}`}});
-        setOrders(Array.isArray(response.data)? response.data: []);
-    }
-    catch(err){
-        console.error("Failed to load orders data");
-        setError("Failed to load orders data");
-    }
-    finally{
-        setOrdersLoading(false);
-    }
-};
-
 if(token){
     fetchDashboard();
-    //fetchOrders();
 }},[token]);
 
 if(loading){
    return (
-    <div className="container py-5 text-center">
-      <div className="alert alert-info">
-        <h4>Debug Info:</h4>
-        <p>Token: {token ? "Present (first 20 chars: " + token.substring(0, 20) + "...)" : "❌ Missing"}</p>
-        <p>Loading state: true</p>
-        <p>Waiting for API response...</p>
+    <section className="merchant-dashboard-page merchant-dashboard-state">
+      <div className="merchant-state-card text-center">
+        <div className="spinner-border text-warning" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <h4 className="mt-3 mb-2">Loading your merchant insights</h4>
+        <p className="text-muted mb-0">Please wait while we prepare the latest restaurant and order data.</p>
       </div>
-      <div className="spinner-border text-primary" role="status">
-        <span className="visually-hidden">Loading...</span>
-      </div>
-      <p className="mt-3">Loading merchant dashboard...</p>
-    </div>
+    </section>
   );
 }
 
 if (error) {
     return (
-    <div className="container py-5">
-      <div className="alert alert-danger">
-        <h4>Error Occurred</h4>
-        <p>Error message: {error}</p>
-        <p>Token present: {token ? "Yes" : "No"}</p>
-        <p>API URL: {API_BASE_URL}/Dashboard/Merchant</p>
+    <section className="merchant-dashboard-page merchant-dashboard-state">
+      <div className="merchant-state-card merchant-state-error">
+        <h4 className="mb-2">Dashboard failed to load</h4>
+        <p className="mb-3">{error}</p>
+        <button className="btn btn-outline-danger" onClick={onBack}>
+          <i className="bi bi-arrow-left me-2"></i>Back to Home
+        </button>
       </div>
-      <button className="btn btn-outline-secondary" onClick={onBack}>
-        ← Back to Home
-      </button>
-    </div>
+    </section>
   );
   }
 
   if(!dashboard){
     return (
-    <div className="container py-5">
-      <div className="alert alert-warning">
-        <h4> No Dashboard Data</h4>
-        <p>Token: {token ? " Present" : " Missing"}</p>
-        <p>Dashboard is null or undefined</p>
-        <p>API URL: {API_BASE_URL}/Dashboard/Merchant</p>
-        <button 
-          className="btn btn-primary mt-3"
-          onClick={async () => {
-            const res = await fetch(`${API_BASE_URL}/Dashboard/Merchant`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            const text = await res.text();
-            alert("API Response: " + text.substring(0, 500));
-          }}
-        >
-          Test API Manually
+    <section className="merchant-dashboard-page merchant-dashboard-state">
+      <div className="merchant-state-card">
+        <h4 className="mb-2">No dashboard data yet</h4>
+        <p className="mb-3">There is no merchant data available for this account right now.</p>
+        <button className="btn btn-outline-secondary" onClick={onBack}>
+          <i className="bi bi-arrow-left me-2"></i>Back to Home
         </button>
       </div>
-      <button className="btn btn-outline-secondary" onClick={onBack}>
-        ← Back to Home
-      </button>
-    </div>
+    </section>
   );
   }
   const restaurant = dashboard?.restaurant || {};
@@ -116,6 +80,9 @@ if (error) {
   const revenue = dashboard?.revenue || {};
   const recentOrders = dashboard?.recentOrders || [];
   const reviews = dashboard?.reviews || {};
+  const restaurantName = restaurant.emertimi || restaurant.name || "Restaurant";
+
+  const formatCurrency = (value) => `€${Number(value || 0).toFixed(2)}`;
 
   const getStatusColor = (status) => {
     const statusLower = String(status || "").toLowerCase();
@@ -156,102 +123,127 @@ if (error) {
   }
 };
    return (
-    <section className="container py-4">
-      {/* Back button */}
-      <div className="mb-4">
-        <button className="btn btn-outline-secondary" onClick={onBack}>
-          <i className="bi bi-arrow-left me-2"></i>Back to Home
-        </button>
-      </div>
-
-       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>🏪 Merchant Dashboard</h2>
-        <div className="text-end">
-          <span className="badge bg-success fs-6 p-2">
+    <section className="merchant-dashboard-page">
+      <div className="container py-4 py-lg-5">
+        <div className="merchant-dash-topbar mb-4">
+          <button className="btn btn-light merchant-back-btn" onClick={onBack}>
+            <i className="bi bi-arrow-left me-2"></i>Back to Home
+          </button>
+          <div className="merchant-status-chip">
+            <span className="merchant-status-dot"></span>
             {restaurant.statusi || "Active"}
-          </span>
-        </div>
-      </div>
-       <div className="row g-4 mb-4">
-        <div className="col-md-6">
-          <div className="restaurant-menu p-4">
-            <h5 className="mb-3">📋 Restaurant Information</h5>
-            <p><strong>Name:</strong> {restaurant.emertimi || restaurant.name || "-"}</p>
-            <p><strong>Rating:</strong> ⭐ {restaurant.rating || "0"} / 5</p>
-            <p><strong>Total Reviews:</strong> {reviews.total || 0}</p>
-            <p><strong>Average Rating:</strong> ⭐ {(reviews.average || restaurant.rating || 0).toFixed(1)}</p>
           </div>
         </div>
 
-         <div className="col-md-6">
-          <div className="restaurant-menu p-4">
-            <h5 className="mb-3">💰 Revenue Summary</h5>
-            <table className="table table-sm">
-              <tbody>
-                <tr>
-                  <td><strong>Today:</strong></td>
-                  <td className="text-end">€{(revenue.today || 0).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td><strong>This Week:</strong></td>
-                  <td className="text-end">€{(revenue.thisWeek || 0).toFixed(2)}</td>
-                </tr>
-                <tr>
-                  <td><strong>This Month:</strong></td>
-                  <td className="text-end">€{(revenue.thisMonth || 0).toFixed(2)}</td>
-                </tr>
-                <tr className="table-active">
-                  <td><strong>Total:</strong></td>
-                  <td className="text-end"><strong>€{(revenue.total || 0).toFixed(2)}</strong></td>
-              </tr>
-              </tbody>
-            </table>
+        <div className="merchant-dash-hero mb-4 mb-lg-5">
+          <div>
+            <p className="merchant-eyebrow mb-2">Merchant Control Center</p>
+            <h2 className="merchant-dash-title mb-2">{restaurantName}</h2>
+            <p className="merchant-dash-subtitle mb-0">
+              Track revenue, monitor live order flow, and keep your restaurant operations in sync.
+            </p>
           </div>
         </div>
-      </div>     
 
-     <div className="row g-4 mb-4">
-        <div className="col-12">
-          <div className="restaurant-menu p-4">
-            <h5 className="mb-3">📦 Order Statistics</h5>
-            <div className="row text-center">
-              <div className="col-3">
-                <div className="p-3 bg-light rounded">
-                  <h3 className="mb-0">{stats.total || 0}</h3>
-                  <small className="text-muted">Total Orders</small>
+        <div className="row g-4 mb-4">
+          <div className="col-lg-6">
+            <div className="merchant-card merchant-card-soft h-100">
+              <h5 className="merchant-section-title mb-3">Restaurant Snapshot</h5>
+              <div className="merchant-info-grid">
+                <div className="merchant-info-cell">
+                  <span className="merchant-label">Name</span>
+                  <p className="merchant-value mb-0">{restaurantName}</p>
+                </div>
+                <div className="merchant-info-cell">
+                  <span className="merchant-label">Rating</span>
+                  <p className="merchant-value mb-0">{Number(restaurant.rating || 0).toFixed(1)} / 5</p>
+                </div>
+                <div className="merchant-info-cell">
+                  <span className="merchant-label">Reviews</span>
+                  <p className="merchant-value mb-0">{reviews.total || 0}</p>
+                </div>
+                <div className="merchant-info-cell">
+                  <span className="merchant-label">Average</span>
+                  <p className="merchant-value mb-0">{Number(reviews.average || restaurant.rating || 0).toFixed(1)} stars</p>
                 </div>
               </div>
-              <div className="col-3">
-                <div className="p-3 bg-warning bg-opacity-10 rounded">
-                  <h3 className="mb-0">{stats.pending || 0}</h3>
-                  <small className="text-muted">Pending</small>
-                </div>
-              </div>
-              <div className="col-3">
+            </div>
+          </div>
 
-                <div className="p-3 bg-info bg-opacity-10 rounded">
-                  <h3 className="mb-0">{stats.preparing || 0}</h3>
-                  <small className="text-muted">Preparing</small>
+          <div className="col-lg-6">
+            <div className="merchant-card h-100">
+              <h5 className="merchant-section-title mb-3">Revenue Summary</h5>
+              <div className="merchant-revenue-list">
+                <div className="merchant-revenue-row">
+                  <span>Today</span>
+                  <strong>{formatCurrency(revenue.today)}</strong>
                 </div>
-              </div>
-              <div className="col-3">
-                <div className="p-3 bg-success bg-opacity-10 rounded">
-                  <h3 className="mb-0">{stats.delivered || 0}</h3>
-                  <small className="text-muted">Delivered</small>
+                <div className="merchant-revenue-row">
+                  <span>This Week</span>
+                  <strong>{formatCurrency(revenue.thisWeek)}</strong>
+                </div>
+                <div className="merchant-revenue-row">
+                  <span>This Month</span>
+                  <strong>{formatCurrency(revenue.thisMonth)}</strong>
+                </div>
+                <div className="merchant-revenue-row merchant-revenue-total">
+                  <span>Total</span>
+                  <strong>{formatCurrency(revenue.total)}</strong>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="card p-4">
-  <h5 className="mb-3">📋 Recent Orders (Last 10)</h5>
+        <div className="merchant-card mb-4">
+          <h5 className="merchant-section-title mb-3">Order Performance</h5>
+          <div className="row g-3">
+            <div className="col-6 col-md-3">
+              <div className="merchant-stat-item merchant-stat-total">
+                <p className="merchant-stat-value">{stats.total || 0}</p>
+                <small>Total Orders</small>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="merchant-stat-item merchant-stat-pending">
+                <p className="merchant-stat-value">{stats.pending || 0}</p>
+                <small>Pending</small>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="merchant-stat-item merchant-stat-accepted">
+                <p className="merchant-stat-value">{stats.accepted || 0}</p>
+                <small>Accepted</small>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="merchant-stat-item merchant-stat-preparing">
+                <p className="merchant-stat-value">{stats.preparing || 0}</p>
+                <small>Preparing</small>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="merchant-stat-item merchant-stat-ready">
+                <p className="merchant-stat-value">{stats.ready || 0}</p>
+                <small>Ready</small>
+              </div>
+            </div>
+            <div className="col-6 col-md-3">
+              <div className="merchant-stat-item merchant-stat-delivered">
+                <p className="merchant-stat-value">{stats.delivered || 0}</p>
+                <small>Delivered</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="merchant-card merchant-orders-card p-4">
+  <h5 className="merchant-section-title mb-3">Recent Orders (Last 10)</h5>
   {recentOrders.length === 0 ? (
-    <p className="text-muted">No orders yet.</p>
+    <p className="text-muted mb-0">No orders yet.</p>
   ) : (
-    <div className="accordion" id="ordersAccordion">
-      {recentOrders.map((order, index) => (
+    <div className="accordion merchant-orders-accordion" id="ordersAccordion">
+      {recentOrders.map((order) => (
         <div className="accordion-item mb-2" key={order.id}>
           <h2 className="accordion-header">
             <button 
@@ -260,10 +252,10 @@ if (error) {
               data-bs-toggle="collapse" 
               data-bs-target={`#collapse-${order.id}`}
             >
-              <div className="d-flex justify-content-between w-100 me-3">
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100 me-3">
                 <span><strong>Order #{order.id}</strong></span>
-                <span className="mx-3">{order.customerName || "Customer"}</span>
-                <span className="badge bg-primary me-2">€{order.shumaTotale?.toFixed(2)}</span>
+                <span className="merchant-customer-name">{order.customerName || "Customer"}</span>
+                <span className="badge text-bg-dark me-2">{formatCurrency(order.shumaTotale)}</span>
                 <span className={`badge ${getStatusBadgeClass(getStatusName(order.statusi))}`}>
                   {getStatusName(order.statusi)}
                 </span>
@@ -278,7 +270,8 @@ if (error) {
             <div className="accordion-body">
               <h6>Order Items:</h6>
               {order.items && order.items.length > 0 ? (
-                <table className="table table-sm">
+                <div className="table-responsive">
+                <table className="table table-sm align-middle">
                   <thead>
                     <tr>
                       <th>Item</th>
@@ -300,10 +293,11 @@ if (error) {
                   <tfoot>
                     <tr>
                       <td colSpan="3" className="text-end"><strong>Total:</strong></td>
-                      <td><strong>€{order.shumaTotale?.toFixed(2)}</strong></td>
+                      <td><strong>{formatCurrency(order.shumaTotale)}</strong></td>
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               ) : (
                 <p className="text-muted">No items details available</p>
               )}
@@ -324,10 +318,10 @@ if (error) {
                 </div>
               )}
                   <button
-                className="btn btn-sm btn-outline-primary mt-2"
+                className="btn btn-sm btn-outline-dark mt-2"
                 onClick={() => viewOrderDetails(order.id)}
                 >
-                📋 View Full Order Details
+                View Full Order Details
                 </button>
               
             </div>
@@ -342,13 +336,13 @@ if (error) {
     
   )}
   
-</div>
+        </div>
 
       {/* 🔥 MODAL PËR DETAJET E POROSISË */}
       {showModal && selectedOrder && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-lg">
-            <div className="modal-content">
+            <div className="modal-content merchant-modal-content">
               <div className="modal-header">
                 <h5 className="modal-title">Order #{selectedOrder.id} Details</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
@@ -383,7 +377,8 @@ if (error) {
                 )}
                 
                 <h6>Order Items:</h6>
-                <table className="table table-sm table-bordered">
+                <div className="table-responsive">
+                <table className="table table-sm table-bordered align-middle">
                   <thead className="table-light">
                     <tr>
                       <th>Item</th>
@@ -411,10 +406,11 @@ if (error) {
                   <tfoot className="table-active">
                     <tr>
                       <td colSpan="3" className="text-end"><strong>Total:</strong></td>
-                      <td><strong>€{selectedOrder.shumaTotale?.toFixed(2)}</strong></td>
+                      <td><strong>{formatCurrency(selectedOrder.shumaTotale)}</strong></td>
                     </tr>
                   </tfoot>
                 </table>
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
@@ -425,6 +421,7 @@ if (error) {
           </div>
         </div>
       )}
+      </div>
     </section>
     
     );

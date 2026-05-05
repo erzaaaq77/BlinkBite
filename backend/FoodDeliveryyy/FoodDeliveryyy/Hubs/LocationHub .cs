@@ -15,13 +15,13 @@ public class LocationHub : Hub {
     }
 
     public async Task UpdateDriverLocation(int orderId, double latitude, double longitude) {
-        var driverId = Context.UserIdentitifer;
+        var driverId = Context.UserIdentifier;
 
         _driverLocations[orderId] = new DriverLocation
         {
 
             OrderId = orderId,
-            DrvierId = driverId,
+            DriverId = driverId,
             Latitude = latitude,
             Longitude = longitude,
             LastUpdate = DateTime.UtcNow,

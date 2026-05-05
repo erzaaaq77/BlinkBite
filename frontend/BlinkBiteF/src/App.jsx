@@ -18,6 +18,27 @@ const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
 const RestaurantDetailsPage = lazy(() => import("./components/RestaurantDetailsPage.jsx"));
 const BranchMenuPage = lazy(() => import("./components/BranchMenuPage.jsx"));
 
+// Helper: image with multi-candidate fallback for Kanban detail modal
+function KanbanItemImage({ candidates = [], alt = "" }) {
+  const [idx, setIdx] = React.useState(0);
+  const src = candidates[idx] || "";
+  if (!src) {
+    return (
+      <div className="kd-item-img kd-item-img-placeholder">
+        <i className="bi bi-image"></i>
+      </div>
+    );
+  }
+  return (
+    <img
+      className="kd-item-img"
+      src={src}
+      alt={alt}
+      onError={() => { if (idx < candidates.length - 1) setIdx(i => i + 1); }}
+    />
+  );
+}
+
 function App() {
   const categoriesSliderRef = useRef(null);
   const searchInputRef = useRef(null);
@@ -144,7 +165,10 @@ function App() {
   const [roleOrdersLoading, setRoleOrdersLoading] = useState(false);
   const [roleOrdersError, setRoleOrdersError] = useState("");
   const [roleActionMessage, setRoleActionMessage] = useState("");
+  const [roleToastVisible, setRoleToastVisible] = useState(false);
+  const roleToastTimerRef = React.useRef(null);
   const [roleActionOrderId, setRoleActionOrderId] = useState(null);
+  const [kanbanDetailOrder, setKanbanDetailOrder] = useState(null);
 
   const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
   const [token, setToken] = useState(getStoredToken());
@@ -1633,18 +1657,35 @@ function App() {
             ? order.OrderItems
             : [];
 
-        const normalizedItems = items.map((item, index) => ({
-          id: item?.id ?? item?.Id ?? item?.menuItemId ?? item?.MenuItemId ?? index,
-          name:
-            item?.menuItemName ??
-            item?.MenuItemName ??
-            item?.itemName ??
-            item?.ItemName ??
-            item?.name ??
-            item?.Name ??
-            `Item ${index + 1}`,
-          quantity: Number(item?.sasia ?? item?.Sasia ?? item?.quantity ?? item?.Quantity ?? 1),
-        }));
+        const normalizedItems = items.map((item, index) => {
+          const nestedMenuItem = item?.menuItem ?? item?.MenuItem ?? {};
+          const menuItemId = item?.menuItemId ?? item?.MenuItemId ?? nestedMenuItem?.id ?? nestedMenuItem?.Id ?? null;
+          const rawImagePath =
+            item?.menuItemImage ?? item?.MenuItemImage ??
+            item?.image ?? item?.Image ??
+            item?.foto ?? item?.Foto ??
+            nestedMenuItem?.image ?? nestedMenuItem?.Image ??
+            nestedMenuItem?.foto ?? nestedMenuItem?.Foto ?? "";
+          return {
+            id: item?.id ?? item?.Id ?? menuItemId ?? index,
+            menuItemId,
+            name:
+              item?.menuItemName ?? item?.MenuItemName ??
+              item?.itemName ?? item?.ItemName ??
+              item?.name ?? item?.Name ??
+              nestedMenuItem?.name ?? nestedMenuItem?.Name ??
+              nestedMenuItem?.emertimi ?? nestedMenuItem?.Emertimi ??
+              `Item ${index + 1}`,
+            rawImagePath,
+            image: toAbsoluteAssetUrl(rawImagePath),
+            imageCandidates: getAssetUrlCandidates(rawImagePath),
+            price: Number(
+              item?.cmimi ?? item?.Cmimi ?? item?.price ?? item?.Price ??
+              item?.unitPrice ?? item?.UnitPrice ?? item?.cmimiNjesi ?? item?.CmimiNjesi ?? 0
+            ),
+            quantity: Number(item?.sasia ?? item?.Sasia ?? item?.quantity ?? item?.Quantity ?? 1),
+          };
+        });
 
         const totalItemsCount = normalizedItems.reduce(
           (sum, item) => sum + Math.max(1, Number(item.quantity || 1)),
@@ -1666,6 +1707,12 @@ function App() {
             order?.restaurant?.emertimi ??
             order?.restaurant?.Emertimi ??
             "Restaurant",
+          customerName:
+            order?.user?.name ?? order?.user?.Name ??
+            order?.user?.userName ?? order?.user?.UserName ??
+            order?.user?.emri ?? order?.user?.Emri ??
+            order?.userName ?? order?.UserName ??
+            order?.customerName ?? order?.CustomerName ?? "",
           itemsCount: totalItemsCount,
           items: normalizedItems,
         };
@@ -1679,7 +1726,33 @@ function App() {
         return true;
       });
 
-      setRoleOrders(filteredByRole);
+      // Enrich items with images from menu lookup when backend doesn't include them
+      const needsEnrichment = filteredByRole.some((order) =>
+        (order.items || []).some((item) => item?.menuItemId && !item.image)
+      );
+
+      if (needsEnrichment) {
+        const menuLookup = await fetchMenuItemsLookup();
+        const enriched = filteredByRole.map((order) => ({
+          ...order,
+          items: (order.items || []).map((item) => {
+            if (item.image) return item;
+            const match = item?.menuItemId ? menuLookup.get(String(item.menuItemId)) : null;
+            return {
+              ...item,
+              name: item.name && !/^Item\s\d+$/i.test(item.name) ? item.name : match?.name || item.name,
+              image: match?.image || item.image || "",
+              imageCandidates:
+                match?.imageCandidates?.length > 0
+                  ? match.imageCandidates
+                  : getAssetUrlCandidates(item.rawImagePath || ""),
+            };
+          }),
+        }));
+        setRoleOrders(enriched);
+      } else {
+        setRoleOrders(filteredByRole);
+      }
     } catch (err) {
       console.error(err);
       setRoleOrders([]);
@@ -1753,6 +1826,9 @@ function App() {
       }
 
       setRoleActionMessage(`Order #${orderId} moved to ${normalizedNextStatus}.`);
+      setRoleToastVisible(true);
+      clearTimeout(roleToastTimerRef.current);
+      roleToastTimerRef.current = setTimeout(() => setRoleToastVisible(false), 3500);
       setRoleOrders((current) =>
         current.map((entry) =>
           Number(entry?.id) === orderId
@@ -1766,6 +1842,9 @@ function App() {
     } catch (err) {
       console.error(err);
       setRoleActionMessage("Could not update order status right now.");
+      setRoleToastVisible(true);
+      clearTimeout(roleToastTimerRef.current);
+      roleToastTimerRef.current = setTimeout(() => setRoleToastVisible(false), 4000);
     } finally {
       setRoleActionOrderId(null);
     }
@@ -2553,11 +2632,7 @@ function App() {
 
             {!canManageOperationalOrders && myOrdersError && <div className="alert alert-warning">{myOrdersError}</div>}
             {canManageOperationalOrders && roleOrdersError && <div className="alert alert-warning">{roleOrdersError}</div>}
-            {canManageOperationalOrders && roleActionMessage && (
-              <div className={`alert ${roleActionMessage.toLowerCase().includes("moved") ? "alert-success" : "alert-warning"}`}>
-                {roleActionMessage}
-              </div>
-            )}
+
 
             {canManageOperationalOrders ? (
               roleOrdersLoading ? (
@@ -2580,6 +2655,81 @@ function App() {
                       Courier sees orders when they reach Ready status.
                     </p>
                   )}
+                </div>
+              ) : isMerchantRole ? (
+                /* ── MERCHANT KANBAN BOARD ── */
+                <div className="kanban-board">
+                  {[
+                    { key: "pending",   label: "New",       statuses: ["pending"],   color: "#f59e0b", icon: "bi-clock" },
+                    { key: "accepted",  label: "Accepted",  statuses: ["accepted"],  color: "#8b5cf6", icon: "bi-check-circle" },
+                    { key: "preparing", label: "Preparing", statuses: ["preparing"], color: "#3b82f6", icon: "bi-fire" },
+                    { key: "ready",     label: "Ready",     statuses: ["ready"],     color: "#10b981", icon: "bi-bag-check" },
+                  ].map((col) => {
+                    const colOrders = roleOrders.filter(o =>
+                      col.statuses.includes(normalizeStatusLabel(o.statusLabel).toLowerCase())
+                    );
+                    return (
+                      <div className="kanban-col" key={col.key}>
+                        <div className="kanban-col-header" style={{ borderColor: col.color }}>
+                          <i className={`bi ${col.icon}`} style={{ color: col.color }}></i>
+                          <span>{col.label}</span>
+                          <span className="kanban-col-count" style={{ background: col.color }}>{colOrders.length}</span>
+                        </div>
+                        <div className="kanban-col-body">
+                          {colOrders.length === 0 ? (
+                            <div className="kanban-empty">No orders</div>
+                          ) : colOrders.map((order) => {
+                            const actions = getAvailableActionsForOrder(order);
+                            return (
+                              <div
+                                className="kanban-card"
+                                key={order.id}
+                                onClick={() => setKanbanDetailOrder(order)}
+                                style={{ cursor: "pointer" }}
+                              >
+                                <div className="kanban-card-top">
+                                  <span className="kanban-order-id">#{order.id}</span>
+                                  <span className="kanban-amount">€{Number(order.total || 0).toFixed(2)}</span>
+                                </div>
+                                {order.customerName && (
+                                  <p className="kanban-customer-name"><i className="bi bi-person me-1"></i>{order.customerName}</p>
+                                )}
+                                <p className="kanban-restaurant">{order.restaurantName}</p>
+                                <div className="kanban-meta">
+                                  <span><i className="bi bi-bag me-1"></i>{order.itemsCount} items</span>
+                                  <span><i className="bi bi-geo-alt me-1"></i>{(order.address || "-").split(",")[0]}</span>
+                                </div>
+                                <div className="kanban-meta mt-1">
+                                  <span><i className="bi bi-clock me-1"></i>{order.createdAt ? new Date(order.createdAt).toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"}) : "-"}</span>
+                                  <span><i className="bi bi-cash me-1"></i>{order.paymentLabel || "-"}</span>
+                                </div>
+                                {actions.length > 0 && (
+                                  <div className="kanban-actions" onClick={e => e.stopPropagation()}>
+                                    {actions.map((action) => (
+                                      <button
+                                        key={`${order.id}-${action.nextStatus}`}
+                                        type="button"
+                                        className="kanban-action-btn"
+                                        style={{ background: col.color }}
+                                        disabled={Number(roleActionOrderId) === Number(order.id)}
+                                        onClick={() => handleRoleOrderStatusUpdate(order, action.nextStatus)}
+                                      >
+                                        {Number(roleActionOrderId) === Number(order.id) ? (
+                                          <><i className="bi bi-hourglass-split me-1"></i>Updating...</>
+                                        ) : (
+                                          <><i className="bi bi-arrow-right-circle me-1"></i>{action.label}</>
+                                        )}
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-3">
@@ -2715,6 +2865,110 @@ function App() {
               </div>
             )}
           </section>
+        )}
+
+        {/* ── ROLE ACTION TOAST ── */}
+        {roleActionMessage && (
+          <div className={`role-toast ${roleToastVisible ? "role-toast--in" : "role-toast--out"} ${roleActionMessage.toLowerCase().includes("moved") ? "role-toast--success" : "role-toast--error"}`}>
+            <i className={`bi ${roleActionMessage.toLowerCase().includes("moved") ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill"} me-2`}></i>
+            {roleActionMessage}
+          </div>
+        )}
+
+        {/* ── KANBAN ORDER DETAIL MODAL ── */}
+        {kanbanDetailOrder && (
+          <div className="kd-overlay" onClick={() => setKanbanDetailOrder(null)}>
+            <div className="kd-modal" onClick={e => e.stopPropagation()}>
+
+              {/* Header */}
+              <div className="kd-header">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                  <span className="kd-order-id">Order #{kanbanDetailOrder.id}</span>
+                  <span className={`badge ${getStatusBadgeClass(kanbanDetailOrder.statusLabel)}`}>{kanbanDetailOrder.statusLabel}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flexShrink: 0 }}>
+                  <span className="kd-total">€{Number(kanbanDetailOrder.total || 0).toFixed(2)}</span>
+                  <button className="kd-close" onClick={() => setKanbanDetailOrder(null)}>
+                    <i className="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              </div>
+
+              {/* Customer & info */}
+              <div className="kd-info-row">
+                <div className="kd-info-cell">
+                  <i className="bi bi-person-circle"></i>
+                  <div>
+                    <div className="kd-info-label">Customer</div>
+                    <div className="kd-info-value">{kanbanDetailOrder.customerName || "—"}</div>
+                  </div>
+                </div>
+                <div className="kd-info-cell">
+                  <i className="bi bi-geo-alt"></i>
+                  <div>
+                    <div className="kd-info-label">Address</div>
+                    <div className="kd-info-value">{kanbanDetailOrder.address || "—"}</div>
+                  </div>
+                </div>
+                <div className="kd-info-cell">
+                  <i className="bi bi-credit-card"></i>
+                  <div>
+                    <div className="kd-info-label">Payment</div>
+                    <div className="kd-info-value">{kanbanDetailOrder.paymentLabel || "—"}</div>
+                  </div>
+                </div>
+                <div className="kd-info-cell">
+                  <i className="bi bi-clock"></i>
+                  <div>
+                    <div className="kd-info-label">Ordered at</div>
+                    <div className="kd-info-value">{kanbanDetailOrder.createdAt ? new Date(kanbanDetailOrder.createdAt).toLocaleString() : "—"}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Items */}
+              <div className="kd-items-title">Order Items</div>
+              <div className="kd-items">
+                {(kanbanDetailOrder.items || []).length === 0 ? (
+                  <p className="text-muted small">No items available.</p>
+                ) : (kanbanDetailOrder.items || []).map((item, idx) => (
+                  <div className="kd-item" key={item.id ?? idx}>
+                    <KanbanItemImage
+                      candidates={item.imageCandidates || (item.image ? [item.image] : [])}
+                      alt={item.name}
+                    />
+                    <div className="kd-item-info">
+                      <div className="kd-item-name">{item.name}</div>
+                      <div className="kd-item-sub">
+                        <span>x{Number(item.quantity || 1)}</span>
+                        {item.price > 0 && <span>€{(item.price * Number(item.quantity || 1)).toFixed(2)}</span>}
+                      </div>
+                    </div>
+                    {item.price > 0 && (
+                      <div className="kd-item-price">€{item.price.toFixed(2)}<span className="kd-item-unit">/ ea</span></div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Footer totals */}
+              <div className="kd-footer">
+                {kanbanDetailOrder.deliveryFee > 0 && (
+                  <div className="kd-footer-row">
+                    <span>Delivery fee</span>
+                    <span>€{Number(kanbanDetailOrder.deliveryFee).toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="kd-footer-row kd-footer-total">
+                  <span>Total</span>
+                  <span>€{Number(kanbanDetailOrder.total || 0).toFixed(2)}</span>
+                </div>
+                {kanbanDetailOrder.note && (
+                  <div className="kd-note"><i className="bi bi-chat-left-text me-1"></i>{kanbanDetailOrder.note}</div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
 
         {page === "restaurantDetails" && (

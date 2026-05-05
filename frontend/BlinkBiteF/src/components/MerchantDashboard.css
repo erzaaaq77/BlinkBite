@@ -1,0 +1,427 @@
+/* ═══════════════════════════════════════════
+   MERCHANT DASHBOARD  —  Premium Edition
+═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+.merchant-dashboard-page {
+  --gold:        #b5761e;
+  --gold-light:  #d4921f;
+  --gold-dark:   #8a5e14;
+  --ink:         #1c1510;
+  --ink-soft:    #3a2e20;
+  --muted:       #8a7e6e;
+  --card-bg:     rgba(255, 255, 255, 0.96);
+  --card-border: rgba(180, 130, 50, 0.16);
+  --shadow-sm:   0 2px 10px rgba(80,55,20,0.08);
+  --shadow-md:   0 6px 24px rgba(80,55,20,0.11);
+  --shadow-lg:   0 16px 48px rgba(80,55,20,0.14);
+
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  padding-top: 90px;
+  min-height: 100vh;
+}
+
+/* ── Hero ───────────────────────────────── */
+.merchant-dash-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.merchant-dash-hero {
+  position: relative;
+  padding: 40px 44px;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #ffffff 0%, #fff8ee 60%, #fdf0d8 100%);
+  border: 1px solid rgba(200,146,42,0.20);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,210,100,0.30);
+}
+
+.merchant-dash-hero::before {
+  content: "";
+  position: absolute;
+  top: -80px; right: -80px;
+  width: 340px; height: 340px;
+  background: radial-gradient(circle, rgba(200,146,42,0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.merchant-dash-hero::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.merchant-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: rgba(181,118,30,0.10);
+  border: 1px solid rgba(181,118,30,0.25);
+  color: #8a5510;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 14px;
+}
+
+.merchant-dash-title {
+  color: var(--ink);
+  font-size: clamp(1.9rem, 3.2vw, 2.9rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  margin-bottom: 8px;
+}
+
+.merchant-dash-subtitle {
+  color: var(--muted);
+  font-size: 0.93rem;
+  max-width: 520px;
+  line-height: 1.6;
+}
+
+.merchant-back-btn {
+  border-radius: 999px;
+  border: 1px solid rgba(181,118,30,0.25);
+  font-size: 0.85rem;
+  color: #6b4410;
+  background: rgba(255,255,255,0.70);
+  padding: 7px 18px;
+  transition: all 0.2s;
+}
+
+.merchant-back-btn:hover {
+  background: rgba(181,118,30,0.10);
+  border-color: rgba(181,118,30,0.45);
+  color: var(--gold-dark);
+}
+
+.merchant-status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  border-radius: 999px;
+  white-space: nowrap;
+  color: #1a7a3a;
+  background: rgba(30,160,80,0.10);
+  border: 1px solid rgba(30,160,80,0.22);
+}
+
+.merchant-status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #22b054;
+  animation: merchantPulse 2s ease-in-out infinite;
+}
+
+@keyframes merchantPulse {
+  0%, 100% { box-shadow: 0 0 0 0   rgba(30,160,80,0.60); }
+  50%       { box-shadow: 0 0 0 8px rgba(30,160,80,0.00); }
+}
+
+/* ── Cards ───────────────────────────────── */
+.merchant-card {
+  border-radius: 22px;
+  border: 1px solid rgba(181,130,50,0.14);
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--ink);
+  box-shadow: var(--shadow-md);
+  padding: 26px;
+  transition: transform 0.22s, box-shadow 0.22s;
+}
+
+.merchant-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-lg);
+}
+
+.merchant-card-soft {
+  background: linear-gradient(180deg, #ffffff 0%, #fdf6e8 100%);
+}
+
+/* ── Section titles ───────────────────────── */
+.merchant-section-title {
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.10em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px !important;
+}
+
+.merchant-section-title::before {
+  content: "";
+  display: inline-block;
+  width: 3px; height: 16px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--gold-light), var(--gold));
+  flex-shrink: 0;
+}
+
+/* ── Restaurant Snapshot ─────────────────── */
+.merchant-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.merchant-info-cell {
+  background: rgba(250,244,232,0.80);
+  border: 1px solid rgba(181,130,50,0.14);
+  border-radius: 14px;
+  padding: 14px 16px;
+  transition: background 0.18s;
+}
+
+.merchant-info-cell:hover {
+  background: rgba(181,130,50,0.08);
+}
+
+.merchant-label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--muted);
+  margin-bottom: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-weight: 600;
+}
+
+.merchant-value {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+/* ── Revenue ─────────────────────────────── */
+.merchant-revenue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.merchant-revenue-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(250,244,232,0.70);
+  border: 1px solid rgba(181,130,50,0.12);
+  font-size: 0.93rem;
+  color: var(--ink-soft);
+  transition: background 0.15s;
+}
+
+.merchant-revenue-row:hover {
+  background: rgba(181,130,50,0.09);
+}
+
+.merchant-revenue-row strong {
+  color: var(--ink);
+}
+
+.merchant-revenue-total {
+  background: linear-gradient(90deg, rgba(181,118,30,0.13), rgba(181,118,30,0.06));
+  border-color: rgba(181,118,30,0.26);
+}
+
+.merchant-revenue-total strong {
+  color: var(--gold-dark);
+  font-size: 1.08rem;
+}
+
+/* ── Stat Boxes ──────────────────────────── */
+.merchant-stat-item {
+  border-radius: 18px;
+  padding: 22px 12px 16px;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.07);
+  background: rgba(255,255,255,0.04);
+  transition: transform 0.20s, box-shadow 0.20s;
+  position: relative;
+  overflow: hidden;
+}
+
+.merchant-stat-item::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 4px 4px 0 0;
+}
+
+.merchant-stat-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+}
+
+.merchant-stat-item small {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.70rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  display: block;
+  margin-top: 6px;
+}
+
+.merchant-stat-value {
+  margin: 0;
+  font-weight: 900;
+  font-size: 2.4rem;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.02em;
+}
+
+.merchant-stat-total::before   { background: linear-gradient(90deg, #a09080, #c8b898); }
+.merchant-stat-pending::before  { background: linear-gradient(90deg, #e8a020, #f0c040); }
+.merchant-stat-accepted::before { background: linear-gradient(90deg, #8850e0, #b070ff); }
+.merchant-stat-preparing::before{ background: linear-gradient(90deg, #2880c8, #50aaee); }
+.merchant-stat-ready::before    { background: linear-gradient(90deg, #e86820, #ff9040); }
+.merchant-stat-delivered::before{ background: linear-gradient(90deg, #20a860, #40d888); }
+
+/* ── Accordion Orders ────────────────────── */
+.merchant-orders-card .accordion-item {
+  background: #fff !important;
+  border: 1px solid rgba(181,130,50,0.15) !important;
+  border-radius: 14px !important;
+  overflow: hidden;
+  margin-bottom: 10px;
+  transition: border-color 0.18s;
+}
+
+.merchant-orders-card .accordion-item:hover {
+  border-color: rgba(181,130,50,0.30) !important;
+}
+
+.merchant-orders-card .accordion-button {
+  background: #fff;
+  color: var(--ink);
+  font-size: 0.92rem;
+  padding: 16px 20px;
+}
+
+.merchant-orders-card .accordion-button:not(.collapsed) {
+  background: rgba(181,130,50,0.07);
+  color: var(--gold-dark);
+  box-shadow: none;
+}
+
+.merchant-orders-card .accordion-button:focus {
+  box-shadow: 0 0 0 0.2rem rgba(181,130,50,0.18);
+}
+
+.merchant-orders-card .accordion-body {
+  background: #fdfaf4;
+  padding: 18px 20px;
+  color: var(--ink-soft);
+}
+
+.merchant-orders-card .table thead th {
+  color: var(--muted);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.merchant-customer-name {
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+/* ── Modal ───────────────────────────────── */
+.merchant-modal-content {
+  background: #fff;
+  border-radius: 24px;
+  border: 1px solid rgba(181,130,50,0.18);
+  box-shadow: 0 24px 64px rgba(80,55,20,0.18);
+  color: var(--ink);
+}
+
+.merchant-modal-content .modal-header {
+  border-bottom: 1px solid rgba(181,130,50,0.14);
+  padding: 22px 26px 18px;
+}
+
+.merchant-modal-content .modal-header .modal-title {
+  color: var(--gold-dark);
+  font-weight: 800;
+}
+
+.merchant-modal-content .modal-footer {
+  border-top: 1px solid rgba(181,130,50,0.14);
+}
+
+.merchant-modal-content .table thead th {
+  color: var(--muted);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.merchant-modal-content .table-active {
+  background: rgba(181,130,50,0.08) !important;
+}
+
+/* ── Loading / Error ─────────────────────── */
+.merchant-dashboard-state {
+  display: grid;
+  place-items: center;
+  padding: 80px 16px;
+}
+
+.merchant-state-card {
+  width: min(540px, 100%);
+  padding: 40px;
+  border-radius: 26px;
+  border: 1px solid rgba(181,130,50,0.18);
+  background: rgba(255,255,255,0.96);
+  color: var(--ink);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.merchant-state-error {
+  border-color: rgba(200, 60, 60, 0.28);
+}
+
+/* ── Responsive ───────────────────────────── */
+@media (max-width: 991.98px) {
+  .merchant-dash-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 26px 24px;
+  }
+  .merchant-status-chip { align-self: flex-start; }
+}
+
+@media (max-width: 575.98px) {
+  .merchant-card,
+  .merchant-state-card {
+    border-radius: 18px;
+    padding: 18px;
+  }
+  .merchant-dash-hero { border-radius: 20px; }
+  .merchant-info-grid  { grid-template-columns: 1fr; }
+  .merchant-stat-value { font-size: 2rem; }
+  .merchant-orders-card .accordion-button {
+    font-size: 0.86rem;
+    padding: 13px 14px;
+  }
+}
