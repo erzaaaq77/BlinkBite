@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
+import * as signalR from "@microsoft/signalr";
 
 const API_BASE_URL = "http://localhost:5063/api";
 
@@ -32,6 +33,9 @@ const DriverDashboard = ({ token, onBack }) => {
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState("current");
   const [actionLoading, setActionLoading] = useState(null);
+  const [locationStatus, setLocationStatus] = useState("idle"); // idle | sharing | error
+  const locationIntervalRef = useRef(null);
+  const hubConnectionRef = useRef(null);
 
   const fetchData = useCallback(async () => {
     if (!token) {
@@ -59,6 +63,59 @@ const DriverDashboard = ({ token, onBack }) => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const startSharingLocation = async () => {
+    if (!navigator.geolocation) {
+      setLocationStatus("error");
+      return;
+    }
+    try {
+      const connection = new signalR.HubConnectionBuilder()
+        .withUrl(`http://localhost:5063/locationHub`, { accessTokenFactory: () => token })
+        .withAutomaticReconnect()
+        .build();
+      await connection.start();
+      hubConnectionRef.current = connection;
+      setLocationStatus("sharing");
+
+      const currentOrders = data?.currentOrders || [];
+      const activeOrderId = currentOrders[0]?.id;
+
+      locationIntervalRef.current = setInterval(() => {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+          const payload = {
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+            lastUpdate: new Date().toISOString(),
+          };
+          try {
+            if (activeOrderId) {
+              await connection.invoke("UpdateDriverLocation", activeOrderId, payload);
+            }
+          } catch (e) {
+            console.error("Location send failed:", e);
+          }
+        });
+      }, 5000);
+    } catch (e) {
+      console.error("Hub connection failed:", e);
+      setLocationStatus("error");
+    }
+  };
+
+  const stopSharingLocation = () => {
+    if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+    if (hubConnectionRef.current) hubConnectionRef.current.stop();
+    hubConnectionRef.current = null;
+    setLocationStatus("idle");
+  };
+
+  useEffect(() => {
+    return () => {
+      if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+      if (hubConnectionRef.current) hubConnectionRef.current.stop();
+    };
+  }, []);
 
   const markDelivered = async (orderId) => {
     setActionLoading(`${orderId}-deliver`);
@@ -130,7 +187,24 @@ const DriverDashboard = ({ token, onBack }) => {
 
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>🚚 Driver Dashboard</h2>
-        <span className="badge bg-success fs-6 p-2">{driver.automjeti || "Vehicle"}</span>
+        <div className="d-flex align-items-center gap-2">
+          <span className="badge bg-success fs-6 p-2">{driver.automjeti || "Vehicle"}</span>
+          {locationStatus === "sharing" ? (
+            <button className="btn btn-danger btn-sm" onClick={stopSharingLocation}>
+              <i className="bi bi-geo-alt-fill me-1"></i>Stop Location
+            </button>
+          ) : (
+            <button className="btn btn-success btn-sm" onClick={startSharingLocation}>
+              <i className="bi bi-geo-alt me-1"></i>Share Location
+            </button>
+          )}
+          {locationStatus === "sharing" && (
+            <span className="badge bg-success"><i className="bi bi-broadcast me-1"></i>Live</span>
+          )}
+          {locationStatus === "error" && (
+            <span className="badge bg-danger">Location Error</span>
+          )}
+        </div>
       </div>
 
       <div className="card p-4 mb-4">

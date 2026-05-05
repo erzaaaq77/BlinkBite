@@ -148,6 +148,7 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
   const [activeRestaurantId, setActiveRestaurantId] = useState(initialRoute.restaurantId);
   const [activeBranchId, setActiveBranchId] = useState(initialRoute.branchId || "");
+  const [trackOrderId, setTrackOrderId] = useState(initialRoute.orderId || "");
   const [page, setPage] = useState(initialRoute.page);
   const [restaurantsLoading, setRestaurantsLoading] = useState(false);
   const [restaurantDetailsLoading, setRestaurantDetailsLoading] = useState(false);
@@ -2135,6 +2136,7 @@ function App() {
       setPage(route.page);
       setActiveRestaurantId(route.restaurantId);
       setActiveBranchId(route.branchId || "");
+      setTrackOrderId(route.orderId || "");
 
       if (route.page === "myOrders") {
         if (canManageOperationalOrders) {
@@ -2785,7 +2787,7 @@ function App() {
 
       {page === "trackOrder" && (
   <OrderTracking 
-    orderId={route.orderId} 
+    orderId={trackOrderId} 
     token={token} 
   />
 )}
@@ -3037,6 +3039,16 @@ function App() {
                         <strong>Note:</strong> {order.note}
                       </p>
                     )}
+
+                    <div className="mt-3 d-flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => { window.location.hash = `/track/${order.id}`; }}
+                      >
+                        <i className="bi bi-geo-alt me-1"></i>Track Order
+                      </button>
+                    </div>
 
                     {Array.isArray(order.items) && order.items.length > 0 && (
                       <div className="order-items-preview mt-3">
