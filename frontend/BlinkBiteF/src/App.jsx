@@ -8,6 +8,7 @@ import logo from "./assets/LogoBB.png";
 import locationImage from "./assets/location.png";
 import MerchantDashboard from "./components/MerchantDashboard.jsx";
 import DriverDashboard from "./components/DriverDashboard";
+import OrderTracking from "./components/OrderTracking";
 
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
@@ -49,6 +50,16 @@ function App() {
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
 
+    if (hash.startsWith("#/track/")) {
+  const orderId = hash.replace("#/track/", "");
+  return {
+    page: "trackOrder",
+    orderId: orderId,
+    category: "",
+    restaurantId: null,
+    branchId: "",
+  };
+}
     if (hash.startsWith("#/driver/dashboard")) {
   return {
     page: "driverDashboard",
@@ -2771,6 +2782,13 @@ function App() {
           }}
         />
       )}
+
+      {page === "trackOrder" && (
+  <OrderTracking 
+    orderId={route.orderId} 
+    token={token} 
+  />
+)}
         {page === "restaurants" && (
           <RestaurantsPage
             selectedCategory={selectedCategory}
