@@ -1,5 +1,6 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,6 +8,7 @@ namespace FoodDeliveryyy.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(Roles ="Merchant,Admin")]
 public class MenuItemsController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -34,6 +36,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize (Roles ="Merchant,Admin")]
     public async Task<ActionResult<MenuItems>> CreateMenuItem(MenuItems menuItem)
     {
         _context.MenuItems.Add(menuItem);
@@ -43,6 +46,8 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = "Merchant,Admin")]
+
     public async Task<IActionResult> UpdateMenuItem(int id, MenuItems menuItem)
     {
         if (id != menuItem.Id)
@@ -68,6 +73,8 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = "Merchant,Admin")]
+
     public async Task<IActionResult> DeleteMenuItem(int id)
     {
         var menuItem = await _context.MenuItems.FindAsync(id);

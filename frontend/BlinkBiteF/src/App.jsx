@@ -9,6 +9,9 @@ import locationImage from "./assets/location.png";
 import MerchantDashboard from "./components/MerchantDashboard.jsx";
 import DriverDashboard from "./components/DriverDashboard";
 import OrderTracking from "./components/OrderTracking";
+import MenuManagement from "./components/MenuManagement";
+
+
 
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
@@ -50,6 +53,13 @@ function App() {
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
 
+    if (hash.startsWith("#/merchant/menu/")) {
+  const restaurantId = hash.replace("#/merchant/menu/", "");
+  return {
+    page: "merchantMenu",
+    restaurantId: restaurantId,
+  };
+}
     if (hash.startsWith("#/track/")) {
   const orderId = hash.replace("#/track/", "");
   return {
@@ -1610,9 +1620,9 @@ function App() {
         : isMerchantRole
           ? [
               ...merchantRestaurantEndpoints,
-              `${API_BASE}/orders/merchant`,
-              `${API_BASE}/orders/for-merchant`,
-              `${API_BASE}/orders/my-restaurant`,
+            //  `${API_BASE}/orders/merchant`,
+              //`${API_BASE}/orders/for-merchant`,
+              //`${API_BASE}/orders/my-restaurant`,
               `${API_BASE}/orders/pending`,
               `${API_BASE}/orders/in-progress`,
               `${API_BASE}/orders/my`,
@@ -2133,6 +2143,7 @@ function App() {
   useEffect(() => {
     const syncRouteFromHash = async () => {
       const route = getRouteState();
+      const { page, restaurantId, orderId } = route;
       setPage(route.page);
       setActiveRestaurantId(route.restaurantId);
       setActiveBranchId(route.branchId || "");
@@ -2421,9 +2432,9 @@ function App() {
         // Same fallback chain as fetchOperationalOrders so we always find data
         const endpoints = [
           ...ridEndpoints,
-          `${API_BASE}/orders/merchant`,
-          `${API_BASE}/orders/for-merchant`,
-          `${API_BASE}/orders/my-restaurant`,
+       //   `${API_BASE}/orders/merchant`,
+         // `${API_BASE}/orders/for-merchant`,
+         // `${API_BASE}/orders/my-restaurant`,
           `${API_BASE}/orders/my`,
           `${API_BASE}/orders`,
         ];
@@ -2782,9 +2793,27 @@ function App() {
           onBack={() => {
             window.location.hash = "/";
           }}
-        />
-      )}
+          
 
+        />
+
+
+      )}
+        {page === "trackOrder" && (
+    <OrderTracking orderId={route.orderId} token={token} />
+  )}
+    {page === "driverDashboard" && (
+    <DriverDashboard token={token} onBack={() => { window.location.hash = "/"; }} />
+  )}
+{page === "merchantMenu" && (
+  <MenuManagement
+    token={token}
+    restaurantId={parseInt(route.restaurantId)}
+    onBack={() => {
+      window.location.hash = "/merchant/dashboard";
+    }}
+  />
+)}
       {page === "trackOrder" && (
   <OrderTracking 
     orderId={trackOrderId} 

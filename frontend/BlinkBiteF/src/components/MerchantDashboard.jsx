@@ -129,6 +129,15 @@ if (error) {
           <button className="btn btn-light merchant-back-btn" onClick={onBack}>
             <i className="bi bi-arrow-left me-2"></i>Back to Home
           </button>
+             <button 
+              className="btn btn-outline-primary"
+              onClick={() => {
+                window.location.hash = `/merchant/menu/${restaurant.id}`;
+              }}
+            >
+              <i className="bi bi-grid-3x3-gap-fill me-2"></i>
+               Manage Menu
+            </button>
           <div className="merchant-status-chip">
             <span className="merchant-status-dot"></span>
             {restaurant.statusi || "Active"}
