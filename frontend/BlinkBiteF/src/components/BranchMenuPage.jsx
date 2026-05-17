@@ -385,12 +385,23 @@ function BranchMenuPage({
                             <div className="product-addons-popover mt-2">
                               <div className="product-addons-popup-header">
                                 <h6 className="mb-0">Choose extras</h6>
-                                <button
-                                  type="button"
-                                  className="btn-close"
-                                  aria-label="Close extras"
-                                  onClick={() => setShowAddOnsPopup(false)}
-                                ></button>
+                                <div className="d-flex align-items-center gap-2">
+                                  {selectedAddOns.length > 0 && (
+                                    <button
+                                      type="button"
+                                      className="btn btn-sm btn-outline-danger"
+                                      onClick={() => setSelectedAddOns([])}
+                                    >
+                                      Clear extras
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="btn-close"
+                                    aria-label="Close extras"
+                                    onClick={() => setShowAddOnsPopup(false)}
+                                  ></button>
+                                </div>
                               </div>
 
                               <div className="product-quickview-chips">

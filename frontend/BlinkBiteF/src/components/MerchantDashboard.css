@@ -325,8 +325,13 @@
 
 .merchant-orders-filters {
   display: grid;
-  grid-template-columns: 180px minmax(220px, 320px);
+  grid-template-columns: 180px minmax(220px, 320px) 180px 190px;
   gap: 10px;
+}
+
+.merchant-filter-inline .form-check-label {
+  font-size: 0.84rem;
+  color: var(--ink-soft);
 }
 
 .merchant-filter-group .form-label {
@@ -338,6 +343,7 @@
 }
 
 .merchant-flow-chip {
+  width: 100%;
   border-radius: 12px;
   padding: 10px 12px;
   border: 1px solid rgba(181,130,50,0.20);
@@ -346,6 +352,24 @@
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  text-align: left;
+  transition: border-color 0.16s, background 0.16s, transform 0.16s;
+}
+
+button.merchant-flow-chip {
+  cursor: pointer;
+}
+
+button.merchant-flow-chip:hover {
+  background: rgba(181,130,50,0.16);
+  border-color: rgba(181,130,50,0.35);
+  transform: translateY(-1px);
+}
+
+button.merchant-flow-chip.active {
+  border-color: rgba(181,130,50,0.45);
+  background: rgba(181,130,50,0.18);
+  box-shadow: 0 0 0 2px rgba(181,130,50,0.15);
 }
 
 .merchant-flow-chip span {
@@ -498,6 +522,10 @@
 
 /* ── Responsive ───────────────────────────── */
 @media (max-width: 991.98px) {
+  .merchant-orders-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
   .merchant-dash-topbar {
     justify-content: flex-start;
     gap: 10px;

@@ -32,6 +32,8 @@ const MerchantDashboard = ({ token }) => {
   const [showModal, setShowModal] = useState(false);
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
+  const [orderSort, setOrderSort] = useState("newest");
+  const [showActionableOnly, setShowActionableOnly] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [statusActionOrderId, setStatusActionOrderId] = useState(null);
   const [statusActionMessage, setStatusActionMessage] = useState("");
@@ -103,7 +105,7 @@ const MerchantDashboard = ({ token }) => {
 
   useEffect(() => {
     setVisibleOrdersCount(MERCHANT_ORDERS_BATCH_SIZE);
-  }, [orderStatusFilter, orderSearch]);
+  }, [orderStatusFilter, orderSearch, orderSort, showActionableOnly]);
 
   const getStatusColor = (status) => {
     const statusLower = String(status || "").toLowerCase();
@@ -308,13 +310,68 @@ const MerchantDashboard = ({ token }) => {
 
   const formatCurrency = (value) => `€${Number(value || 0).toFixed(2)}`;
 
+  const parseNumericValue = (raw) => {
+    if (typeof raw === "number") {
+      return Number.isFinite(raw) ? raw : 0;
+    }
+
+    if (typeof raw === "string") {
+      const cleaned = raw.replace(/[^\d,.-]/g, "").replace(/,/g, ".").trim();
+      const parsed = Number(cleaned);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    return 0;
+  };
+
+  const parseCreatedAtMs = (order) => {
+    const candidates = [order?.dataPorosis, order?.createdAt, order?.orderDate, order?.date];
+
+    for (const value of candidates) {
+      if (!value) continue;
+
+      const timestamp = new Date(value).getTime();
+      if (Number.isFinite(timestamp) && timestamp > 0) {
+        return timestamp;
+      }
+    }
+
+    // Fallback by order id so sorting still feels deterministic when date is missing.
+    return parseNumericValue(order?.id);
+  };
+
   const normalizedRecentOrders = recentOrders.map((order) => {
     const statusName = getStatusName(order.statusi);
+    const createdAtMs = parseCreatedAtMs(order);
+    const totalAmount = parseNumericValue(order.shumaTotale ?? order.total ?? order.totalAmount);
+    const orderItems = Array.isArray(order.items) ? order.items : [];
+    const itemSearchText = orderItems
+      .map((item) => item?.name || item?.menuItemName || item?.menuItem?.emertimi || "")
+      .join(" ")
+      .toLowerCase();
+    const addressLabel = String(order.address || order.adresaDorezimit || "").toLowerCase();
+    const noteLabel = String(order.note || order.shenimet || "").toLowerCase();
+    const customerLabel = String(
+      order.customerName || order.customer || order.user?.userName || order.userName || "Customer"
+    );
+
     return {
       ...order,
       statusName,
       statusKey: String(statusName || "unknown").toLowerCase(),
-      customerLabel: String(order.customerName || "Customer"),
+      customerLabel,
+      createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
+      totalAmount: Number.isFinite(totalAmount) ? totalAmount : 0,
+      searchableText: [
+        String(order.id || ""),
+        customerLabel,
+        String(statusName || ""),
+        itemSearchText,
+        addressLabel,
+        noteLabel,
+      ]
+        .join(" ")
+        .toLowerCase(),
     };
   });
 
@@ -330,28 +387,79 @@ const MerchantDashboard = ({ token }) => {
   );
 
   const normalizedSearch = orderSearch.trim().toLowerCase();
+
+  const matchesStatusFilter = (order, statusFilter) => {
+    if (statusFilter === "all") return true;
+    if (statusFilter === "in-progress") {
+      return ["accepted", "preparing", "ready"].includes(order.statusKey);
+    }
+    return order.statusKey === statusFilter;
+  };
+
   const filteredOrders = normalizedRecentOrders.filter((order) => {
-    const passesStatus = orderStatusFilter === "all" || order.statusKey === orderStatusFilter;
+    const passesStatus = matchesStatusFilter(order, orderStatusFilter);
     if (!passesStatus) return false;
 
+    if (showActionableOnly && getOrderActions(order.statusName).length === 0) {
+      return false;
+    }
+
     if (!normalizedSearch) return true;
-    const byOrderId = String(order.id || "").toLowerCase().includes(normalizedSearch);
-    const byCustomer = order.customerLabel.toLowerCase().includes(normalizedSearch);
-    return byOrderId || byCustomer;
+    return order.searchableText.includes(normalizedSearch);
   });
 
-  const visibleFilteredOrders = filteredOrders.slice(0, visibleOrdersCount);
-  const hasMoreFilteredOrders = filteredOrders.length > visibleFilteredOrders.length;
+  const sortedFilteredOrders = [...filteredOrders].sort((a, b) => {
+    if (orderSort === "oldest") {
+      const byDate = a.createdAtMs - b.createdAtMs;
+      return byDate !== 0 ? byDate : a.totalAmount - b.totalAmount;
+    }
+    if (orderSort === "highest") {
+      const byTotal = b.totalAmount - a.totalAmount;
+      return byTotal !== 0 ? byTotal : b.createdAtMs - a.createdAtMs;
+    }
+    if (orderSort === "lowest") {
+      const byTotal = a.totalAmount - b.totalAmount;
+      return byTotal !== 0 ? byTotal : b.createdAtMs - a.createdAtMs;
+    }
+    if (orderSort === "customer") return a.customerLabel.localeCompare(b.customerLabel);
+    const byNewest = b.createdAtMs - a.createdAtMs;
+    return byNewest !== 0 ? byNewest : b.totalAmount - a.totalAmount;
+  });
+
+  const visibleFilteredOrders = sortedFilteredOrders.slice(0, visibleOrdersCount);
+  const hasMoreFilteredOrders = sortedFilteredOrders.length > visibleFilteredOrders.length;
 
   const statusFilterOptions = [
     { value: "all", label: "All statuses" },
     { value: "pending", label: "Pending" },
+    { value: "in-progress", label: "In Progress" },
     { value: "accepted", label: "Accepted" },
     { value: "preparing", label: "Preparing" },
     { value: "ready", label: "Ready" },
     { value: "delivered", label: "Delivered" },
     { value: "cancelled", label: "Cancelled" },
   ];
+
+  const sortOptions = [
+    { value: "newest", label: "Newest first" },
+    { value: "oldest", label: "Oldest first" },
+    { value: "highest", label: "Highest total" },
+    { value: "lowest", label: "Lowest total" },
+    { value: "customer", label: "Customer A-Z" },
+  ];
+
+  const hasActiveFilters =
+    orderStatusFilter !== "all" ||
+    orderSearch.trim().length > 0 ||
+    orderSort !== "newest" ||
+    showActionableOnly;
+
+  const clearOrderFilters = () => {
+    setOrderStatusFilter("all");
+    setOrderSearch("");
+    setOrderSort("newest");
+    setShowActionableOnly(false);
+  };
 
   return (
     <section className="merchant-dashboard-page">
@@ -522,37 +630,92 @@ const MerchantDashboard = ({ token }) => {
                   onChange={(e) => setOrderSearch(e.target.value)}
                 />
               </div>
+
+              <div className="merchant-filter-group">
+                <label className="form-label mb-1" htmlFor="merchant-order-sort">Sort</label>
+                <select
+                  id="merchant-order-sort"
+                  className="form-select form-select-sm"
+                  value={orderSort}
+                  onChange={(e) => setOrderSort(e.target.value)}
+                >
+                  {sortOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="merchant-filter-group merchant-filter-inline">
+                <label className="form-label mb-1" htmlFor="merchant-actionable-only">Workflow</label>
+                <div className="form-check mt-1 mb-0">
+                  <input
+                    id="merchant-actionable-only"
+                    className="form-check-input"
+                    type="checkbox"
+                    checked={showActionableOnly}
+                    onChange={(e) => setShowActionableOnly(e.target.checked)}
+                  />
+                  <label className="form-check-label" htmlFor="merchant-actionable-only">
+                    Actionable only
+                  </label>
+                </div>
+              </div>
             </div>
 
-            <div className="merchant-orders-meta text-muted small">
-              Showing {visibleFilteredOrders.length} of {normalizedRecentOrders.length} recent orders
+            <div className="merchant-orders-meta text-muted small d-flex flex-wrap align-items-center gap-2 justify-content-end">
+              <span>
+                Showing {visibleFilteredOrders.length} of {sortedFilteredOrders.length} filtered ({normalizedRecentOrders.length} total)
+              </span>
+              {hasActiveFilters && (
+                <button type="button" className="btn btn-sm btn-outline-dark" onClick={clearOrderFilters}>
+                  Reset filters
+                </button>
+              )}
             </div>
           </div>
 
           <div className="row g-2 mb-3">
             <div className="col-6 col-lg-3">
-              <div className="merchant-flow-chip merchant-flow-pending">
+              <button
+                type="button"
+                className={`merchant-flow-chip merchant-flow-pending ${orderStatusFilter === "pending" ? "active" : ""}`}
+                onClick={() => setOrderStatusFilter((current) => (current === "pending" ? "all" : "pending"))}
+              >
                 <span>Pending</span>
                 <strong>{flowSnapshot.pending}</strong>
-              </div>
+              </button>
             </div>
             <div className="col-6 col-lg-3">
-              <div className="merchant-flow-chip merchant-flow-progress">
+              <button
+                type="button"
+                className={`merchant-flow-chip merchant-flow-progress ${orderStatusFilter === "in-progress" ? "active" : ""}`}
+                onClick={() => setOrderStatusFilter((current) => (current === "in-progress" ? "all" : "in-progress"))}
+              >
                 <span>In Progress</span>
                 <strong>{flowSnapshot.inProgress}</strong>
-              </div>
+              </button>
             </div>
             <div className="col-6 col-lg-3">
-              <div className="merchant-flow-chip merchant-flow-delivered">
+              <button
+                type="button"
+                className={`merchant-flow-chip merchant-flow-delivered ${orderStatusFilter === "delivered" ? "active" : ""}`}
+                onClick={() => setOrderStatusFilter((current) => (current === "delivered" ? "all" : "delivered"))}
+              >
                 <span>Delivered</span>
                 <strong>{flowSnapshot.delivered}</strong>
-              </div>
+              </button>
             </div>
             <div className="col-6 col-lg-3">
-              <div className="merchant-flow-chip merchant-flow-cancelled">
+              <button
+                type="button"
+                className={`merchant-flow-chip merchant-flow-cancelled ${orderStatusFilter === "cancelled" ? "active" : ""}`}
+                onClick={() => setOrderStatusFilter((current) => (current === "cancelled" ? "all" : "cancelled"))}
+              >
                 <span>Cancelled</span>
                 <strong>{flowSnapshot.cancelled}</strong>
-              </div>
+              </button>
             </div>
           </div>
 
@@ -561,7 +724,7 @@ const MerchantDashboard = ({ token }) => {
               <h6 className="mb-1">No orders yet</h6>
               <p className="text-muted mb-0">New orders will appear here as soon as customers place them.</p>
             </div>
-          ) : filteredOrders.length === 0 ? (
+          ) : sortedFilteredOrders.length === 0 ? (
             <div className="merchant-inline-state">
               <h6 className="mb-1">No matching results</h6>
               <p className="text-muted mb-0">Try a different status filter or clear the search text.</p>
@@ -680,7 +843,7 @@ const MerchantDashboard = ({ token }) => {
             </div>
           )}
 
-          {filteredOrders.length > 0 && (
+          {sortedFilteredOrders.length > 0 && (
             <div className="merchant-orders-pagination mt-3">
               {hasMoreFilteredOrders && (
                 <button
@@ -688,7 +851,7 @@ const MerchantDashboard = ({ token }) => {
                   className="btn btn-sm btn-outline-secondary"
                   onClick={() => setVisibleOrdersCount((current) => current + MERCHANT_ORDERS_BATCH_SIZE)}
                 >
-                  Show more ({filteredOrders.length - visibleFilteredOrders.length} left)
+                  Show more ({sortedFilteredOrders.length - visibleFilteredOrders.length} left)
                 </button>
               )}
 

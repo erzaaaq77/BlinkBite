@@ -15,6 +15,7 @@ const OrderTracking = lazy(() => import("./components/OrderTracking"));
 const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
 const NEARBY_COORDS_KEY = "nearby_coords";
+const DELIVERY_GEO_CACHE_KEY = "blinkbite_geo_cache_v1";
 const ORDER_CART_KEY = "blinkbite_cart_v1";
 const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
 const RESTAURANT_CUSTOMIZATION_KEY = "blinkbite_restaurant_customizations_v1";
@@ -28,6 +29,103 @@ const CART_ITEM_QUICK_REQUESTS = [
   "Extra spicy",
   "No cheese",
 ];
+const DELIVERY_FEE_MODE = "distance_tiered";
+const DELIVERY_FEE_MODELS = {
+  branch_fixed: {
+    label: "Branch fixed fee",
+  },
+  distance_tiered: {
+    label: "Distance tiers",
+    tiers: [
+      { maxKm: 2, fee: 1.0 },
+      { maxKm: 5, fee: 2.0 },
+      { maxKm: 8, fee: 3.0 },
+      { maxKm: 12, fee: 4.5 },
+      { maxKm: Infinity, fee: 6.0 },
+    ],
+  },
+  distance_tiered_free_over_20: {
+    label: "Distance tiers + free delivery over EUR 20",
+    freeOverSubtotal: 20,
+    tiers: [
+      { maxKm: 2, fee: 1.0 },
+      { maxKm: 5, fee: 2.0 },
+      { maxKm: 8, fee: 3.0 },
+      { maxKm: 12, fee: 4.5 },
+      { maxKm: Infinity, fee: 6.0 },
+    ],
+  },
+};
+
+const toFiniteNumber = (value) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const calculateDistanceKm = (fromLat, fromLng, toLat, toLng) => {
+  const lat1 = toFiniteNumber(fromLat);
+  const lon1 = toFiniteNumber(fromLng);
+  const lat2 = toFiniteNumber(toLat);
+  const lon2 = toFiniteNumber(toLng);
+
+  if ([lat1, lon1, lat2, lon2].some((entry) => entry === null)) return null;
+
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+};
+
+const findDeliveryTier = (distanceKm, tiers = []) => {
+  if (!Number.isFinite(distanceKm)) return null;
+  return tiers.find((tier) => distanceKm <= Number(tier.maxKm)) || tiers[tiers.length - 1] || null;
+};
+
+const resolveDeliveryPricing = ({ mode, subtotal, baseFee, distanceKm }) => {
+  const safeBaseFee = Number.isFinite(Number(baseFee)) ? Math.max(0, Number(baseFee)) : 0;
+  const model = DELIVERY_FEE_MODELS[mode] || DELIVERY_FEE_MODELS.branch_fixed;
+
+  if (!model.tiers || !Number.isFinite(distanceKm)) {
+    return {
+      fee: safeBaseFee,
+      modeLabel: model.label,
+      usedDistanceKm: null,
+      ruleLabel: "Fixed by branch",
+    };
+  }
+
+  if (Number.isFinite(Number(model.freeOverSubtotal)) && Number(subtotal || 0) >= Number(model.freeOverSubtotal)) {
+    return {
+      fee: 0,
+      modeLabel: model.label,
+      usedDistanceKm: distanceKm,
+      ruleLabel: `Free over EUR ${Number(model.freeOverSubtotal).toFixed(2)}`,
+    };
+  }
+
+  const tier = findDeliveryTier(distanceKm, model.tiers);
+  if (!tier) {
+    return {
+      fee: safeBaseFee,
+      modeLabel: model.label,
+      usedDistanceKm: distanceKm,
+      ruleLabel: "Fallback branch fee",
+    };
+  }
+
+  const upperBoundLabel = Number.isFinite(Number(tier.maxKm)) ? `${Number(tier.maxKm)} km` : "over max range";
+  return {
+    fee: Math.max(0, Number(tier.fee || 0)),
+    modeLabel: model.label,
+    usedDistanceKm: distanceKm,
+    ruleLabel: `Tier up to ${upperBoundLabel}`,
+  };
+};
 const HomePage = lazy(() => import("./components/HomePage.jsx"));
 const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
 const RestaurantDetailsPage = lazy(() => import("./components/RestaurantDetailsPage.jsx"));
@@ -217,7 +315,18 @@ function App() {
   const [cartCount, setCartCount] = useState(0);
   const [cartItems, setCartItems] = useState([]);
   const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [resolvedDeliveryCoords, setResolvedDeliveryCoords] = useState(null);
+  const [resolvedBranchCoords, setResolvedBranchCoords] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState("1");
+  const [paymentCardHolder, setPaymentCardHolder] = useState("");
+  const [paymentCardNumber, setPaymentCardNumber] = useState("");
+  const [paymentCardExpiry, setPaymentCardExpiry] = useState("");
+  const [paymentCardCvc, setPaymentCardCvc] = useState("");
+  const [paymentOnlineAccount, setPaymentOnlineAccount] = useState("");
+  const [paymentVerified, setPaymentVerified] = useState(true);
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [orderNotes, setOrderNotes] = useState("");
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderMessage, setOrderMessage] = useState("");
@@ -235,6 +344,7 @@ function App() {
   const [roleActionOrderId, setRoleActionOrderId] = useState(null);
   const [kanbanDetailOrder, setKanbanDetailOrder] = useState(null);
   const [myOrderItemPreview, setMyOrderItemPreview] = useState(null);
+  const [cartItemEditor, setCartItemEditor] = useState(null);
 
   // New order notification state
   const [newOrderCount, setNewOrderCount] = useState(0);
@@ -325,6 +435,17 @@ function App() {
     (Array.isArray(currentUser?.Roles) && currentUser.Roles.length > 0 ? currentUser.Roles[0] : "") ??
     getRoleFromJwt() ??
     "";
+
+  const isOnlinePaymentMethod = ["2", "3", "4"].includes(String(paymentMethod || ""));
+
+  const getPaymentMethodLabel = (value) => {
+    const key = String(value || "");
+    if (key === "1") return "Cash";
+    if (key === "2") return "Credit Card";
+    if (key === "3") return "PayPal";
+    if (key === "4") return "Online";
+    return "Unknown";
+  };
   const normalizedCurrentUserRole = String(currentUserRole || "").trim().toLowerCase();
   const isCustomerRole = ["customer", "user"].includes(normalizedCurrentUserRole);
   const isAdminRole = normalizedCurrentUserRole === "admin";
@@ -938,8 +1059,48 @@ function App() {
 
   const getCartItemUnitPrice = (item) => Number(item?.price || 0) + getCartItemAddOnsUnitTotal(item);
 
+  const activeBranch = restaurantBranches.find((b) => String(b.id) === String(activeBranchId)) || null;
+  const branchBaseDeliveryFee = Number(activeBranch?.deliveryFee || 0);
+
+  const storedNearbyCoords = (() => {
+    try {
+      const raw = localStorage.getItem(NEARBY_COORDS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      const latitude = toFiniteNumber(parsed?.latitude);
+      const longitude = toFiniteNumber(parsed?.longitude);
+      if (latitude === null || longitude === null) return null;
+      return { latitude, longitude };
+    } catch {
+      return null;
+    }
+  })();
+
+  const effectiveCustomerCoords =
+    (resolvedDeliveryCoords && Number.isFinite(Number(resolvedDeliveryCoords.latitude)) && Number.isFinite(Number(resolvedDeliveryCoords.longitude)))
+      ? resolvedDeliveryCoords
+      : storedNearbyCoords;
+
+  const effectiveBranchCoords =
+    (Number.isFinite(Number(activeBranch?.latitude)) && Number.isFinite(Number(activeBranch?.longitude)))
+      ? { latitude: Number(activeBranch?.latitude), longitude: Number(activeBranch?.longitude) }
+      : resolvedBranchCoords;
+
+  const branchDistanceKm = calculateDistanceKm(
+    effectiveCustomerCoords?.latitude,
+    effectiveCustomerCoords?.longitude,
+    effectiveBranchCoords?.latitude,
+    effectiveBranchCoords?.longitude
+  );
+
   const cartSubtotal = cartItems.reduce((sum, item) => sum + getCartItemUnitPrice(item) * Number(item.quantity || 0), 0);
-  const cartDeliveryFee = Number(restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.deliveryFee || 0);
+  const deliveryPricing = resolveDeliveryPricing({
+    mode: DELIVERY_FEE_MODE,
+    subtotal: cartSubtotal,
+    baseFee: branchBaseDeliveryFee,
+    distanceKm: branchDistanceKm,
+  });
+  const cartDeliveryFee = Number(deliveryPricing.fee || 0);
   const cartTotal = cartSubtotal + cartDeliveryFee;
 
   const isSameCartLine = (item, targetItem) => {
@@ -954,19 +1115,27 @@ function App() {
     );
   };
 
-  const addToCart = (menuItem, quantity, customizations = null) => {
-    if (!menuItem || !activeRestaurantId || !activeBranchId) return;
-    const nextQty = Math.max(1, Number(quantity || 1));
-    const removedIngredients = normalizeTextList(customizations?.removedIngredients);
-    const selectedAddOns = normalizeAddOns(customizations?.selectedAddOns);
-    const customizationSignature = JSON.stringify({
-      removedIngredients: removedIngredients.map((entry) => String(entry).trim().toLowerCase()).sort(),
-      selectedAddOns: selectedAddOns
+  const getCustomizationSignature = ({ removedIngredients = [], selectedAddOns = [] } = {}) =>
+    JSON.stringify({
+      removedIngredients: normalizeTextList(removedIngredients)
+        .map((entry) => String(entry).trim().toLowerCase())
+        .sort(),
+      selectedAddOns: normalizeAddOns(selectedAddOns)
         .map((entry) => ({
           name: String(entry?.name || "").trim().toLowerCase(),
           extraPrice: Number(entry?.extraPrice || 0),
         }))
         .sort((a, b) => a.name.localeCompare(b.name)),
+    });
+
+  const addToCart = (menuItem, quantity, customizations = null) => {
+    if (!menuItem || !activeRestaurantId || !activeBranchId) return;
+    const nextQty = Math.max(1, Number(quantity || 1));
+    const removedIngredients = normalizeTextList(customizations?.removedIngredients);
+    const selectedAddOns = normalizeAddOns(customizations?.selectedAddOns);
+    const customizationSignature = getCustomizationSignature({
+      removedIngredients,
+      selectedAddOns,
     });
 
     setCartItems((current) => {
@@ -1042,6 +1211,74 @@ function App() {
     setCartItems((current) =>
       current.filter((item) => !isSameCartLine(item, targetItem))
     );
+    setOrderMessage("");
+  };
+
+  const openCartItemEditor = (item) => {
+    if (!item) return;
+
+    setCartItemEditor({
+      targetItem: item,
+      selectedRequests: Array.isArray(item?.selectedRequests) ? item.selectedRequests : [],
+      selectedRemovedIngredients: normalizeTextList(item?.selectedRemovedIngredients),
+      selectedAddOns: normalizeAddOns(item?.selectedAddOns),
+    });
+  };
+
+  const saveCartItemEditorChanges = () => {
+    if (!cartItemEditor?.targetItem) {
+      setCartItemEditor(null);
+      return;
+    }
+
+    const nextRequests = Array.isArray(cartItemEditor.selectedRequests)
+      ? cartItemEditor.selectedRequests.filter(Boolean)
+      : [];
+    const nextRemovedIngredients = normalizeTextList(cartItemEditor.selectedRemovedIngredients);
+    const nextSelectedAddOns = normalizeAddOns(cartItemEditor.selectedAddOns);
+    const nextSignature = getCustomizationSignature({
+      removedIngredients: nextRemovedIngredients,
+      selectedAddOns: nextSelectedAddOns,
+    });
+
+    setCartItems((current) => {
+      const updated = current.map((item) =>
+        isSameCartLine(item, cartItemEditor.targetItem)
+          ? {
+              ...item,
+              selectedRequests: nextRequests,
+              selectedRemovedIngredients: nextRemovedIngredients,
+              selectedAddOns: nextSelectedAddOns,
+              customizationSignature: nextSignature,
+            }
+          : item
+      );
+
+      const targetIndex = updated.findIndex((item) => isSameCartLine(item, cartItemEditor.targetItem));
+      if (targetIndex < 0) return current;
+
+      const editedItem = updated[targetIndex];
+      const mergeIndex = updated.findIndex(
+        (item, index) =>
+          index !== targetIndex &&
+          String(item.menuItemId) === String(editedItem.menuItemId) &&
+          String(item.branchId) === String(editedItem.branchId) &&
+          String(item.restaurantId) === String(editedItem.restaurantId) &&
+          String(item.customizationSignature || "") === String(editedItem.customizationSignature || "")
+      );
+
+      if (mergeIndex < 0) return updated;
+
+      const merged = [...updated];
+      merged[mergeIndex] = {
+        ...merged[mergeIndex],
+        quantity: Number(merged[mergeIndex].quantity || 0) + Number(editedItem.quantity || 0),
+      };
+      merged.splice(targetIndex, 1);
+      return merged;
+    });
+
+    setCartItemEditor(null);
     setOrderMessage("");
   };
 
@@ -1335,6 +1572,7 @@ function App() {
 
   const handleSubmitOrder = async () => {
     setOrderMessage("");
+    setPaymentError("");
 
     if (!token) {
       setOrderMessage("Please login first to place an order.");
@@ -1353,6 +1591,11 @@ function App() {
 
     if (!deliveryAddress.trim()) {
       setOrderMessage("Please enter delivery address.");
+      return;
+    }
+
+    if (isOnlinePaymentMethod && !paymentVerified) {
+      setPaymentError("Please complete payment confirmation before placing the order.");
       return;
     }
 
@@ -1377,6 +1620,11 @@ function App() {
       getUserIdFromJwt() ??
       "";
 
+    const paymentMeta =
+      isOnlinePaymentMethod && paymentReference
+        ? `[Payment confirmed: ${getPaymentMethodLabel(paymentMethod)} ${paymentReference}]`
+        : "";
+
     const payload = {
       UserId: String(resolvedUserId || ""),
       RestaurantId: Number(referenceItem.restaurantId),
@@ -1384,7 +1632,7 @@ function App() {
       TarifaDorezimit: Number(cartDeliveryFee || 0),
       Zbritja: 0,
       MetodaPageses: Number(paymentMethod),
-      Shenimet: orderNotes.trim(),
+      Shenimet: [orderNotes.trim(), paymentMeta].filter(Boolean).join(" | "),
       ShumaTotale: Number(cartTotal.toFixed(2)),
       OrderItems: cartItems.map((item) => ({
         MenuItemId: Number(item.menuItemId),
@@ -1427,6 +1675,14 @@ function App() {
       );
       clearCart();
       setOrderNotes("");
+      setPaymentCardHolder("");
+      setPaymentCardNumber("");
+      setPaymentCardExpiry("");
+      setPaymentCardCvc("");
+      setPaymentOnlineAccount("");
+      setPaymentReference("");
+      setPaymentError("");
+      setPaymentMethod("1");
       if (!addressStreet && !addressCity) {
         setDeliveryAddress("");
       }
@@ -1551,6 +1807,8 @@ function App() {
     deliveryFee: Number.isFinite(Number(branch?.deliveryFee ?? branch?.DeliveryFee ?? branch?.tarifaDorezimit ?? branch?.TarifaDorezimit))
       ? Number(branch?.deliveryFee ?? branch?.DeliveryFee ?? branch?.tarifaDorezimit ?? branch?.TarifaDorezimit)
       : null,
+    latitude: toFiniteNumber(branch?.latitude ?? branch?.Latitude ?? branch?.lat ?? branch?.Lat),
+    longitude: toFiniteNumber(branch?.longitude ?? branch?.Longitude ?? branch?.lng ?? branch?.Lng ?? branch?.lon ?? branch?.Lon),
     offersText: branch?.offers ?? branch?.Offers ?? branch?.menuOffers ?? branch?.MenuOffers ?? "",
   });
 
@@ -1885,6 +2143,143 @@ function App() {
       displayName: first?.display_name || trimmed,
     };
   };
+
+  const getGeoCache = () => {
+    try {
+      const raw = localStorage.getItem(DELIVERY_GEO_CACHE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  };
+
+  const getCachedCoords = (cacheKey) => {
+    if (!cacheKey) return null;
+    const cache = getGeoCache();
+    const entry = cache[cacheKey];
+    const latitude = toFiniteNumber(entry?.latitude);
+    const longitude = toFiniteNumber(entry?.longitude);
+    if (latitude === null || longitude === null) return null;
+    return { latitude, longitude };
+  };
+
+  const setCachedCoords = (cacheKey, coords) => {
+    if (!cacheKey || !coords) return;
+    const latitude = toFiniteNumber(coords?.latitude);
+    const longitude = toFiniteNumber(coords?.longitude);
+    if (latitude === null || longitude === null) return;
+
+    try {
+      const cache = getGeoCache();
+      cache[cacheKey] = {
+        latitude,
+        longitude,
+        updatedAt: Date.now(),
+      };
+      localStorage.setItem(DELIVERY_GEO_CACHE_KEY, JSON.stringify(cache));
+    } catch {
+      // Ignore cache write errors; runtime flow should still continue.
+    }
+  };
+
+  useEffect(() => {
+    let isCancelled = false;
+    const normalized = normalizeAddressForBackend(deliveryAddress || "");
+
+    if (normalized.length < 5) {
+      setResolvedDeliveryCoords(null);
+      return undefined;
+    }
+
+    const cacheKey = `delivery:${normalized.toLowerCase()}`;
+    const cached = getCachedCoords(cacheKey);
+    if (cached) {
+      setResolvedDeliveryCoords(cached);
+      return undefined;
+    }
+
+    const timerId = window.setTimeout(async () => {
+      try {
+        const resolved = await resolveLocationCoordinates(normalized);
+        if (!resolved || isCancelled) return;
+
+        const coords = {
+          latitude: Number(resolved.latitude),
+          longitude: Number(resolved.longitude),
+        };
+        setResolvedDeliveryCoords(coords);
+        setCachedCoords(cacheKey, coords);
+      } catch {
+        if (!isCancelled) {
+          setResolvedDeliveryCoords(null);
+        }
+      }
+    }, 450);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timerId);
+    };
+  }, [deliveryAddress]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    if (!activeBranch) {
+      setResolvedBranchCoords(null);
+      return undefined;
+    }
+
+    if (Number.isFinite(Number(activeBranch?.latitude)) && Number.isFinite(Number(activeBranch?.longitude))) {
+      setResolvedBranchCoords({
+        latitude: Number(activeBranch.latitude),
+        longitude: Number(activeBranch.longitude),
+      });
+      return undefined;
+    }
+
+    const branchAddressQuery = [activeBranch?.address, activeBranch?.city, activeBranch?.zone]
+      .filter(Boolean)
+      .join(", ")
+      .trim();
+
+    if (!branchAddressQuery) {
+      setResolvedBranchCoords(null);
+      return undefined;
+    }
+
+    const cacheKey = `branch:${String(activeBranch?.id || branchAddressQuery).toLowerCase()}`;
+    const cached = getCachedCoords(cacheKey);
+    if (cached) {
+      setResolvedBranchCoords(cached);
+      return undefined;
+    }
+
+    const timerId = window.setTimeout(async () => {
+      try {
+        const resolved = await resolveLocationCoordinates(branchAddressQuery);
+        if (!resolved || isCancelled) return;
+
+        const coords = {
+          latitude: Number(resolved.latitude),
+          longitude: Number(resolved.longitude),
+        };
+        setResolvedBranchCoords(coords);
+        setCachedCoords(cacheKey, coords);
+      } catch {
+        if (!isCancelled) {
+          setResolvedBranchCoords(null);
+        }
+      }
+    }, 250);
+
+    return () => {
+      isCancelled = true;
+      window.clearTimeout(timerId);
+    };
+  }, [activeBranch]);
 
   const handleFindFood = async () => {
     setNearbyError("");
@@ -2706,6 +3101,106 @@ function App() {
     const totalQty = cartItems.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
     setCartCount(totalQty);
   }, [cartItems]);
+
+  useEffect(() => {
+    const isCash = String(paymentMethod) === "1";
+    setPaymentVerified(isCash);
+    setPaymentReference("");
+    setPaymentError("");
+  }, [paymentMethod]);
+
+  useEffect(() => {
+    if (!isOnlinePaymentMethod) return;
+    // Any cart total change invalidates a previous online verification.
+    setPaymentVerified(false);
+    setPaymentReference("");
+  }, [cartTotal, isOnlinePaymentMethod]);
+
+  useEffect(() => {
+    if (!cartItemEditor) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setCartItemEditor(null);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [cartItemEditor]);
+
+  const handleConfirmPayment = async () => {
+    if (!isOnlinePaymentMethod) {
+      setPaymentVerified(true);
+      setPaymentError("");
+      return;
+    }
+
+    setPaymentError("");
+    const method = String(paymentMethod);
+
+    if (method === "2") {
+      const holder = String(paymentCardHolder || "").trim();
+      const numberDigits = String(paymentCardNumber || "").replace(/\D/g, "");
+      const expiry = String(paymentCardExpiry || "").trim();
+      const cvcDigits = String(paymentCardCvc || "").replace(/\D/g, "");
+
+      if (holder.length < 3) {
+        setPaymentError("Card holder name is required.");
+        return;
+      }
+
+      if (numberDigits.length < 13 || numberDigits.length > 19) {
+        setPaymentError("Card number is invalid.");
+        return;
+      }
+
+      const expiryMatch = expiry.match(/^(0[1-9]|1[0-2])\/(\d{2})$/);
+      if (!expiryMatch) {
+        setPaymentError("Expiry must be in MM/YY format.");
+        return;
+      }
+
+      const month = Number(expiryMatch[1]);
+      const year = Number(`20${expiryMatch[2]}`);
+      const expiryDate = new Date(year, month, 0, 23, 59, 59);
+      if (expiryDate.getTime() < Date.now()) {
+        setPaymentError("Card has expired.");
+        return;
+      }
+
+      if (cvcDigits.length < 3 || cvcDigits.length > 4) {
+        setPaymentError("CVC is invalid.");
+        return;
+      }
+    }
+
+    if (method === "3") {
+      const paypalEmail = String(paymentOnlineAccount || "").trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(paypalEmail)) {
+        setPaymentError("Enter a valid PayPal email.");
+        return;
+      }
+    }
+
+    if (method === "4") {
+      const onlineId = String(paymentOnlineAccount || "").trim();
+      if (onlineId.length < 4) {
+        setPaymentError("Enter online payment account/reference.");
+        return;
+      }
+    }
+
+    setPaymentProcessing(true);
+    try {
+      const reference = `BB-${Date.now().toString().slice(-8)}`;
+      setPaymentReference(reference);
+      setPaymentVerified(true);
+      setOrderMessage(`Payment confirmed (${getPaymentMethodLabel(paymentMethod)} - ${reference}).`);
+    } finally {
+      setPaymentProcessing(false);
+    }
+  };
 
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
@@ -4061,6 +4556,160 @@ function App() {
           </div>
         )}
 
+        {cartItemEditor?.targetItem && (
+          <div className="kd-overlay" onClick={() => setCartItemEditor(null)}>
+            <div className="kd-modal cart-edit-modal" onClick={(event) => event.stopPropagation()}>
+              <div className="d-flex justify-content-between align-items-center mb-3 gap-2">
+                <div>
+                  <h5 className="mb-1">Edit Item</h5>
+                  <p className="small text-muted mb-0">{cartItemEditor.targetItem.name || "Item"}</p>
+                </div>
+                <button className="kd-close" onClick={() => setCartItemEditor(null)}>
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              <div className="cart-edit-section mb-3">
+                <label className="cart-item-note-label mb-2">Quick requests</label>
+                <div className="cart-item-quick-requests">
+                  {(sanitizeQuickRequestOptions(
+                    cartItemEditor.targetItem?.quickRequestOptions,
+                    cartItemEditor.targetItem?.ingredients
+                  ) || [])
+                    .filter((request) => !/^no\s+/i.test(String(request || "").trim()))
+                    .map((request) => {
+                      const selected = Array.isArray(cartItemEditor.selectedRequests) &&
+                        cartItemEditor.selectedRequests.includes(request);
+
+                      return (
+                        <button
+                          key={`${cartItemEditor.targetItem?.cartLineId || cartItemEditor.targetItem?.menuItemId}-edit-request-${request}`}
+                          type="button"
+                          className={`btn btn-sm cart-request-chip ${selected ? "cart-request-chip-active" : ""}`}
+                          onClick={() => {
+                            setCartItemEditor((current) => {
+                              if (!current) return current;
+                              const currentRequests = Array.isArray(current.selectedRequests) ? current.selectedRequests : [];
+                              const alreadySelected = currentRequests.includes(request);
+                              return {
+                                ...current,
+                                selectedRequests: alreadySelected
+                                  ? currentRequests.filter((entry) => entry !== request)
+                                  : [...currentRequests, request],
+                              };
+                            });
+                          }}
+                        >
+                          {request}
+                        </button>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <div className="cart-edit-section mb-3">
+                <label className="cart-item-note-label mb-2">Remove ingredients</label>
+                {Array.isArray(cartItemEditor.targetItem?.ingredients) && cartItemEditor.targetItem.ingredients.length > 0 ? (
+                  <div className="cart-item-remove-options">
+                    {cartItemEditor.targetItem.ingredients.map((ingredient) => {
+                      const active = normalizeTextList(cartItemEditor.selectedRemovedIngredients).some(
+                        (entry) => String(entry || "").trim().toLowerCase() === String(ingredient || "").trim().toLowerCase()
+                      );
+
+                      return (
+                        <button
+                          key={`${cartItemEditor.targetItem?.cartLineId || cartItemEditor.targetItem?.menuItemId}-edit-remove-${ingredient}`}
+                          type="button"
+                          className={`btn btn-sm cart-remove-ingredient-chip ${active ? "cart-remove-ingredient-chip-active" : ""}`}
+                          onClick={() => {
+                            const ingredientName = String(ingredient || "").trim();
+                            if (!ingredientName) return;
+
+                            setCartItemEditor((current) => {
+                              if (!current) return current;
+                              const removed = normalizeTextList(current.selectedRemovedIngredients);
+                              const exists = removed.some(
+                                (entry) => String(entry || "").trim().toLowerCase() === ingredientName.toLowerCase()
+                              );
+
+                              return {
+                                ...current,
+                                selectedRemovedIngredients: exists
+                                  ? removed.filter(
+                                      (entry) => String(entry || "").trim().toLowerCase() !== ingredientName.toLowerCase()
+                                    )
+                                  : [...removed, ingredientName],
+                              };
+                            });
+                          }}
+                        >
+                          {active ? `Undo ${ingredient}` : `No ${ingredient}`}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="small text-muted mb-0">No ingredients configured for this item.</p>
+                )}
+              </div>
+
+              <div className="cart-edit-section mb-4">
+                <label className="cart-item-note-label mb-2">Extras</label>
+                {normalizeAddOns(cartItemEditor.targetItem?.availableAddOns).length > 0 ? (
+                  <div className="cart-item-addons">
+                    {normalizeAddOns(cartItemEditor.targetItem.availableAddOns).map((addOn) => {
+                      const name = String(addOn?.name || "").trim();
+                      const active = normalizeAddOns(cartItemEditor.selectedAddOns).some(
+                        (entry) => String(entry?.name || "").trim().toLowerCase() === name.toLowerCase()
+                      );
+
+                      return (
+                        <button
+                          key={`${cartItemEditor.targetItem?.cartLineId || cartItemEditor.targetItem?.menuItemId}-edit-addon-${name}`}
+                          type="button"
+                          className={`btn btn-sm cart-addon-chip ${active ? "cart-addon-chip-active" : ""}`}
+                          onClick={() => {
+                            setCartItemEditor((current) => {
+                              if (!current) return current;
+
+                              const currentAddOns = normalizeAddOns(current.selectedAddOns);
+                              const alreadySelected = currentAddOns.some(
+                                (entry) => String(entry?.name || "").trim().toLowerCase() === name.toLowerCase()
+                              );
+
+                              return {
+                                ...current,
+                                selectedAddOns: alreadySelected
+                                  ? currentAddOns.filter(
+                                      (entry) => String(entry?.name || "").trim().toLowerCase() !== name.toLowerCase()
+                                    )
+                                  : [...currentAddOns, { name, extraPrice: Number(addOn?.extraPrice || 0) }],
+                              };
+                            });
+                          }}
+                        >
+                          + {name} ({Number(addOn?.extraPrice || 0).toFixed(2)} EUR)
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="small text-muted mb-0">No extras available for this item.</p>
+                )}
+              </div>
+
+              <div className="d-flex justify-content-end gap-2">
+                <button type="button" className="btn btn-outline-secondary" onClick={() => setCartItemEditor(null)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-primary" onClick={saveCartItemEditorChanges}>
+                  Save changes
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── ROLE ACTION TOAST ── */}
         {roleActionMessage && (
           <div className={`role-toast ${roleToastVisible ? "role-toast--in" : "role-toast--out"} ${roleActionMessage.toLowerCase().includes("moved") ? "role-toast--success" : "role-toast--error"}`}>
@@ -4379,6 +5028,13 @@ function App() {
                               >
                                 Remove
                               </button>
+                              <button
+                                type="button"
+                                className="btn btn-outline-dark btn-sm cart-edit-btn"
+                                onClick={() => openCartItemEditor(item)}
+                              >
+                                Edit
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -4415,6 +5071,96 @@ function App() {
                     </div>
                   </div>
 
+                  <div className="checkout-payment-panel mb-2">
+                    <div className="d-flex justify-content-between align-items-center gap-2 mb-2">
+                      <span className="checkout-label mb-0">Payment Verification</span>
+                      <span className={`badge ${paymentVerified ? "text-bg-success" : "text-bg-secondary"}`}>
+                        {paymentVerified ? "Confirmed" : "Pending"}
+                      </span>
+                    </div>
+
+                    {String(paymentMethod) === "2" && (
+                      <div className="checkout-payment-fields">
+                        <input
+                          className="form-control"
+                          type="text"
+                          placeholder="Card holder name"
+                          value={paymentCardHolder}
+                          onChange={(e) => setPaymentCardHolder(e.target.value)}
+                        />
+                        <input
+                          className="form-control"
+                          type="text"
+                          placeholder="Card number"
+                          value={paymentCardNumber}
+                          onChange={(e) => setPaymentCardNumber(e.target.value)}
+                        />
+                        <div className="checkout-payment-fields-inline">
+                          <input
+                            className="form-control"
+                            type="text"
+                            placeholder="MM/YY"
+                            value={paymentCardExpiry}
+                            onChange={(e) => setPaymentCardExpiry(e.target.value)}
+                          />
+                          <input
+                            className="form-control"
+                            type="password"
+                            placeholder="CVC"
+                            value={paymentCardCvc}
+                            onChange={(e) => setPaymentCardCvc(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {String(paymentMethod) === "3" && (
+                      <div className="checkout-payment-fields">
+                        <input
+                          className="form-control"
+                          type="email"
+                          placeholder="PayPal email"
+                          value={paymentOnlineAccount}
+                          onChange={(e) => setPaymentOnlineAccount(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {String(paymentMethod) === "4" && (
+                      <div className="checkout-payment-fields">
+                        <input
+                          className="form-control"
+                          type="text"
+                          placeholder="Online payment account/reference"
+                          value={paymentOnlineAccount}
+                          onChange={(e) => setPaymentOnlineAccount(e.target.value)}
+                        />
+                      </div>
+                    )}
+
+                    {paymentError && <div className="small text-danger mt-2">{paymentError}</div>}
+                    {paymentReference && (
+                      <div className="small text-success mt-2">
+                        Reference: {paymentReference}
+                      </div>
+                    )}
+
+                    {isOnlinePaymentMethod && (
+                      <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm mt-2"
+                        onClick={handleConfirmPayment}
+                        disabled={paymentProcessing}
+                      >
+                        {paymentProcessing ? "Processing..." : paymentVerified ? "Reconfirm Payment" : "Pay now"}
+                      </button>
+                    )}
+
+                    {!isOnlinePaymentMethod && (
+                      <p className="small text-muted mb-0 mt-1">Cash on delivery selected.</p>
+                    )}
+                  </div>
+
                   <div className="checkout-field mb-2">
                     <label className="form-label checkout-label">Order Notes (optional)</label>
                     <textarea
@@ -4434,6 +5180,31 @@ function App() {
                     <span>Delivery</span>
                     <strong>EUR {cartDeliveryFee.toFixed(2)}</strong>
                   </div>
+                  <div className="cart-fee-explainer mb-2">
+                    <div className="small cart-fee-mode">
+                      <strong>Fee model:</strong> {deliveryPricing.modeLabel}
+                    </div>
+                    <div className="small text-muted">
+                      <strong>Rule:</strong> {deliveryPricing.ruleLabel}
+                      {Number.isFinite(Number(deliveryPricing.usedDistanceKm)) && (
+                        <>
+                          {" | "}
+                          <strong>Distance:</strong> {Number(deliveryPricing.usedDistanceKm).toFixed(2)} km
+                        </>
+                      )}
+                    </div>
+                    {Array.isArray(DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE]?.tiers) && (
+                      <div className="small text-muted mt-1">
+                        Tiers: {DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE].tiers
+                          .map((tier) => {
+                            const maxKm = Number(tier.maxKm);
+                            const label = Number.isFinite(maxKm) ? `0-${maxKm}km` : `>${DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE].tiers[DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE].tiers.length - 2]?.maxKm || 0}km`;
+                            return `${label}: EUR ${Number(tier.fee || 0).toFixed(2)}`;
+                          })
+                          .join(" | ")}
+                      </div>
+                    )}
+                  </div>
                   <div className="d-flex justify-content-between mb-3 cart-summary-total">
                     <span className="fw-semibold">Total</span>
                     <strong>EUR {cartTotal.toFixed(2)}</strong>
@@ -4442,7 +5213,12 @@ function App() {
                   <button
                     type="button"
                     className="btn btn-primary w-100 cart-place-order-btn"
-                    disabled={orderSubmitting || cartItems.length === 0 || (normalizedCurrentUserRole && normalizedCurrentUserRole !== "customer")}
+                    disabled={
+                      orderSubmitting ||
+                      cartItems.length === 0 ||
+                      (normalizedCurrentUserRole && normalizedCurrentUserRole !== "customer") ||
+                      (isOnlinePaymentMethod && !paymentVerified)
+                    }
                     onClick={handleSubmitOrder}
                   >
                     {orderSubmitting ? "Placing order..." : "Place Order"}
