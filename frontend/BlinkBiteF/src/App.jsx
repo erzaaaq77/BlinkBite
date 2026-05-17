@@ -16,6 +16,18 @@ const API_BASE = "http://localhost:5063/api";
 const ACCESS_TOKEN_KEY = "access_token";
 const NEARBY_COORDS_KEY = "nearby_coords";
 const ORDER_CART_KEY = "blinkbite_cart_v1";
+const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
+const RESTAURANT_CUSTOMIZATION_KEY = "blinkbite_restaurant_customizations_v1";
+const ORDERS_LIST_BATCH_SIZE = 10;
+const MY_ORDERS_BATCH_SIZE = 3;
+const CART_ITEM_QUICK_REQUESTS = [
+  "No onion",
+  "No mayo",
+  "No ketchup",
+  "No spicy",
+  "Extra spicy",
+  "No cheese",
+];
 const HomePage = lazy(() => import("./components/HomePage.jsx"));
 const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
 const RestaurantDetailsPage = lazy(() => import("./components/RestaurantDetailsPage.jsx"));
@@ -215,18 +227,38 @@ function App() {
   const [roleOrders, setRoleOrders] = useState([]);
   const [roleOrdersLoading, setRoleOrdersLoading] = useState(false);
   const [roleOrdersError, setRoleOrdersError] = useState("");
+  const [myOrdersVisibleCount, setMyOrdersVisibleCount] = useState(MY_ORDERS_BATCH_SIZE);
+  const [roleOrdersVisibleCount, setRoleOrdersVisibleCount] = useState(ORDERS_LIST_BATCH_SIZE);
   const [roleActionMessage, setRoleActionMessage] = useState("");
   const [roleToastVisible, setRoleToastVisible] = useState(false);
   const roleToastTimerRef = React.useRef(null);
   const [roleActionOrderId, setRoleActionOrderId] = useState(null);
   const [kanbanDetailOrder, setKanbanDetailOrder] = useState(null);
+  const [myOrderItemPreview, setMyOrderItemPreview] = useState(null);
 
   // New order notification state
   const [newOrderCount, setNewOrderCount] = useState(0);
   const knownOrderIdsRef = React.useRef(null); // null = not initialized yet
   const pollingIntervalRef = React.useRef(null);
 
-  const getStoredToken = () => localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+  const getStoredToken = () => {
+    try {
+      const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+      if (sessionToken) return sessionToken;
+
+      // One-time migration from legacy localStorage token to per-tab session storage.
+      const legacyToken = localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+      if (legacyToken) {
+        sessionStorage.setItem(ACCESS_TOKEN_KEY, legacyToken);
+        localStorage.removeItem(ACCESS_TOKEN_KEY);
+        return legacyToken;
+      }
+    } catch (err) {
+      console.error("Token storage read failed", err);
+    }
+
+    return "";
+  };
   const [token, setToken] = useState(getStoredToken());
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -302,6 +334,24 @@ function App() {
   const [merchantRestaurantIdForUi, setMerchantRestaurantIdForUi] = useState("");
 
   useEffect(() => {
+    if (page !== "myOrders") return;
+    setMyOrdersVisibleCount(MY_ORDERS_BATCH_SIZE);
+    setRoleOrdersVisibleCount(ORDERS_LIST_BATCH_SIZE);
+  }, [page, normalizedCurrentUserRole]);
+
+  useEffect(() => {
+    if (roleOrdersVisibleCount > roleOrders.length && roleOrders.length > 0) {
+      setRoleOrdersVisibleCount(Math.max(ORDERS_LIST_BATCH_SIZE, roleOrders.length));
+    }
+  }, [roleOrders.length, roleOrdersVisibleCount]);
+
+  useEffect(() => {
+    if (myOrdersVisibleCount > myOrders.length && myOrders.length > 0) {
+      setMyOrdersVisibleCount(Math.max(MY_ORDERS_BATCH_SIZE, myOrders.length));
+    }
+  }, [myOrders.length, myOrdersVisibleCount]);
+
+  useEffect(() => {
     const tryAssignMerchantRestaurantId = async () => {
       if (!isMerchantRole || !currentUser?.id) return;
       if (
@@ -366,11 +416,13 @@ function App() {
 
   const persistToken = (nextToken) => {
     if (nextToken) {
-      localStorage.setItem(ACCESS_TOKEN_KEY, nextToken);
+      sessionStorage.setItem(ACCESS_TOKEN_KEY, nextToken);
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
       setToken(nextToken);
       return;
     }
 
+    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
     localStorage.removeItem(ACCESS_TOKEN_KEY);
     setToken("");
   };
@@ -522,6 +574,208 @@ function App() {
     return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
   };
 
+  const normalizeTextList = (value) => {
+    if (Array.isArray(value)) {
+      return Array.from(
+        new Set(
+          value
+            .map((entry) => String(entry || "").trim())
+            .filter(Boolean)
+        )
+      );
+    }
+
+    const source = String(value || "").trim();
+    if (!source) return [];
+
+    return Array.from(
+      new Set(
+        source
+          .split(/[\n,;|]/)
+          .map((entry) => entry.trim())
+          .filter(Boolean)
+      )
+    );
+  };
+
+  const normalizeAddOns = (value) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((entry) => {
+          if (!entry) return null;
+          if (typeof entry === "string") {
+            const name = entry.trim();
+            if (!name) return null;
+            return { name, extraPrice: 0 };
+          }
+
+          const name = String(entry?.name ?? entry?.Name ?? entry?.label ?? entry?.Label ?? "").trim();
+          const extraPrice = Number(entry?.extraPrice ?? entry?.ExtraPrice ?? entry?.price ?? entry?.Price ?? 0);
+          if (!name) return null;
+
+          return {
+            name,
+            extraPrice: Number.isFinite(extraPrice) ? Math.max(0, extraPrice) : 0,
+          };
+        })
+        .filter(Boolean);
+    }
+
+    const source = String(value || "").trim();
+    if (!source) return [];
+
+    return source
+      .split(/\n|;/)
+      .map((entry) => {
+        const piece = String(entry || "").trim();
+        if (!piece) return null;
+
+        const [nameRaw, priceRaw] = piece.split(":");
+        const name = String(nameRaw || "").trim();
+        const parsedPrice = Number(String(priceRaw || "0").replace(",", ".").trim());
+        if (!name) return null;
+
+        return {
+          name,
+          extraPrice: Number.isFinite(parsedPrice) ? Math.max(0, parsedPrice) : 0,
+        };
+      })
+      .filter(Boolean);
+  };
+
+  const loadMenuCustomizationOverrides = () => {
+    try {
+      // DB-only mode: menu ingredient/request fields must come from backend API.
+      return {};
+    } catch (err) {
+      console.error("Failed to load DB-only menu customizations", err);
+      return {};
+    }
+  };
+
+  const loadRestaurantCustomizationOverrides = () => {
+    try {
+      const raw = localStorage.getItem(RESTAURANT_CUSTOMIZATION_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (err) {
+      console.error("Failed to parse restaurant customizations", err);
+      return {};
+    }
+  };
+
+  const mergeUniqueAddOns = (...sources) => {
+    const map = new Map();
+
+    sources.forEach((source) => {
+      normalizeAddOns(source).forEach((entry) => {
+        const key = String(entry?.name || "").trim().toLowerCase();
+        if (!key) return;
+        map.set(key, {
+          name: String(entry.name).trim(),
+          extraPrice: Number(entry.extraPrice || 0),
+        });
+      });
+    });
+
+    return Array.from(map.values());
+  };
+
+  const getRestaurantCustomizationFor = (restaurantId, overrideMap = null) => {
+    const map = overrideMap || loadRestaurantCustomizationOverrides();
+    const current = map[String(restaurantId)] || {};
+
+    return {
+      globalAddOns: normalizeAddOns(current?.globalAddOns),
+    };
+  };
+
+  const inferItemQuickRequests = (item) => {
+    const directOptions = normalizeTextList(
+      item?.requestOptions ??
+      item?.RequestOptions ??
+      item?.opsionePersonalizimi ??
+      item?.OpsionePersonalizimi ??
+      item?.customizationOptions ??
+      item?.CustomizationOptions
+    );
+    if (directOptions.length > 0) return directOptions;
+
+    const ingredientList = normalizeTextList(
+      item?.ingredients ??
+      item?.Ingredients ??
+      item?.perberesit ??
+      item?.Perberesit ??
+      item?.perberes ??
+      item?.Perberes
+    );
+
+    if (ingredientList.length > 0) {
+      return ingredientList.slice(0, 8).map((ingredient) => `No ${ingredient}`);
+    }
+
+    const name = String(item?.name || "").toLowerCase();
+    const category = String(item?.categoryName || "").toLowerCase();
+
+    if (name.includes("pizza") || category.includes("pizza")) {
+      return ["No cheese", "No olives", "No mushrooms", "No spicy"];
+    }
+
+    if (name.includes("salad") || category.includes("salad")) {
+      return ["No dressing", "No onion", "No tomato"];
+    }
+
+    if (name.includes("burger") || name.includes("whopper") || name.includes("sandwich")) {
+      return ["No onion", "No mayo", "No ketchup", "No cheese", "No pickles"];
+    }
+
+    if (name.includes("chicken") || category.includes("chicken")) {
+      return ["No mayo", "No spicy", "Extra spicy"];
+    }
+
+    return CART_ITEM_QUICK_REQUESTS;
+  };
+
+  const deriveIngredientsFromNoOptions = (requestOptions) => {
+    const options = normalizeTextList(requestOptions);
+    return Array.from(
+      new Set(
+        options
+          .map((entry) => {
+            const raw = String(entry || "").trim();
+            if (!/^no\s+/i.test(raw)) return "";
+            return raw.replace(/^no\s+/i, "").trim();
+          })
+          .filter(Boolean)
+      )
+    );
+  };
+
+  const sanitizeQuickRequestOptions = (requestOptions, ingredientSource = []) => {
+    const options = normalizeTextList(requestOptions);
+    if (options.length === 0) return [];
+
+    const ingredients = normalizeTextList(ingredientSource).map((entry) => String(entry).trim().toLowerCase());
+    if (ingredients.length === 0) return options;
+
+    return options.filter((option) => {
+      const normalizedOption = String(option || "").trim();
+      const noMatch = normalizedOption.match(/^no\s+(.+)$/i);
+      if (!noMatch) return true;
+
+      const candidate = String(noMatch[1] || "").trim().toLowerCase();
+      if (!candidate) return false;
+
+      if (ingredients.some((ingredient) => ingredient === candidate)) {
+        return true;
+      }
+
+      const isPrefixNoise = ingredients.some((ingredient) => ingredient.startsWith(candidate));
+      return !isPrefixNoise;
+    });
+  };
+
   const applyImageFallbackCandidate = (event, candidates = [], fallbackSrc = "") => {
     const img = event.currentTarget;
     const currentIndex = Number(img.dataset.candidateIndex || "0");
@@ -558,21 +812,76 @@ function App() {
         const data = await res.json();
         const list = Array.isArray(data) ? data : [];
         const lookup = new Map();
+        const customizationOverrides = loadMenuCustomizationOverrides();
+        const restaurantCustomizationOverrides = loadRestaurantCustomizationOverrides();
 
         list.forEach((item) => {
           const menuItemId = item?.id ?? item?.Id;
           if (menuItemId === undefined || menuItemId === null) return;
+          const itemOverride = customizationOverrides[String(menuItemId)] || {};
+          const itemRestaurantId = item?.restaurantId ?? item?.RestaurantId;
+          const restaurantCustomization = getRestaurantCustomizationFor(itemRestaurantId, restaurantCustomizationOverrides);
 
           const imageRaw = item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? "";
           const imageCandidates = getAssetUrlCandidates(imageRaw);
           const imageUrl = imageCandidates[0] || "";
           const name =
             item?.emertimi ?? item?.Emertimi ?? item?.name ?? item?.Name ?? "Item";
+          const sourceIngredients = normalizeTextList(
+            itemOverride?.ingredients ??
+            item?.ingredients ??
+            item?.Ingredients ??
+            item?.perberesit ??
+            item?.Perberesit ??
+            item?.perberes ??
+            item?.Perberes
+          );
+          const directRequestOptions = normalizeTextList(
+            itemOverride?.requestOptions ??
+            item?.requestOptions ??
+            item?.RequestOptions ??
+            item?.opsionePersonalizimi ??
+            item?.OpsionePersonalizimi ??
+            item?.customizationOptions ??
+            item?.CustomizationOptions
+          );
+          const ingredients =
+            sourceIngredients.length > 0
+              ? sourceIngredients
+              : deriveIngredientsFromNoOptions(directRequestOptions);
+          const cleanDirectRequestOptions = sanitizeQuickRequestOptions(directRequestOptions, ingredients);
+
+          const categoryName =
+            item?.categoryName ?? item?.CategoryName ?? item?.kategoria ?? item?.Kategoria ?? "";
+
+          const quickRequestOptions =
+            cleanDirectRequestOptions.length > 0
+              ? cleanDirectRequestOptions
+              : inferItemQuickRequests({
+                  name,
+                  categoryName,
+                  ingredients,
+                });
+
+          const addOns = mergeUniqueAddOns(
+            restaurantCustomization.globalAddOns,
+            item?.addOns,
+            item?.AddOns,
+            item?.extras,
+            item?.Extras
+          );
 
           lookup.set(String(menuItemId), {
             name: String(name || "Item"),
+            description: String(
+              item?.pershkrimi ?? item?.Pershkrimi ?? item?.description ?? item?.Description ?? ""
+            ),
             image: imageUrl,
             imageCandidates,
+            ingredients,
+            quickRequestOptions,
+            addOns,
+            restaurantId: itemRestaurantId,
           });
         });
 
@@ -607,6 +916,11 @@ function App() {
           rawImagePath,
           imageCandidates,
           image: item?.image || imageCandidates[0] || "",
+          ingredients: normalizeTextList(item?.ingredients),
+          quickRequestOptions: sanitizeQuickRequestOptions(item?.quickRequestOptions, item?.ingredients),
+          availableAddOns: normalizeAddOns(item?.availableAddOns ?? item?.addOns ?? item?.AddOns),
+          selectedAddOns: normalizeAddOns(item?.selectedAddOns),
+          selectedRemovedIngredients: normalizeTextList(item?.selectedRemovedIngredients),
         };
       });
     } catch (err) {
@@ -619,20 +933,49 @@ function App() {
     setCartItems([]);
   };
 
-  const cartSubtotal = cartItems.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 0), 0);
+  const getCartItemAddOnsUnitTotal = (item) =>
+    normalizeAddOns(item?.selectedAddOns).reduce((sum, addOn) => sum + Number(addOn.extraPrice || 0), 0);
+
+  const getCartItemUnitPrice = (item) => Number(item?.price || 0) + getCartItemAddOnsUnitTotal(item);
+
+  const cartSubtotal = cartItems.reduce((sum, item) => sum + getCartItemUnitPrice(item) * Number(item.quantity || 0), 0);
   const cartDeliveryFee = Number(restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.deliveryFee || 0);
   const cartTotal = cartSubtotal + cartDeliveryFee;
 
-  const addToCart = (menuItem, quantity) => {
+  const isSameCartLine = (item, targetItem) => {
+    if (item?.cartLineId && targetItem?.cartLineId) {
+      return String(item.cartLineId) === String(targetItem.cartLineId);
+    }
+
+    return (
+      String(item.menuItemId) === String(targetItem.menuItemId) &&
+      String(item.branchId) === String(targetItem.branchId) &&
+      String(item.restaurantId) === String(targetItem.restaurantId)
+    );
+  };
+
+  const addToCart = (menuItem, quantity, customizations = null) => {
     if (!menuItem || !activeRestaurantId || !activeBranchId) return;
     const nextQty = Math.max(1, Number(quantity || 1));
+    const removedIngredients = normalizeTextList(customizations?.removedIngredients);
+    const selectedAddOns = normalizeAddOns(customizations?.selectedAddOns);
+    const customizationSignature = JSON.stringify({
+      removedIngredients: removedIngredients.map((entry) => String(entry).trim().toLowerCase()).sort(),
+      selectedAddOns: selectedAddOns
+        .map((entry) => ({
+          name: String(entry?.name || "").trim().toLowerCase(),
+          extraPrice: Number(entry?.extraPrice || 0),
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    });
 
     setCartItems((current) => {
       const idx = current.findIndex(
         (entry) =>
           String(entry.menuItemId) === String(menuItem.id) &&
           String(entry.branchId) === String(activeBranchId) &&
-          String(entry.restaurantId) === String(activeRestaurantId)
+          String(entry.restaurantId) === String(activeRestaurantId) &&
+          String(entry.customizationSignature || "") === customizationSignature
       );
 
       if (idx >= 0) {
@@ -654,6 +997,8 @@ function App() {
               : getAssetUrlCandidates(rawImagePath);
 
           return {
+          cartLineId: `${menuItem.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          customizationSignature,
           menuItemId: menuItem.id,
           name: menuItem.name || "Item",
           price: Number(menuItem.price || 0),
@@ -661,6 +1006,18 @@ function App() {
           imageCandidates,
           image: menuItem?.image || imageCandidates[0] || "",
           quantity: nextQty,
+          selectedRequests: [],
+          ingredients:
+            Array.isArray(menuItem?.ingredients) && menuItem.ingredients.length > 0
+              ? menuItem.ingredients
+              : [],
+          selectedRemovedIngredients: removedIngredients,
+          quickRequestOptions:
+            Array.isArray(menuItem?.quickRequestOptions) && menuItem.quickRequestOptions.length > 0
+              ? menuItem.quickRequestOptions
+              : inferItemQuickRequests(menuItem),
+          availableAddOns: normalizeAddOns(menuItem?.addOns ?? menuItem?.AddOns),
+          selectedAddOns,
           restaurantId: activeRestaurantId,
           restaurantName: selectedRestaurant?.name || "Restaurant",
           branchId: activeBranchId,
@@ -676,29 +1033,155 @@ function App() {
   const updateCartItemQuantity = (targetItem, quantity) => {
     const nextQty = Math.max(1, Number(quantity || 1));
     setCartItems((current) =>
-      current.map((item) =>
-        String(item.menuItemId) === String(targetItem.menuItemId) &&
-        String(item.branchId) === String(targetItem.branchId) &&
-        String(item.restaurantId) === String(targetItem.restaurantId)
-          ? { ...item, quantity: nextQty }
-          : item
-      )
+      current.map((item) => (isSameCartLine(item, targetItem) ? { ...item, quantity: nextQty } : item))
     );
     setOrderMessage("");
   };
 
   const removeCartItem = (targetItem) => {
     setCartItems((current) =>
-      current.filter(
-        (item) =>
-          !(
-            String(item.menuItemId) === String(targetItem.menuItemId) &&
-            String(item.branchId) === String(targetItem.branchId) &&
-            String(item.restaurantId) === String(targetItem.restaurantId)
-          )
-      )
+      current.filter((item) => !isSameCartLine(item, targetItem))
     );
     setOrderMessage("");
+  };
+
+  const toggleCartItemQuickRequest = (targetItem, request) => {
+    setCartItems((current) =>
+      current.map((item) => {
+        const isTarget =
+          isSameCartLine(item, targetItem);
+
+        if (!isTarget) return item;
+
+        const currentRequests = Array.isArray(item.selectedRequests) ? item.selectedRequests : [];
+        const alreadySelected = currentRequests.includes(request);
+
+        return {
+          ...item,
+          selectedRequests: alreadySelected
+            ? currentRequests.filter((entry) => entry !== request)
+            : [...currentRequests, request],
+        };
+      })
+    );
+    setOrderMessage("");
+  };
+
+  const toggleCartItemAddOn = (targetItem, addOn) => {
+    const addOnName = String(addOn?.name || "").trim();
+    if (!addOnName) return;
+
+    setCartItems((current) =>
+      current.map((item) => {
+        const isTarget =
+          isSameCartLine(item, targetItem);
+
+        if (!isTarget) return item;
+
+        const currentAddOns = normalizeAddOns(item.selectedAddOns);
+        const alreadySelected = currentAddOns.some((entry) => String(entry.name) === addOnName);
+
+        return {
+          ...item,
+          selectedAddOns: alreadySelected
+            ? currentAddOns.filter((entry) => String(entry.name) !== addOnName)
+            : [...currentAddOns, { name: addOnName, extraPrice: Number(addOn.extraPrice || 0) }],
+        };
+      })
+    );
+
+    setOrderMessage("");
+  };
+
+  const toggleCartItemRemovedIngredient = (targetItem, ingredient) => {
+    const ingredientName = String(ingredient || "").trim();
+    if (!ingredientName) return;
+
+    setCartItems((current) =>
+      current.map((item) => {
+        if (!isSameCartLine(item, targetItem)) return item;
+
+        const removed = normalizeTextList(item?.selectedRemovedIngredients);
+        const isRemoved = removed.some(
+          (entry) => String(entry || "").trim().toLowerCase() === ingredientName.toLowerCase()
+        );
+
+        return {
+          ...item,
+          selectedRemovedIngredients: isRemoved
+            ? removed.filter((entry) => String(entry || "").trim().toLowerCase() !== ingredientName.toLowerCase())
+            : [...removed, ingredientName],
+        };
+      })
+    );
+
+    setOrderMessage("");
+  };
+
+  const composeCartItemNote = (item) => {
+    const picked = Array.isArray(item?.selectedRequests) ? item.selectedRequests.filter(Boolean) : [];
+    const pickedAddOns = normalizeAddOns(item?.selectedAddOns);
+    const removedIngredients = normalizeTextList(item?.selectedRemovedIngredients);
+
+    const noteParts = [];
+    if (picked.length > 0) {
+      noteParts.push(picked.join(", "));
+    }
+
+    if (pickedAddOns.length > 0) {
+      noteParts.push(
+        `Add-ons: ${pickedAddOns
+          .map((entry) => `${entry.name} (+${Number(entry.extraPrice || 0).toFixed(2)} EUR)`)
+          .join(", ")}`
+      );
+    }
+
+    if (removedIngredients.length > 0) {
+      noteParts.push(`Remove: ${removedIngredients.join(", ")}`);
+    }
+
+    return noteParts.join(". ");
+  };
+
+  const parseOrderItemNote = (rawNote) => {
+    const note = String(rawNote || "").trim();
+    if (!note) return { removedIngredients: [], addedAddOns: [] };
+
+    const parts = note
+      .split(/\.(?:\s+|$)/)
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+    const removedIngredients = [];
+    const addedAddOns = [];
+
+    parts.forEach((part) => {
+      if (/^remove\s*:/i.test(part)) {
+        const value = part.replace(/^remove\s*:/i, "").trim();
+        normalizeTextList(value).forEach((entry) => {
+          if (!removedIngredients.includes(entry)) {
+            removedIngredients.push(entry);
+          }
+        });
+        return;
+      }
+
+      if (/^add-ons\s*:/i.test(part)) {
+        const value = part.replace(/^add-ons\s*:/i, "").trim();
+        value
+          .split(/\s*,\s*/)
+          .map((entry) => String(entry || "").trim())
+          .filter(Boolean)
+          .forEach((entry) => {
+            const cleaned = entry.replace(/\s*\(\+[^)]*\)\s*$/i, "").trim();
+            if (cleaned && !addedAddOns.includes(cleaned)) {
+              addedAddOns.push(cleaned);
+            }
+          });
+      }
+    });
+
+    return { removedIngredients, addedAddOns };
   };
 
   const openCartPage = () => {
@@ -906,8 +1389,8 @@ function App() {
       OrderItems: cartItems.map((item) => ({
         MenuItemId: Number(item.menuItemId),
         Sasia: Number(item.quantity),
-        Cmimi: Number(item.price),
-        Shenimet: "",
+        Cmimi: Number(getCartItemUnitPrice(item).toFixed(2)),
+        Shenimet: composeCartItemNote(item),
       })),
     };
 
@@ -1136,13 +1619,61 @@ function App() {
         return categoryIds.has(categoryId);
       });
 
+      const customizationOverrides = loadMenuCustomizationOverrides();
+      const restaurantCustomizationOverrides = loadRestaurantCustomizationOverrides();
+      const restaurantCustomization = getRestaurantCustomizationFor(restaurantId, restaurantCustomizationOverrides);
+
       return filteredItems
         .map((item) => {
           const categoryId = item?.categoryId ?? item?.CategoryId;
           const category = categoryById.get(categoryId);
+          const itemId = item?.id ?? item?.Id;
+          const itemOverride = customizationOverrides[String(itemId)] || {};
+          const name = item?.emertimi ?? item?.Emertimi ?? item?.name ?? item?.Name ?? "Item";
+          const categoryName = category?.name || "Menu";
+          const sourceIngredients = normalizeTextList(
+            itemOverride?.ingredients ??
+            item?.ingredients ??
+            item?.Ingredients ??
+            item?.perberesit ??
+            item?.Perberesit ??
+            item?.perberes ??
+            item?.Perberes
+          );
+          const directRequestOptions = normalizeTextList(
+            itemOverride?.requestOptions ??
+            item?.requestOptions ??
+            item?.RequestOptions ??
+            item?.opsionePersonalizimi ??
+            item?.OpsionePersonalizimi ??
+            item?.customizationOptions ??
+            item?.CustomizationOptions
+          );
+          const ingredients =
+            sourceIngredients.length > 0
+              ? sourceIngredients
+              : deriveIngredientsFromNoOptions(directRequestOptions);
+          const cleanDirectRequestOptions = sanitizeQuickRequestOptions(directRequestOptions, ingredients);
+          const quickRequestOptions =
+            cleanDirectRequestOptions.length > 0
+              ? cleanDirectRequestOptions
+              : inferItemQuickRequests({
+                  name,
+                  categoryName,
+                  ingredients,
+                });
+
+          const addOns = mergeUniqueAddOns(
+            restaurantCustomization.globalAddOns,
+            item?.addOns,
+            item?.AddOns,
+            item?.extras,
+            item?.Extras
+          );
+
           return {
             id: item?.id ?? item?.Id,
-            name: item?.emertimi ?? item?.Emertimi ?? item?.name ?? item?.Name ?? "Item",
+            name,
             description: item?.pershkrimi ?? item?.Pershkrimi ?? item?.description ?? item?.Description ?? "",
             price: Number(item?.cmimi ?? item?.Cmimi ?? item?.price ?? item?.Price ?? 0),
             image: toAbsoluteAssetUrl(item?.foto ?? item?.Foto ?? item?.image ?? item?.Image ?? ""),
@@ -1151,7 +1682,10 @@ function App() {
             available: Boolean(item?.disponueshme ?? item?.Disponueshme ?? true),
             calories: item?.kalori ?? item?.Kalori ?? null,
             allergens: item?.alergjene ?? item?.Alergjene ?? "",
-            categoryName: category?.name || "Menu",
+            ingredients,
+            quickRequestOptions,
+            addOns,
+            categoryName,
             categoryOrder: category?.order ?? 0,
           };
         })
@@ -1532,10 +2066,33 @@ function App() {
             id: item?.id ?? item?.Id ?? item?.menuItemId ?? item?.MenuItemId ?? index,
             menuItemId,
             name: String(itemName || "Item"),
+            description: String(
+              item?.pershkrimi ??
+                item?.Pershkrimi ??
+                item?.description ??
+                item?.Description ??
+                nestedMenuItem?.pershkrimi ??
+                nestedMenuItem?.Pershkrimi ??
+                nestedMenuItem?.description ??
+                nestedMenuItem?.Description ??
+                ""
+            ),
+            ingredients: normalizeTextList(
+              item?.perberesit ??
+                item?.Perberesit ??
+                item?.ingredients ??
+                item?.Ingredients ??
+                nestedMenuItem?.perberesit ??
+                nestedMenuItem?.Perberesit ??
+                nestedMenuItem?.ingredients ??
+                nestedMenuItem?.Ingredients
+            ),
             rawImagePath,
             imageCandidates,
             image: itemImage || imageCandidates[0] || "",
             quantity: Number(item?.sasia ?? item?.Sasia ?? item?.quantity ?? item?.Quantity ?? 1),
+            price: Number(item?.cmimi ?? item?.Cmimi ?? item?.price ?? item?.Price ?? 0),
+            note: String(item?.shenimet ?? item?.Shenimet ?? ""),
           };
         });
 
@@ -1583,6 +2140,11 @@ function App() {
           return {
             ...item,
             name: item.name && !/^Item\s\d+$/i.test(String(item.name)) ? item.name : menuMatch?.name || item.name,
+            description: item.description || menuMatch?.description || "",
+            ingredients:
+              Array.isArray(item?.ingredients) && item.ingredients.length > 0
+                ? item.ingredients
+                : normalizeTextList(menuMatch?.ingredients),
             imageCandidates:
               Array.isArray(item?.imageCandidates) && item.imageCandidates.length > 0
                 ? item.imageCandidates
@@ -1839,7 +2401,21 @@ function App() {
       ...(statusCode ? [{ status: normalizedNextStatus, statusCode }] : []),
     ];
 
-    const requestCandidates = [
+    const explicitTransitionCandidates = [];
+    if (normalizedNextStatus === "Accepted") {
+      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/accept`, payload: JSON.stringify("") });
+    }
+    if (normalizedNextStatus === "Preparing") {
+      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/prepare`, payload: JSON.stringify("") });
+    }
+    if (normalizedNextStatus === "Ready") {
+      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/ready`, payload: JSON.stringify("") });
+    }
+    if (normalizedNextStatus === "Delivered") {
+      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/deliver`, payload: JSON.stringify("") });
+    }
+
+    const genericCandidates = [
       { method: "PUT", url: `${API_BASE}/orders/${orderId}/status` },
       { method: "PATCH", url: `${API_BASE}/orders/${orderId}/status` },
       { method: "POST", url: `${API_BASE}/orders/${orderId}/status` },
@@ -1851,15 +2427,21 @@ function App() {
       { method: "POST", url: `${API_BASE}/orders/update-status/${orderId}` },
     ];
 
+    const requestCandidates = [...explicitTransitionCandidates, ...genericCandidates];
+
     try {
       let updated = false;
 
       for (const candidate of requestCandidates) {
-        for (const payload of payloadVariants) {
+        const candidatePayloads = candidate.payload
+          ? [candidate.payload]
+          : payloadVariants.map((p) => JSON.stringify(p));
+
+        for (const payloadBody of candidatePayloads) {
           const res = await authenticatedFetch(candidate.url, {
             method: candidate.method,
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
+            body: payloadBody,
           });
 
           if (res.ok) {
@@ -1867,12 +2449,14 @@ function App() {
             break;
           }
 
-          if (![400, 404, 405].includes(res.status)) {
+          if ([401, 403].includes(res.status)) {
             const errPayload = await res.json().catch(() => null);
             setRoleActionMessage(extractErrorMessage(errPayload, `Failed to update order (HTTP ${res.status}).`));
             setRoleActionOrderId(null);
             return;
           }
+
+          // For other failure codes (400/404/405/415/500/etc), try the next candidate.
         }
 
         if (updated) break;
@@ -2126,8 +2710,14 @@ function App() {
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const hydrateCartItemsFromMenu = async () => {
-      const hasMissingImage = cartItems.some((item) => item?.menuItemId && !item?.image);
-      if (!hasMissingImage) return;
+      const needsHydration = cartItems.some((item) => {
+        if (!item?.menuItemId) return false;
+        const missingImage = !item?.image;
+        const missingQuickRequests = !Array.isArray(item?.quickRequestOptions) || item.quickRequestOptions.length === 0;
+        const missingIngredients = !Array.isArray(item?.ingredients);
+        return missingImage || missingQuickRequests || missingIngredients;
+      });
+      if (!needsHydration) return;
 
       const menuLookup = await fetchMenuItemsLookup();
       if (!menuLookup.size) return;
@@ -2135,20 +2725,41 @@ function App() {
       setCartItems((current) => {
         let changed = false;
         const next = current.map((item) => {
-          if (item?.image || !item?.menuItemId) return item;
+          if (!item?.menuItemId) return item;
           const menuMatch = menuLookup.get(String(item.menuItemId));
-          if (!menuMatch?.image) return item;
-          changed = true;
+          if (!menuMatch) return item;
 
-          return {
+          const nextItem = {
             ...item,
             name: item?.name || menuMatch.name,
             imageCandidates:
               Array.isArray(item?.imageCandidates) && item.imageCandidates.length > 0
                 ? item.imageCandidates
                 : menuMatch.imageCandidates || [],
-            image: menuMatch.image,
+            image: item?.image || menuMatch.image,
+            ingredients:
+              Array.isArray(item?.ingredients)
+                ? item.ingredients
+                : (menuMatch.ingredients || []),
+            selectedRemovedIngredients: normalizeTextList(item?.selectedRemovedIngredients),
+            quickRequestOptions:
+              Array.isArray(item?.quickRequestOptions) && item.quickRequestOptions.length > 0
+                ? item.quickRequestOptions
+                : (menuMatch.quickRequestOptions || CART_ITEM_QUICK_REQUESTS),
+            availableAddOns:
+              Array.isArray(item?.availableAddOns) && item.availableAddOns.length > 0
+                ? normalizeAddOns(item.availableAddOns)
+                : normalizeAddOns(menuMatch.addOns || []),
+            selectedAddOns: normalizeAddOns(item?.selectedAddOns),
           };
+
+          const serializedBefore = JSON.stringify(item);
+          const serializedAfter = JSON.stringify(nextItem);
+          if (serializedBefore !== serializedAfter) {
+            changed = true;
+          }
+
+          return nextItem;
         });
 
         return changed ? next : current;
@@ -2203,6 +2814,16 @@ function App() {
           setTrackOrderId("");
           return;
         }
+      }
+
+      // Courier should use Driver Dashboard, not Orders Dashboard (/my-orders)
+      if (isCourierRole && route.page === "myOrders") {
+        window.location.hash = "/driver/dashboard";
+        setPage("driverDashboard");
+        setActiveRestaurantId(null);
+        setActiveBranchId("");
+        setTrackOrderId("");
+        return;
       }
 
       setPage(route.page);
@@ -2645,6 +3266,11 @@ function App() {
   }, [isMerchantRole, token, currentUser, page]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
+  const visibleRoleOrders = roleOrders.slice(0, roleOrdersVisibleCount);
+  const hasMoreRoleOrders = roleOrders.length > visibleRoleOrders.length;
+  const visibleMyOrders = myOrders.slice(0, myOrdersVisibleCount);
+  const hasMoreMyOrders = myOrders.length > visibleMyOrders.length;
+
   return (
     <>
       {/* NAVBAR */}
@@ -2746,19 +3372,21 @@ function App() {
 
             {token ? (
               <>
-                <button
-                  className="btn btn-outline-primary nav-orders-btn"
-                  onClick={() => {
-                    primeAudioFromGesture();
-                    setNewOrderCount(0);
-                    window.location.hash = "/my-orders";
-                  }}
-                >
-                  {canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}
-                  {newOrderCount > 0 && (
-                    <span className="nav-new-order-badge">{newOrderCount}</span>
-                  )}
-                </button>
+                {!isCourierRole && (
+                  <button
+                    className="btn btn-outline-primary nav-orders-btn"
+                    onClick={() => {
+                      primeAudioFromGesture();
+                      setNewOrderCount(0);
+                      window.location.hash = "/my-orders";
+                    }}
+                  >
+                    {canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}
+                    {newOrderCount > 0 && (
+                      <span className="nav-new-order-badge">{newOrderCount}</span>
+                    )}
+                  </button>
+                )}
                 {/* ✅ Username i rregulluar */}
                 <div className="me-2">
                   <span className="small text-muted">Hi, {currentUser?.userName || "User"}</span>
@@ -3010,8 +3638,10 @@ function App() {
               </button>
             </div>
 
-            <h2 className="mb-2">{canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}</h2>
-            <p className="small text-muted mb-3">{getRoleCapabilitiesLabel()}</p>
+            <div className="orders-page-hero mb-3">
+              <h2 className="mb-1">{canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}</h2>
+              <p className="small text-muted mb-0">{getRoleCapabilitiesLabel()}</p>
+            </div>
             {isMerchantRole && (
               <button
                 type="button"
@@ -3126,7 +3756,7 @@ function App() {
                 </div>
               ) : (
                 <div className="d-flex flex-column gap-3">
-                  {roleOrders.map((order) => {
+                  {visibleRoleOrders.map((order) => {
                     const actions = getAvailableActionsForOrder(order);
 
                     return (
@@ -3180,57 +3810,89 @@ function App() {
                       </div>
                     );
                   })}
+
+                  {roleOrders.length > 0 && (
+                    <div className="orders-pagination-bar">
+                      {hasMoreRoleOrders && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-secondary"
+                          onClick={() => setRoleOrdersVisibleCount((current) => current + ORDERS_LIST_BATCH_SIZE)}
+                        >
+                          Show more ({roleOrders.length - visibleRoleOrders.length} left)
+                        </button>
+                      )}
+
+                      {roleOrdersVisibleCount > ORDERS_LIST_BATCH_SIZE && (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-outline-dark"
+                          onClick={() => setRoleOrdersVisibleCount(ORDERS_LIST_BATCH_SIZE)}
+                        >
+                          Show less
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
               )
             ) : myOrdersLoading ? (
               <div className="text-muted">Loading your orders...</div>
             ) : myOrders.length === 0 ? (
-              <div className="restaurant-menu">
+              <div className="restaurant-menu orders-empty-state">
                 <p className="text-muted mb-0">You have no orders yet.</p>
               </div>
             ) : (
               <div className="d-flex flex-column gap-3">
-                {myOrders.map((order) => (
-                  <div className="restaurant-menu" key={order.id}>
-                    <div className="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                <p className="small text-muted mb-0">
+                  Showing {visibleMyOrders.length} of {myOrders.length} orders
+                </p>
+
+                {visibleMyOrders.map((order) => (
+                  <article className="restaurant-menu order-card-v2" key={order.id}>
+                    <div className="order-card-v2-head">
                       <div>
-                        <h5 className="mb-1">Order #{order.id}</h5>
-                        <p className="text-muted small mb-0">{order.restaurantName}</p>
+                        <h5 className="mb-1 order-card-v2-id">Order #{order.id}</h5>
+                        <p className="text-muted small mb-0 order-card-v2-restaurant">{order.restaurantName}</p>
                       </div>
-                      <span className={`badge ${getStatusBadgeClass(order.statusLabel)}`}>{order.statusLabel}</span>
+                      <span className={`badge order-card-v2-status ${getStatusBadgeClass(order.statusLabel)}`}>{order.statusLabel}</span>
                     </div>
 
-                    <div className="row g-2 small">
-                      <div className="col-md-4">
-                        <strong>Total:</strong> EUR {Number(order.total || 0).toFixed(2)}
+                    <div className="order-card-v2-metrics">
+                      <div className="order-metric-chip">
+                        <span className="order-metric-label">Total</span>
+                        <strong>EUR {Number(order.total || 0).toFixed(2)}</strong>
                       </div>
-                      <div className="col-md-4">
-                        <strong>Delivery Fee:</strong> EUR {Number(order.deliveryFee || 0).toFixed(2)}
+                      <div className="order-metric-chip">
+                        <span className="order-metric-label">Delivery Fee</span>
+                        <strong>EUR {Number(order.deliveryFee || 0).toFixed(2)}</strong>
                       </div>
-                      <div className="col-md-4">
-                        <strong>Items:</strong> {order.itemsCount}
+                      <div className="order-metric-chip">
+                        <span className="order-metric-label">Items</span>
+                        <strong>{order.itemsCount}</strong>
                       </div>
                     </div>
 
-                    <div className="row g-2 small mt-1">
-                      <div className="col-md-6">
-                        <strong>Address:</strong> {order.address || "-"}
+                    <div className="order-card-v2-details">
+                      <div>
+                        <span className="order-detail-label">Address</span>
+                        <p className="mb-0">{order.address || "-"}</p>
                       </div>
-                      <div className="col-md-3">
-                        <strong>Payment:</strong> {order.paymentLabel || "-"}
+                      <div>
+                        <span className="order-detail-label">Payment</span>
+                        <p className="mb-0">{order.paymentLabel || "-"}</p>
                       </div>
-                      <div className="col-md-3">
-                        <strong>Date:</strong> {order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}
+                      <div>
+                        <span className="order-detail-label">Date</span>
+                        <p className="mb-0">{order.createdAt ? new Date(order.createdAt).toLocaleString() : "-"}</p>
                       </div>
                     </div>
 
                     {order.note && (
-                      <p className="small text-muted mt-2 mb-0">
-                        <strong>Note:</strong> {order.note}
-                      </p>
+                      <p className="small text-muted mt-3 mb-0"><strong>Note:</strong> {order.note}</p>
                     )}
 
-                    <div className="mt-3 d-flex gap-2">
+                    <div className="mt-3 d-flex gap-2 order-card-v2-actions">
                       <button
                         type="button"
                         className="btn btn-sm btn-outline-primary"
@@ -3243,7 +3905,28 @@ function App() {
                     {Array.isArray(order.items) && order.items.length > 0 && (
                       <div className="order-items-preview mt-3">
                         {order.items.map((item) => (
-                          <div className="order-item-chip" key={`${order.id}-${item.id}-${item.name}`}>
+                          <div
+                            className="order-item-chip"
+                            key={`${order.id}-${item.id}-${item.name}`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                              setMyOrderItemPreview({
+                                ...item,
+                                orderId: order.id,
+                              });
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                setMyOrderItemPreview({
+                                  ...item,
+                                  orderId: order.id,
+                                });
+                              }
+                            }}
+                            style={{ cursor: "pointer" }}
+                          >
                             <img
                               className="order-item-chip-image"
                               src={item.image || item?.imageCandidates?.[0] || getFoodFallbackImage(item.name)}
@@ -3263,11 +3946,119 @@ function App() {
                         ))}
                       </div>
                     )}
-                  </div>
+                  </article>
                 ))}
+
+                {myOrders.length > 0 && (
+                  <div className="orders-pagination-bar">
+                    {hasMoreMyOrders && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setMyOrdersVisibleCount((current) => current + MY_ORDERS_BATCH_SIZE)}
+                      >
+                        Show more ({myOrders.length - visibleMyOrders.length} left)
+                      </button>
+                    )}
+
+                    {myOrdersVisibleCount > MY_ORDERS_BATCH_SIZE && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-dark"
+                        onClick={() => setMyOrdersVisibleCount(MY_ORDERS_BATCH_SIZE)}
+                      >
+                        Show less
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </section>
+        )}
+
+        {myOrderItemPreview && (
+          <div className="kd-overlay" onClick={() => setMyOrderItemPreview(null)}>
+            <div className="kd-modal" onClick={(event) => event.stopPropagation()}>
+              <div className="kd-header">
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
+                  <span className="kd-order-id">Order #{myOrderItemPreview.orderId || "-"}</span>
+                </div>
+                <button className="kd-close" onClick={() => setMyOrderItemPreview(null)}>
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              <div className="kd-items-title">{myOrderItemPreview.name || "Item"}</div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "minmax(180px, 220px) 1fr", gap: "14px" }}>
+                <img
+                  src={
+                    myOrderItemPreview.image ||
+                    myOrderItemPreview?.imageCandidates?.[0] ||
+                    getFoodFallbackImage(myOrderItemPreview.name)
+                  }
+                  alt={myOrderItemPreview.name || "Item"}
+                  data-candidate-index="0"
+                  onError={(event) => {
+                    applyImageFallbackCandidate(
+                      event,
+                      myOrderItemPreview?.imageCandidates,
+                      getFoodFallbackImage(myOrderItemPreview.name)
+                    );
+                  }}
+                  style={{
+                    width: "100%",
+                    height: "200px",
+                    objectFit: "cover",
+                    borderRadius: "12px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                />
+
+                <div>
+                  {myOrderItemPreview.description && (
+                    <p className="small text-muted mb-2">{myOrderItemPreview.description}</p>
+                  )}
+
+                  {Array.isArray(myOrderItemPreview.ingredients) && myOrderItemPreview.ingredients.length > 0 && (
+                    <p className="small mb-2">
+                      <strong>Ingredients:</strong> {myOrderItemPreview.ingredients.join(", ")}
+                    </p>
+                  )}
+
+                  {(() => {
+                    const parsed = parseOrderItemNote(myOrderItemPreview.note);
+                    return (
+                      <>
+                        {parsed.removedIngredients.length > 0 && (
+                          <p className="small mb-2">
+                            <strong>Removed:</strong> {parsed.removedIngredients.join(", ")}
+                          </p>
+                        )}
+
+                        {parsed.addedAddOns.length > 0 && (
+                          <p className="small mb-2">
+                            <strong>Added extras:</strong> {parsed.addedAddOns.join(", ")}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  <p className="small mb-0">
+                    <strong>Qty:</strong> {Number(myOrderItemPreview.quantity || 1)}
+                    {Number(myOrderItemPreview.price || 0) > 0 && (
+                      <>
+                        {" "}
+                        <strong className="ms-2">Price:</strong> EUR {Number(myOrderItemPreview.price || 0).toFixed(2)}
+                      </>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* ── ROLE ACTION TOAST ── */}
@@ -3426,11 +4217,11 @@ function App() {
         )}
 
         {page === "cart" && (
-          <section className="container cart-page pb-5">
+          <section className="container cart-page cart-shell pb-5">
             <div className="mb-4 restaurants-back-wrap d-flex gap-2 flex-wrap">
               <button
                 type="button"
-                className="btn btn-outline-secondary"
+                className="btn btn-outline-secondary cart-back-btn"
                 onClick={() => {
                   if (activeRestaurantId && activeBranchId) {
                     window.location.hash = `/restaurant/${activeRestaurantId}/branch/${encodeURIComponent(activeBranchId)}`;
@@ -3447,7 +4238,10 @@ function App() {
               </button>
             </div>
 
-            <h2 className="mb-3">Your Order</h2>
+            <div className="cart-hero mb-3">
+              <h2 className="mb-1">Your Order</h2>
+              <p className="mb-0 text-muted small">Review items, confirm address, and place your order in seconds.</p>
+            </div>
 
             {orderMessage && (
               <div className={`alert ${orderMessage.toLowerCase().includes("success") ? "alert-success" : "alert-warning"}`}>
@@ -3457,14 +4251,22 @@ function App() {
 
             <div className="row g-4">
               <div className="col-lg-8">
-                <div className="restaurant-menu">
+                <div className="restaurant-menu cart-main-card">
                   <h5 className="mb-3">Cart Items ({cartCount})</h5>
                   {cartItems.length === 0 ? (
-                    <p className="text-muted mb-0">Cart is empty. Add products from the menu.</p>
+                    <div className="cart-empty-state">
+                      <div className="cart-empty-icon">
+                        <i className="bi bi-bag"></i>
+                      </div>
+                      <div>
+                        <h6 className="mb-1">Cart is empty</h6>
+                        <p className="text-muted mb-0">Add products from the menu to start your order.</p>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="d-flex flex-column gap-3">
-                      {cartItems.map((item) => (
-                        <div className="menu-item-card" key={`${item.menuItemId}-${item.branchId}`}>
+                    <div className="d-flex flex-column gap-3 cart-items-list">
+                      {cartItems.map((item, index) => (
+                        <div className="menu-item-card cart-item-row-card" key={item.cartLineId || `${item.menuItemId}-${item.branchId}-${index}`}>
                           <div className="d-flex justify-content-between align-items-start gap-3">
                             <div className="d-flex align-items-start gap-3 cart-item-main">
                               <img
@@ -3477,32 +4279,102 @@ function App() {
                                 }}
                               />
                               <div>
-                                <h6 className="mb-1">{item.name}</h6>
+                                <h6 className="mb-1 fw-bold">{item.name}</h6>
                                 <p className="small text-muted mb-1">{item.restaurantName}</p>
                                 {item.branchAddress && <p className="small text-muted mb-2">{item.branchAddress}</p>}
-                                <div className="small fw-semibold">EUR {Number(item.price || 0).toFixed(2)}</div>
+                                <div className="small fw-semibold">EUR {Number(getCartItemUnitPrice(item) || 0).toFixed(2)}</div>
+                                {normalizeAddOns(item?.selectedAddOns).length > 0 && (
+                                  <p className="cart-item-price-breakdown mb-0">
+                                    Base {Number(item.price || 0).toFixed(2)} + Extras {getCartItemAddOnsUnitTotal(item).toFixed(2)}
+                                  </p>
+                                )}
+
+                                <div className="cart-item-note-wrap mt-2">
+                                  <label className="cart-item-note-label">
+                                    Item request
+                                  </label>
+
+                                  {Array.isArray(item.ingredients) && item.ingredients.length > 0 && (
+                                    <p className="cart-item-ingredients mb-2">
+                                      Ingredients: {item.ingredients.join(", ")}
+                                    </p>
+                                  )}
+
+                                  {normalizeTextList(item?.selectedRemovedIngredients).length > 0 && (
+                                    <div className="cart-item-remove-options mb-2">
+                                      {normalizeTextList(item?.selectedRemovedIngredients).map((ingredient) => {
+                                        return (
+                                          <button
+                                            key={`${item.cartLineId || item.menuItemId}-${ingredient}`}
+                                            type="button"
+                                            className="btn btn-sm cart-remove-ingredient-chip cart-remove-ingredient-chip-active"
+                                            onClick={() => toggleCartItemRemovedIngredient(item, ingredient)}
+                                          >
+                                            {`Undo ${ingredient}`}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+
+                                  <div className="cart-item-quick-requests mb-2">
+                                    {(sanitizeQuickRequestOptions(item?.quickRequestOptions, item?.ingredients) || [])
+                                      .filter((request) => !/^no\s+/i.test(String(request || "").trim()))
+                                      .map((request) => {
+                                      const selected = Array.isArray(item.selectedRequests) && item.selectedRequests.includes(request);
+                                      return (
+                                        <button
+                                          key={`${item.menuItemId}-${item.branchId}-${request}`}
+                                          type="button"
+                                          className={`btn btn-sm cart-request-chip ${selected ? "cart-request-chip-active" : ""}`}
+                                          onClick={() => toggleCartItemQuickRequest(item, request)}
+                                        >
+                                          {request}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+
+                                  {normalizeAddOns(item?.selectedAddOns).length > 0 && (
+                                    <div className="cart-item-addons mb-2">
+                                      {normalizeAddOns(item.selectedAddOns).map((addOn) => {
+                                        return (
+                                          <button
+                                            key={`${item.menuItemId}-${item.branchId}-addon-${addOn.name}`}
+                                            type="button"
+                                            className="btn btn-sm cart-addon-chip cart-addon-chip-active"
+                                            onClick={() => toggleCartItemAddOn(item, addOn)}
+                                          >
+                                            + {addOn.name} ({Number(addOn.extraPrice || 0).toFixed(2)} EUR)
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+
+                                </div>
                               </div>
                             </div>
 
-                            <div className="d-flex align-items-center gap-2">
+                            <div className="d-flex align-items-center gap-2 cart-qty-controls">
                               <button
                                 type="button"
-                                className="btn btn-outline-secondary btn-sm"
+                                className="btn btn-outline-secondary btn-sm cart-qty-btn"
                                 onClick={() => updateCartItemQuantity(item, Number(item.quantity || 1) - 1)}
                               >
                                 -
                               </button>
-                              <span className="fw-semibold">{item.quantity}</span>
+                              <span className="fw-semibold cart-qty-value">{item.quantity}</span>
                               <button
                                 type="button"
-                                className="btn btn-outline-secondary btn-sm"
+                                className="btn btn-outline-secondary btn-sm cart-qty-btn"
                                 onClick={() => updateCartItemQuantity(item, Number(item.quantity || 1) + 1)}
                               >
                                 +
                               </button>
                               <button
                                 type="button"
-                                className="btn btn-outline-danger btn-sm"
+                                className="btn btn-outline-danger btn-sm cart-remove-btn"
                                 onClick={() => removeCartItem(item)}
                               >
                                 Remove
@@ -3517,57 +4389,59 @@ function App() {
               </div>
 
               <div className="col-lg-4">
-                <div className="restaurant-menu cart-summary-sticky">
-                  <h5 className="mb-3">Checkout</h5>
+                <div className="restaurant-menu cart-summary-sticky cart-checkout-card">
+                  <h5 className="mb-2">Checkout</h5>
 
-                  <div className="mb-3">
-                    <label className="form-label">Delivery Address</label>
-                    <textarea
-                      className="form-control"
-                      rows="3"
-                      value={deliveryAddress}
-                      onChange={(e) => setDeliveryAddress(e.target.value)}
-                      placeholder="Street, city, country"
-                    ></textarea>
+                  <div className="checkout-fields-grid">
+                    <div className="checkout-field">
+                      <label className="form-label checkout-label">Delivery Address</label>
+                      <textarea
+                        className="form-control"
+                        rows="2"
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
+                        placeholder="Street, city, country"
+                      ></textarea>
+                    </div>
+
+                    <div className="checkout-field">
+                      <label className="form-label checkout-label">Payment Method</label>
+                      <select className="form-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
+                        <option value="1">Cash</option>
+                        <option value="2">Credit Card</option>
+                        <option value="3">PayPal</option>
+                        <option value="4">Online</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="mb-3">
-                    <label className="form-label">Payment Method</label>
-                    <select className="form-select" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)}>
-                      <option value="1">Cash</option>
-                      <option value="2">Credit Card</option>
-                      <option value="3">PayPal</option>
-                      <option value="4">Online</option>
-                    </select>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Order Notes (optional)</label>
+                  <div className="checkout-field mb-2">
+                    <label className="form-label checkout-label">Order Notes (optional)</label>
                     <textarea
                       className="form-control"
-                      rows="2"
+                      rows="1"
                       value={orderNotes}
                       onChange={(e) => setOrderNotes(e.target.value)}
                       placeholder="No onion, extra spicy..."
                     ></textarea>
                   </div>
 
-                  <div className="d-flex justify-content-between mb-1 small">
+                  <div className="d-flex justify-content-between mb-1 small cart-summary-row">
                     <span>Subtotal</span>
                     <strong>EUR {cartSubtotal.toFixed(2)}</strong>
                   </div>
-                  <div className="d-flex justify-content-between mb-2 small">
+                  <div className="d-flex justify-content-between mb-2 small cart-summary-row">
                     <span>Delivery</span>
                     <strong>EUR {cartDeliveryFee.toFixed(2)}</strong>
                   </div>
-                  <div className="d-flex justify-content-between mb-3">
+                  <div className="d-flex justify-content-between mb-3 cart-summary-total">
                     <span className="fw-semibold">Total</span>
                     <strong>EUR {cartTotal.toFixed(2)}</strong>
                   </div>
 
                   <button
                     type="button"
-                    className="btn btn-primary w-100"
+                    className="btn btn-primary w-100 cart-place-order-btn"
                     disabled={orderSubmitting || cartItems.length === 0 || (normalizedCurrentUserRole && normalizedCurrentUserRole !== "customer")}
                     onClick={handleSubmitOrder}
                   >

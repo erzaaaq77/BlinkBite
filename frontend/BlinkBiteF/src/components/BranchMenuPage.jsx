@@ -17,6 +17,9 @@ function BranchMenuPage({
   const hasBranch = Boolean(branch);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedQuantity, setSelectedQuantity] = useState(1);
+  const [selectedRemovedIngredients, setSelectedRemovedIngredients] = useState([]);
+  const [selectedAddOns, setSelectedAddOns] = useState([]);
+  const [showAddOnsPopup, setShowAddOnsPopup] = useState(false);
 
   const filterMenuForBranch = (items, selectedBranch) => {
     if (!Array.isArray(items)) return [];
@@ -55,6 +58,10 @@ function BranchMenuPage({
 
     const closeOnEscape = (event) => {
       if (event.key === "Escape") {
+        if (showAddOnsPopup) {
+          setShowAddOnsPopup(false);
+          return;
+        }
         setSelectedItem(null);
         setSelectedQuantity(1);
       }
@@ -64,23 +71,57 @@ function BranchMenuPage({
     return () => {
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [selectedItem]);
+  }, [selectedItem, showAddOnsPopup]);
 
   const openProductPopup = (item) => {
     setSelectedItem(item);
     setSelectedQuantity(1);
+    setSelectedRemovedIngredients([]);
+    setSelectedAddOns([]);
+    setShowAddOnsPopup(false);
   };
 
   const closeProductPopup = () => {
     setSelectedItem(null);
     setSelectedQuantity(1);
+    setSelectedRemovedIngredients([]);
+    setSelectedAddOns([]);
+    setShowAddOnsPopup(false);
   };
 
-  const productTotal = selectedItem ? Number(selectedItem.price || 0) * selectedQuantity : 0;
+  const addOnUnitTotal = selectedAddOns.reduce((sum, entry) => sum + Number(entry?.extraPrice || 0), 0);
+  const productTotal = selectedItem ? (Number(selectedItem.price || 0) + addOnUnitTotal) * selectedQuantity : 0;
+
+  const toggleRemovedIngredient = (ingredient) => {
+    const ingredientName = String(ingredient || "").trim();
+    if (!ingredientName) return;
+
+    setSelectedRemovedIngredients((current) => {
+      const exists = current.some((entry) => String(entry).trim().toLowerCase() === ingredientName.toLowerCase());
+      return exists
+        ? current.filter((entry) => String(entry).trim().toLowerCase() !== ingredientName.toLowerCase())
+        : [...current, ingredientName];
+    });
+  };
+
+  const toggleAddOn = (addOn) => {
+    const addOnName = String(addOn?.name || "").trim();
+    if (!addOnName) return;
+
+    setSelectedAddOns((current) => {
+      const exists = current.some((entry) => String(entry?.name).trim().toLowerCase() === addOnName.toLowerCase());
+      return exists
+        ? current.filter((entry) => String(entry?.name).trim().toLowerCase() !== addOnName.toLowerCase())
+        : [...current, { name: addOnName, extraPrice: Number(addOn?.extraPrice || 0) }];
+    });
+  };
 
   const handleAddSelectedItem = () => {
     if (!selectedItem || !onAddToCart) return;
-    onAddToCart(selectedItem, selectedQuantity);
+    onAddToCart(selectedItem, selectedQuantity, {
+      removedIngredients: selectedRemovedIngredients,
+      selectedAddOns,
+    });
     closeProductPopup();
   };
 
@@ -295,6 +336,100 @@ function BranchMenuPage({
                       </div>
 
                       <div className="product-quickview-price mb-3">EUR {Number(selectedItem.price || 0).toFixed(2)}</div>
+
+                      {Array.isArray(selectedItem.ingredients) && selectedItem.ingredients.length > 0 && (
+                        <div className="product-quickview-section mb-3">
+                          <div className="product-quickview-label">This product includes (uncheck to remove)</div>
+                          <div className="product-quickview-checkbox-list">
+                            {selectedItem.ingredients.map((ingredient) => {
+                              const removed = selectedRemovedIngredients.some(
+                                (entry) => String(entry).trim().toLowerCase() === String(ingredient).trim().toLowerCase()
+                              );
+                              const checkboxId = `ingredient-${selectedItem.id}-${String(ingredient).replace(/\s+/g, "-").toLowerCase()}`;
+
+                              return (
+                                <label key={`${selectedItem.id}-remove-${ingredient}`} htmlFor={checkboxId} className="product-ingredient-option">
+                                  <input
+                                    id={checkboxId}
+                                    type="checkbox"
+                                    checked={!removed}
+                                    onChange={() => toggleRemovedIngredient(ingredient)}
+                                  />
+                                  <span>{ingredient}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {Array.isArray(selectedItem.addOns) && selectedItem.addOns.length > 0 && (
+                        <div className="product-quickview-section mb-3">
+                          <div className="product-quickview-label">Add extras</div>
+                          <div className="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() => setShowAddOnsPopup(true)}
+                            >
+                              Add extras
+                            </button>
+                            {selectedAddOns.length > 0 && (
+                              <span className="small text-muted">
+                                {selectedAddOns.length} selected (+{addOnUnitTotal.toFixed(2)} EUR)
+                              </span>
+                            )}
+                          </div>
+
+                          {showAddOnsPopup && (
+                            <div className="product-addons-popover mt-2">
+                              <div className="product-addons-popup-header">
+                                <h6 className="mb-0">Choose extras</h6>
+                                <button
+                                  type="button"
+                                  className="btn-close"
+                                  aria-label="Close extras"
+                                  onClick={() => setShowAddOnsPopup(false)}
+                                ></button>
+                              </div>
+
+                              <div className="product-quickview-chips">
+                                {selectedItem.addOns.map((addOn) => {
+                                  const selected = selectedAddOns.some(
+                                    (entry) => String(entry?.name).trim().toLowerCase() === String(addOn?.name).trim().toLowerCase()
+                                  );
+
+                                  return (
+                                    <button
+                                      key={`${selectedItem.id}-addon-${addOn?.name}`}
+                                      type="button"
+                                      className={`btn btn-sm product-chip product-chip-addon ${selected ? "product-chip-addon-active" : ""}`}
+                                      onClick={() => toggleAddOn(addOn)}
+                                    >
+                                      + {addOn?.name} ({Number(addOn?.extraPrice || 0).toFixed(2)} EUR)
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {selectedAddOns.length > 0 && (
+                            <div className="product-quickview-chips mt-2">
+                              {selectedAddOns.map((addOn) => (
+                                <button
+                                  key={`${selectedItem.id}-addon-picked-${addOn?.name}`}
+                                  type="button"
+                                  className="btn btn-sm product-chip product-chip-addon product-chip-addon-active"
+                                  onClick={() => toggleAddOn(addOn)}
+                                >
+                                  {addOn?.name} ({Number(addOn?.extraPrice || 0).toFixed(2)} EUR)
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="product-quickview-qty mb-3">
                         <span className="small text-muted">Quantity</span>

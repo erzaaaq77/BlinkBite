@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
+using FoodDeliveryyy.Models.Converters;
 
 namespace FoodDeliveryyy.Models.Entities;
 
@@ -29,6 +31,12 @@ public class MenuItems
     public string Alergjene { get; set; } = string.Empty;
 
     public int? Kalori { get; set; }
+
+    [JsonConverter(typeof(StringOrArrayToCsvJsonConverter))]
+    public string Perberesit { get; set; } = string.Empty;
+
+    [JsonConverter(typeof(StringOrArrayToCsvJsonConverter))]
+    public string RequestOptions { get; set; } = string.Empty;
 
     [Required]
     public int CategoryId { get; set; }

@@ -3,6 +3,7 @@ import axios from "axios";
 import * as signalR from "@microsoft/signalr";
 
 const API_BASE_URL = "http://localhost:5063/api";
+const DRIVER_ORDERS_BATCH_SIZE = 5;
 
 const STATUS_MAP = {
   1: "Pending",
@@ -13,8 +14,37 @@ const STATUS_MAP = {
   6: "Cancelled"
 };
 
+const normalizeStatusLabel = (value) => {
+  if (typeof value === "number") {
+    return STATUS_MAP[value] || "Unknown";
+  }
+
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "pending") return "Pending";
+  if (normalized === "accepted") return "Accepted";
+  if (normalized === "preparing") return "Preparing";
+  if (normalized === "ready") return "Ready";
+  if (normalized === "delivered") return "Delivered";
+  if (normalized === "cancelled") return "Cancelled";
+  return "Unknown";
+};
+
+const normalizeDriverAvailability = (value) => {
+  if (typeof value === "number") {
+    if (value === 1) return "Available";
+    if (value === 2) return "Busy";
+    if (value === 3) return "Offline";
+  }
+
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "available") return "Available";
+  if (normalized === "busy") return "Busy";
+  if (normalized === "offline") return "Offline";
+  return "Unknown";
+};
+
 const statusBadge = (code) => {
-  const name = STATUS_MAP[code] || "Unknown";
+  const name = normalizeStatusLabel(code);
   const cls = {
     Pending: "bg-warning text-dark",
     Accepted: "bg-primary",
@@ -31,11 +61,24 @@ const DriverDashboard = ({ token, onBack }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState({ visible: false, type: "success", message: "" });
   const [activeTab, setActiveTab] = useState("current");
   const [actionLoading, setActionLoading] = useState(null);
   const [locationStatus, setLocationStatus] = useState("idle"); // idle | sharing | error
+  const [visibleCurrentCount, setVisibleCurrentCount] = useState(DRIVER_ORDERS_BATCH_SIZE);
+  const [visibleAvailableCount, setVisibleAvailableCount] = useState(DRIVER_ORDERS_BATCH_SIZE);
+  const [visibleHistoryCount, setVisibleHistoryCount] = useState(DRIVER_ORDERS_BATCH_SIZE);
   const locationIntervalRef = useRef(null);
   const hubConnectionRef = useRef(null);
+  const toastTimerRef = useRef(null);
+
+  const showToast = useCallback((message, type = "success") => {
+    clearTimeout(toastTimerRef.current);
+    setToast({ visible: true, type, message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }));
+    }, 2600);
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!token) {
@@ -114,6 +157,7 @@ const DriverDashboard = ({ token, onBack }) => {
     return () => {
       if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
       if (hubConnectionRef.current) hubConnectionRef.current.stop();
+      clearTimeout(toastTimerRef.current);
     };
   }, []);
 
@@ -122,12 +166,13 @@ const DriverDashboard = ({ token, onBack }) => {
     try {
       await axios.put(
         `${API_BASE_URL}/orders/${orderId}/status`,
-        { status: 5 },
+        { status: "Delivered" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       await fetchData();
+      showToast(`Order #${orderId} marked as delivered.`, "success");
     } catch {
-      alert("Failed to mark as delivered.");
+      showToast("Failed to mark as delivered.", "danger");
     } finally {
       setActionLoading(null);
     }
@@ -143,12 +188,19 @@ const DriverDashboard = ({ token, onBack }) => {
       );
       await fetchData();
       setActiveTab("current");
+      showToast(`Order #${orderId} accepted.`, "success");
     } catch (err) {
-      alert(err?.response?.data || "Failed to accept order.");
+      showToast(String(err?.response?.data || "Failed to accept order."), "danger");
     } finally {
       setActionLoading(null);
     }
   };
+
+  useEffect(() => {
+    setVisibleCurrentCount(DRIVER_ORDERS_BATCH_SIZE);
+    setVisibleAvailableCount(DRIVER_ORDERS_BATCH_SIZE);
+    setVisibleHistoryCount(DRIVER_ORDERS_BATCH_SIZE);
+  }, [activeTab]);
 
   if (loading) {
     return (
@@ -177,8 +229,17 @@ const DriverDashboard = ({ token, onBack }) => {
   const availableOrders = data?.availableOrders || [];
   const deliveryHistory = data?.deliveryHistory || [];
 
+  const visibleCurrentOrders = currentOrders.slice(0, visibleCurrentCount);
+  const hasMoreCurrentOrders = currentOrders.length > visibleCurrentOrders.length;
+  const visibleAvailableOrders = availableOrders.slice(0, visibleAvailableCount);
+  const hasMoreAvailableOrders = availableOrders.length > visibleAvailableOrders.length;
+  const visibleDeliveryHistory = deliveryHistory.slice(0, visibleHistoryCount);
+  const hasMoreDeliveryHistory = deliveryHistory.length > visibleDeliveryHistory.length;
+
+  const driverStatusLabel = normalizeDriverAvailability(driver.statusi ?? driver.Statusi);
+
   return (
-    <section className="container py-4">
+    <section className="container py-4" style={{ marginTop: "88px" }}>
       <div className="mb-4">
         <button className="btn btn-outline-secondary" onClick={onBack}>
           ← Back to Home
@@ -207,6 +268,18 @@ const DriverDashboard = ({ token, onBack }) => {
         </div>
       </div>
 
+      {toast.visible && (
+        <div className={`app-toast app-toast--${toast.type}`} role="alert" aria-live="polite">
+          <div className="app-toast__body">{toast.message}</div>
+          <button
+            type="button"
+            className="btn-close"
+            aria-label="Close"
+            onClick={() => setToast((prev) => ({ ...prev, visible: false }))}
+          ></button>
+        </div>
+      )}
+
       <div className="card p-4 mb-4">
         <h5 className="mb-3">📋 Driver Information</h5>
         <div className="row">
@@ -215,8 +288,8 @@ const DriverDashboard = ({ token, onBack }) => {
           </div>
           <div className="col-md-4">
             <strong>Status:</strong>{" "}
-            <span className={`badge ${driver.statusi === 1 ? "bg-success" : "bg-secondary"}`}>
-              {driver.statusi === 1 ? "Available" : "Unavailable"}
+            <span className={`badge ${driverStatusLabel === "Available" ? "bg-success" : driverStatusLabel === "Busy" ? "bg-warning text-dark" : "bg-secondary"}`}>
+              {driverStatusLabel === "Unknown" ? "Unavailable" : driverStatusLabel}
             </span>
           </div>
           <div className="col-md-4">
@@ -290,44 +363,68 @@ const DriverDashboard = ({ token, onBack }) => {
           {currentOrders.length === 0 ? (
             <p className="text-muted">No active deliveries.</p>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Restaurant</th>
-                    <th>Delivery Address</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td>#{order.id}</td>
-                      <td>{order.restaurantName || "-"}</td>
-                      <td>{order.adresaDorezimit || "-"}</td>
-                      <td>€{order.shumaTotale?.toFixed(2)}</td>
-                      <td>{statusBadge(order.statusi)}</td>
-                      <td>
-                        {order.statusi === 4 && (
-                          <button
-                            className="btn btn-sm btn-success"
-                            disabled={actionLoading === `${order.id}-deliver`}
-                            onClick={() => markDelivered(order.id)}
-                          >
-                            {actionLoading === `${order.id}-deliver`
-                              ? "..."
-                              : "Mark as Delivered"}
-                          </button>
-                        )}
-                      </td>
+            <>
+              <p className="small text-muted mb-2">Showing {visibleCurrentOrders.length} of {currentOrders.length}</p>
+              <div className="table-responsive">
+                <table className="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Restaurant</th>
+                      <th>Delivery Address</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {visibleCurrentOrders.map((order) => (
+                      <tr key={order.id}>
+                        <td>#{order.id}</td>
+                        <td>{order.restaurantName || "-"}</td>
+                        <td>{order.adresaDorezimit || "-"}</td>
+                        <td>€{Number(order.shumaTotale || 0).toFixed(2)}</td>
+                        <td>{statusBadge(order.statusi)}</td>
+                        <td>
+                          {normalizeStatusLabel(order.statusi) === "Ready" && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              disabled={actionLoading === `${order.id}-deliver`}
+                              onClick={() => markDelivered(order.id)}
+                            >
+                              {actionLoading === `${order.id}-deliver`
+                                ? "..."
+                                : "Mark as Delivered"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="orders-pagination-bar mt-2">
+                {hasMoreCurrentOrders && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => setVisibleCurrentCount((current) => current + DRIVER_ORDERS_BATCH_SIZE)}
+                  >
+                    Show more ({currentOrders.length - visibleCurrentOrders.length} left)
+                  </button>
+                )}
+                {visibleCurrentCount > DRIVER_ORDERS_BATCH_SIZE && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-dark"
+                    onClick={() => setVisibleCurrentCount(DRIVER_ORDERS_BATCH_SIZE)}
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -337,40 +434,64 @@ const DriverDashboard = ({ token, onBack }) => {
           {availableOrders.length === 0 ? (
             <p className="text-muted">No orders available for pickup right now.</p>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Restaurant</th>
-                    <th>Delivery Address</th>
-                    <th>Amount</th>
-                    <th>Placed At</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {availableOrders.map((order) => (
-                    <tr key={order.id}>
-                      <td>#{order.id}</td>
-                      <td>{order.restaurantName || "-"}</td>
-                      <td>{order.adresaDorezimit || "-"}</td>
-                      <td>€{order.shumaTotale?.toFixed(2)}</td>
-                      <td>{new Date(order.dataPorosis).toLocaleTimeString()}</td>
-                      <td>
-                        <button
-                          className="btn btn-sm btn-primary"
-                          disabled={actionLoading === `${order.id}-accept`}
-                          onClick={() => acceptOrder(order.id)}
-                        >
-                          {actionLoading === `${order.id}-accept` ? "..." : "Accept Order"}
-                        </button>
-                      </td>
+            <>
+              <p className="small text-muted mb-2">Showing {visibleAvailableOrders.length} of {availableOrders.length}</p>
+              <div className="table-responsive">
+                <table className="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Restaurant</th>
+                      <th>Delivery Address</th>
+                      <th>Amount</th>
+                      <th>Placed At</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {visibleAvailableOrders.map((order) => (
+                      <tr key={order.id}>
+                        <td>#{order.id}</td>
+                        <td>{order.restaurantName || "-"}</td>
+                        <td>{order.adresaDorezimit || "-"}</td>
+                        <td>€{Number(order.shumaTotale || 0).toFixed(2)}</td>
+                        <td>{new Date(order.dataPorosis).toLocaleTimeString()}</td>
+                        <td>
+                          <button
+                            className="btn btn-sm btn-primary"
+                            disabled={actionLoading === `${order.id}-accept`}
+                            onClick={() => acceptOrder(order.id)}
+                          >
+                            {actionLoading === `${order.id}-accept` ? "..." : "Accept Order"}
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="orders-pagination-bar mt-2">
+                {hasMoreAvailableOrders && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => setVisibleAvailableCount((current) => current + DRIVER_ORDERS_BATCH_SIZE)}
+                  >
+                    Show more ({availableOrders.length - visibleAvailableOrders.length} left)
+                  </button>
+                )}
+                {visibleAvailableCount > DRIVER_ORDERS_BATCH_SIZE && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-dark"
+                    onClick={() => setVisibleAvailableCount(DRIVER_ORDERS_BATCH_SIZE)}
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}
@@ -380,30 +501,54 @@ const DriverDashboard = ({ token, onBack }) => {
           {deliveryHistory.length === 0 ? (
             <p className="text-muted">No completed deliveries yet.</p>
           ) : (
-            <div className="table-responsive">
-              <table className="table table-hover align-middle">
-                <thead>
-                  <tr>
-                    <th>Order #</th>
-                    <th>Restaurant</th>
-                    <th>Delivery Address</th>
-                    <th>Amount</th>
-                    <th>Delivered At</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deliveryHistory.map((order) => (
-                    <tr key={order.id}>
-                      <td>#{order.id}</td>
-                      <td>{order.restaurantName || "-"}</td>
-                      <td>{order.adresaDorezimit || "-"}</td>
-                      <td>€{order.shumaTotale?.toFixed(2)}</td>
-                      <td>{order.deliveredAt ? new Date(order.deliveredAt).toLocaleString() : "-"}</td>
+            <>
+              <p className="small text-muted mb-2">Showing {visibleDeliveryHistory.length} of {deliveryHistory.length}</p>
+              <div className="table-responsive">
+                <table className="table table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>Order #</th>
+                      <th>Restaurant</th>
+                      <th>Delivery Address</th>
+                      <th>Amount</th>
+                      <th>Delivered At</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {visibleDeliveryHistory.map((order) => (
+                      <tr key={order.id}>
+                        <td>#{order.id}</td>
+                        <td>{order.restaurantName || "-"}</td>
+                        <td>{order.adresaDorezimit || "-"}</td>
+                        <td>€{Number(order.shumaTotale || 0).toFixed(2)}</td>
+                        <td>{order.deliveredAt ? new Date(order.deliveredAt).toLocaleString() : "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="orders-pagination-bar mt-2">
+                {hasMoreDeliveryHistory && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => setVisibleHistoryCount((current) => current + DRIVER_ORDERS_BATCH_SIZE)}
+                  >
+                    Show more ({deliveryHistory.length - visibleDeliveryHistory.length} left)
+                  </button>
+                )}
+                {visibleHistoryCount > DRIVER_ORDERS_BATCH_SIZE && (
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-dark"
+                    onClick={() => setVisibleHistoryCount(DRIVER_ORDERS_BATCH_SIZE)}
+                  >
+                    Show less
+                  </button>
+                )}
+              </div>
+            </>
           )}
         </div>
       )}

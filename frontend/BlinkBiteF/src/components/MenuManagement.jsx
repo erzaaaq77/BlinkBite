@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 const API_BASE_URL = "http://localhost:5063/api";
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
+const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
+const RESTAURANT_CUSTOMIZATION_KEY = "blinkbite_restaurant_customizations_v1";
 
 const toNumberId = (value) => {
   const parsed = Number(value);
@@ -32,6 +34,162 @@ const scopeItemsByCategory = (items, categories) => {
     const categoryId = toNumberId(item?.categoryId ?? item?.CategoryId);
     return categoryId ? allowedCategoryIds.has(categoryId) : false;
   });
+};
+
+const normalizeTextList = (value) => {
+  if (Array.isArray(value)) {
+    return Array.from(
+      new Set(
+        value
+          .map((entry) => String(entry || "").trim())
+          .filter(Boolean)
+      )
+    );
+  }
+
+  const source = String(value || "").trim();
+  if (!source) return [];
+
+  return Array.from(
+    new Set(
+      source
+        .split(/[\n,;|]/)
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    )
+  );
+};
+
+const listToCsv = (value) => normalizeTextList(value).join(", ");
+
+const normalizeAddOns = (value) => {
+  if (Array.isArray(value)) {
+    return value
+      .map((entry) => {
+        if (!entry) return null;
+        if (typeof entry === "string") {
+          const trimmed = entry.trim();
+          if (!trimmed) return null;
+          return { name: trimmed, extraPrice: 0 };
+        }
+
+        const name = String(entry?.name ?? entry?.Name ?? entry?.label ?? entry?.Label ?? "").trim();
+        const extraPrice = Number(entry?.extraPrice ?? entry?.ExtraPrice ?? entry?.price ?? entry?.Price ?? 0);
+        if (!name) return null;
+        return {
+          name,
+          extraPrice: Number.isFinite(extraPrice) ? Math.max(0, extraPrice) : 0,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  const raw = String(value || "").trim();
+  if (!raw) return [];
+
+  return raw
+    .split(/\n|;/)
+    .map((entry) => {
+      const part = String(entry || "").trim();
+      if (!part) return null;
+
+      const [nameRaw, priceRaw] = part.split(":");
+      const name = String(nameRaw || "").trim();
+      const parsedPrice = Number(String(priceRaw || "0").replace(",", ".").trim());
+      if (!name) return null;
+
+      return {
+        name,
+        extraPrice: Number.isFinite(parsedPrice) ? Math.max(0, parsedPrice) : 0,
+      };
+    })
+    .filter(Boolean);
+};
+
+const addOnsToCsv = (value) =>
+  normalizeAddOns(value)
+    .map((entry) => `${entry.name}:${Number(entry.extraPrice || 0).toFixed(2)}`)
+    .join("; ");
+
+const mergeRequestOptionsWithIngredients = (ingredientsValue, requestOptionsValue) => {
+  const manualOptions = normalizeTextList(requestOptionsValue);
+  const ingredientOptions = normalizeTextList(ingredientsValue).map((ingredient) => `No ${ingredient}`);
+
+  const merged = [];
+  const seen = new Set();
+
+  const pushUnique = (entry) => {
+    const normalized = String(entry || "").trim();
+    if (!normalized) return;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    merged.push(normalized);
+  };
+
+  manualOptions.forEach(pushUnique);
+  ingredientOptions.forEach(pushUnique);
+
+  return merged;
+};
+
+const loadMenuCustomizations = () => {
+  try {
+    // DB-only mode: use backend as single source of truth.
+    return {};
+  } catch (err) {
+    console.error("Failed to load DB-only menu customization overrides", err);
+    return {};
+  }
+};
+
+const saveMenuCustomizations = (nextMap) => {
+  // No-op by design in DB-only mode.
+  void nextMap;
+};
+
+const loadRestaurantCustomizations = () => {
+  try {
+    const raw = localStorage.getItem(RESTAURANT_CUSTOMIZATION_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (err) {
+    console.error("Failed to parse restaurant customization overrides", err);
+    return {};
+  }
+};
+
+const saveRestaurantCustomizations = (nextMap) => {
+  try {
+    localStorage.setItem(RESTAURANT_CUSTOMIZATION_KEY, JSON.stringify(nextMap || {}));
+  } catch (err) {
+    console.error("Failed to persist restaurant customization overrides", err);
+  }
+};
+
+const mergeCustomizationIntoItem = (item, override) => {
+  if (!override || typeof override !== "object") return item;
+
+  const ingredientList =
+    normalizeTextList(override.ingredients).length > 0
+      ? normalizeTextList(override.ingredients)
+      : normalizeTextList(item?.perberesit ?? item?.Perberesit ?? item?.ingredients ?? item?.Ingredients);
+
+  const requestList =
+    normalizeTextList(override.requestOptions).length > 0
+      ? normalizeTextList(override.requestOptions)
+      : normalizeTextList(item?.requestOptions ?? item?.RequestOptions ?? item?.customizationOptions ?? item?.CustomizationOptions);
+
+  return {
+    ...item,
+    perberesit: ingredientList,
+    Perberesit: ingredientList,
+    ingredients: ingredientList,
+    requestOptions: requestList,
+    RequestOptions: requestList,
+    customizationOptions: requestList,
+  };
 };
 
 const getAssetUrlCandidates = (rawValue) => {
@@ -90,8 +248,13 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
   const [restaurantCategories, setRestaurantCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState({ visible: false, type: "success", message: "" });
+  const [restaurantCustomizationForm, setRestaurantCustomizationForm] = useState({
+    globalAddOns: "",
+  });
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
+  const toastTimerRef = useRef(null);
   const [formData, setFormData] = useState({
     emertimi: "",
     pershkrimi: "",
@@ -100,6 +263,8 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
     disponueshme: true,
     alergjene: "",
     kalori: "",
+    perberesit: "",
+    requestOptions: "",
     restaurantId: restaurantId,
     categoryId: 1
   });
@@ -120,7 +285,15 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         });
         const allItems = Array.isArray(response.data) ? response.data : [];
         const scopedByCategories = scopeItemsByCategory(allItems, categories);
-        setMenuItems(scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
+        const scopedItems = scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId);
+
+        const localOverrides = loadMenuCustomizations();
+        setMenuItems(
+          scopedItems.map((item) => {
+            const itemId = String(item?.id ?? item?.Id ?? "");
+            return mergeCustomizationIntoItem(item, localOverrides[itemId]);
+          })
+        );
 
         if (categories.length > 0) {
           const firstCategoryId = categories[0]?.id ?? categories[0]?.Id;
@@ -154,18 +327,78 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
     fetchMenuItems();
   }, [restaurantId, token]);
 
+  useEffect(() => {
+    const map = loadRestaurantCustomizations();
+    const current = map[String(restaurantId)] || {};
+    setRestaurantCustomizationForm({
+      globalAddOns: addOnsToCsv(current?.globalAddOns),
+    });
+  }, [restaurantId]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value
-    });
+
+    if (name === "perberesit") {
+      setFormData((prev) => {
+        const nextPerberesit = value;
+        const previousIngredientNoOptions = new Set(
+          normalizeTextList(prev.perberesit).map((ingredient) => `no ${String(ingredient).trim().toLowerCase()}`)
+        );
+        const manualRequestOptionsOnly = normalizeTextList(prev.requestOptions).filter(
+          (option) => !previousIngredientNoOptions.has(String(option).trim().toLowerCase())
+        );
+        const mergedRequestOptions = mergeRequestOptionsWithIngredients(nextPerberesit, manualRequestOptionsOnly);
+        return {
+          ...prev,
+          perberesit: nextPerberesit,
+          requestOptions: mergedRequestOptions.join(", "),
+        };
+      });
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
+
+  const showToast = (message, type = "success") => {
+    clearTimeout(toastTimerRef.current);
+    setToast({ visible: true, type, message });
+    toastTimerRef.current = setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }));
+    }, 2800);
+  };
+
+  const handleRestaurantCustomizationInput = (e) => {
+    const { name, value } = e.target;
+    setRestaurantCustomizationForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSaveRestaurantCustomization = () => {
+    const map = loadRestaurantCustomizations();
+    map[String(restaurantId)] = {
+      globalAddOns: normalizeAddOns(restaurantCustomizationForm.globalAddOns),
+    };
+    saveRestaurantCustomizations(map);
+    showToast("Restaurant customization saved.", "success");
+  };
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   const openModal = (item = null) => {
     if (item) {
       setEditingItem(item);
       setFormData({
+        ...(item || {}),
         emertimi: item.emertimi ?? item.Emertimi ?? "",
         pershkrimi: item.pershkrimi ?? item.Pershkrimi ?? "",
         cmimi: item.cmimi ?? item.Cmimi ?? "",
@@ -173,6 +406,11 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         disponueshme: item.disponueshme ?? item.Disponueshme ?? true,
         alergjene: item.alergjene ?? item.Alergjene ?? "",
         kalori: item.kalori ?? item.Kalori ?? "",
+        perberesit: listToCsv(item.perberesit ?? item.Perberesit ?? item.ingredients ?? item.Ingredients),
+        requestOptions: mergeRequestOptionsWithIngredients(
+          item.perberesit ?? item.Perberesit ?? item.ingredients ?? item.Ingredients,
+          item.requestOptions ?? item.RequestOptions ?? item.customizationOptions ?? item.CustomizationOptions
+        ).join(", "),
         restaurantId: restaurantId,
         categoryId: item.categoryId ?? item.CategoryId ?? 1
       });
@@ -187,6 +425,8 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         disponueshme: true,
         alergjene: "",
         kalori: "",
+        perberesit: "",
+        requestOptions: "",
         restaurantId: restaurantId,
         categoryId: defaultCategoryId
       });
@@ -200,22 +440,22 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
     const normalizedCalories = String(formData.kalori || "").trim() === "" ? null : Number(formData.kalori);
 
     if (!String(formData.emertimi || "").trim()) {
-      alert("Item name is required.");
+      showToast("Item name is required.", "danger");
       return;
     }
 
     if (!Number.isFinite(normalizedPrice) || normalizedPrice <= 0) {
-      alert("Price must be greater than 0.");
+      showToast("Price must be greater than 0.", "danger");
       return;
     }
 
     if (!normalizedCategoryId) {
-      alert("Please select a valid category for this restaurant.");
+      showToast("Please select a valid category for this restaurant.", "danger");
       return;
     }
 
     if (normalizedCalories !== null && !Number.isFinite(normalizedCalories)) {
-      alert("Calories must be a valid number.");
+      showToast("Calories must be a valid number.", "danger");
       return;
     }
 
@@ -227,6 +467,8 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       disponueshme: Boolean(formData.disponueshme),
       alergjene: String(formData.alergjene || "").trim(),
       kalori: normalizedCalories,
+      perberesit: normalizeTextList(formData.perberesit).join(", "),
+      requestOptions: mergeRequestOptionsWithIngredients(formData.perberesit, formData.requestOptions).join(", "),
       categoryId: normalizedCategoryId,
     };
 
@@ -245,6 +487,8 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
     }
 
     try {
+      let savedItemId = null;
+
       if (editingItem) {
         const editingItemId = editingItem.id ?? editingItem.Id;
         await axios.put(
@@ -252,15 +496,27 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
           { ...payload, id: editingItemId },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        alert("Menu item updated");
+        savedItemId = editingItemId;
+        showToast("Menu item updated.", "success");
       } else {
-        await axios.post(
+        const createResponse = await axios.post(
           `${API_BASE_URL}/MenuItems`,
           payload,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        alert("Menu item created");
+        savedItemId = createResponse?.data?.id ?? createResponse?.data?.Id ?? null;
+        showToast("Menu item created.", "success");
       }
+
+      if (savedItemId) {
+        const map = loadMenuCustomizations();
+        map[String(savedItemId)] = {
+          ingredients: normalizeTextList(formData.perberesit),
+          requestOptions: mergeRequestOptionsWithIngredients(formData.perberesit, formData.requestOptions),
+        };
+        saveMenuCustomizations(map);
+      }
+
       setShowModal(false);
       // Refresh
       const categoriesResponse = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurantId}`, {
@@ -274,7 +530,14 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       });
       const allItems = Array.isArray(response.data) ? response.data : [];
       const scopedByCategories = scopeItemsByCategory(allItems, categories);
-      setMenuItems(scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
+      const scopedItems = scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId);
+      const localOverrides = loadMenuCustomizations();
+      setMenuItems(
+        scopedItems.map((item) => {
+          const itemId = String(item?.id ?? item?.Id ?? "");
+          return mergeCustomizationIntoItem(item, localOverrides[itemId]);
+        })
+      );
     } catch (error) {
       console.error(error);
       const validationErrors = error?.response?.data?.errors
@@ -289,7 +552,7 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         error?.response?.data?.title ||
         error?.message ||
         "Failed to save";
-      alert(`Failed to save: ${serverMessage}`);
+      showToast(`Failed to save: ${serverMessage}`, "danger");
     }
   };
 
@@ -300,10 +563,15 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
           headers: { Authorization: `Bearer ${token}` }
         });
         setMenuItems(menuItems.filter(item => Number(item.id ?? item.Id) !== Number(id)));
-        alert("Deleted");
+
+        const map = loadMenuCustomizations();
+        delete map[String(id)];
+        saveMenuCustomizations(map);
+
+        showToast("Menu item deleted.", "success");
       } catch (error) {
         console.error(error);
-        alert("Failed to delete");
+        showToast("Failed to delete menu item.", "danger");
       }
     }
   };
@@ -324,6 +592,13 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
 
   return (
     <div className="container py-4">
+      {toast.visible && (
+        <div className={`app-toast app-toast--${toast.type}`} role="alert" aria-live="polite">
+          <div className="app-toast__body">{toast.message}</div>
+          <button type="button" className="btn-close" aria-label="Close" onClick={() => setToast((prev) => ({ ...prev, visible: false }))}></button>
+        </div>
+      )}
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>🍽️ Manage Menu</h2>
         <div>
@@ -333,6 +608,30 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
           <button className="btn btn-primary" onClick={() => openModal()}>
             + Add Item
           </button>
+        </div>
+      </div>
+
+      <div className="card mb-3">
+        <div className="card-body">
+          <h6 className="mb-3">Restaurant-wide paid add-ons (same for all products)</h6>
+          <div className="row g-2">
+            <div className="col-12">
+              <label className="form-label small text-uppercase fw-semibold mb-1">Global paid add-ons</label>
+              <textarea
+                name="globalAddOns"
+                className="form-control"
+                rows="2"
+                placeholder="e.g. Cheese:1.00; Mayo:0.50"
+                value={restaurantCustomizationForm.globalAddOns}
+                onChange={handleRestaurantCustomizationInput}
+              />
+            </div>
+          </div>
+          <div className="mt-3 d-flex justify-content-end">
+            <button type="button" className="btn btn-outline-primary" onClick={handleSaveRestaurantCustomization}>
+              Save restaurant options
+            </button>
+          </div>
         </div>
       </div>
 
@@ -434,7 +733,6 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         </div>
       )}
 
-      
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -448,6 +746,20 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
                 <textarea name="pershkrimi" className="form-control mb-2" placeholder="Description" value={formData.pershkrimi} onChange={handleInputChange} />
                 <input name="cmimi" type="number" className="form-control mb-2" placeholder="Price" value={formData.cmimi} onChange={handleInputChange} />
                 <input name="foto" className="form-control mb-2" placeholder="Image URL" value={formData.foto} onChange={handleInputChange} />
+                <textarea
+                  name="perberesit"
+                  className="form-control mb-2"
+                  placeholder="Ingredients (comma separated), e.g. Bun, Beef, Onion, Cheese"
+                  value={formData.perberesit}
+                  onChange={handleInputChange}
+                />
+                <textarea
+                  name="requestOptions"
+                  className="form-control mb-2"
+                  placeholder="Customer request options (comma separated), e.g. No onion, No mayo"
+                  value={formData.requestOptions}
+                  onChange={handleInputChange}
+                />
                 {String(formData.foto || "").trim() && (
                   <div className="mb-2">
                     <img

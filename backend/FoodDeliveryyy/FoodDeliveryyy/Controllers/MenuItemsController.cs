@@ -83,6 +83,8 @@ public class MenuItemsController : ControllerBase
         existing.Disponueshme = menuItem.Disponueshme;
         existing.Alergjene = menuItem.Alergjene;
         existing.Kalori = menuItem.Kalori;
+        existing.Perberesit = menuItem.Perberesit;
+        existing.RequestOptions = menuItem.RequestOptions;
         existing.CategoryId = menuItem.CategoryId;
 
         try
