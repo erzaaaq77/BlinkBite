@@ -5,7 +5,7 @@ import "./MerchantDashboard.css";
 
 const API_BASE_URL = "http://localhost:5063/api";
 
-const MerchantDashboard = ({token,onBack}) =>{
+const MerchantDashboard = ({ token }) => {
 
     const [dashboard,setDashboard]=useState(null);
     const [loading,setLoading]=useState(true);
@@ -22,6 +22,7 @@ const MerchantDashboard = ({token,onBack}) =>{
 
     }
     catch(err){
+      console.error(err);
         console.error("Failed to load dashboard data");
         setError("Failed to load dashboard data");
     }
@@ -54,9 +55,7 @@ if (error) {
       <div className="merchant-state-card merchant-state-error">
         <h4 className="mb-2">Dashboard failed to load</h4>
         <p className="mb-3">{error}</p>
-        <button className="btn btn-outline-danger" onClick={onBack}>
-          <i className="bi bi-arrow-left me-2"></i>Back to Home
-        </button>
+        {/* Back to Home button removed for merchant restriction */}
       </div>
     </section>
   );
@@ -68,9 +67,7 @@ if (error) {
       <div className="merchant-state-card">
         <h4 className="mb-2">No dashboard data yet</h4>
         <p className="mb-3">There is no merchant data available for this account right now.</p>
-        <button className="btn btn-outline-secondary" onClick={onBack}>
-          <i className="bi bi-arrow-left me-2"></i>Back to Home
-        </button>
+        {/* Back to Home button removed for merchant restriction */}
       </div>
     </section>
   );
@@ -119,6 +116,7 @@ if (error) {
     setSelectedOrder(response.data);
     setShowModal(true);
   } catch (err) {
+    console.error(err);
     alert("Could not load order details");
   }
 };
@@ -126,9 +124,7 @@ if (error) {
     <section className="merchant-dashboard-page">
       <div className="container py-4 py-lg-5">
         <div className="merchant-dash-topbar mb-4">
-          <button className="btn btn-light merchant-back-btn" onClick={onBack}>
-            <i className="bi bi-arrow-left me-2"></i>Back to Home
-          </button>
+          {/* Back to Home button removed for merchant restriction */}
              <button 
               className="btn btn-outline-primary"
               onClick={() => {

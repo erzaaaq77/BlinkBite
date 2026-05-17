@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import * as signalR from "@microsoft/signalr";
 import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
-import logo from "./assets/LogoBB.png";
-import locationImage from "./assets/location.png";
-import MerchantDashboard from "./components/MerchantDashboard.jsx";
-import DriverDashboard from "./components/DriverDashboard";
-import OrderTracking from "./components/OrderTracking";
+import logo from "./assets/LogoBB.webp";
+import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
+const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
+const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
+const OrderTracking = lazy(() => import("./components/OrderTracking"));
 
 
 
@@ -27,20 +26,50 @@ function KanbanItemImage({ candidates = [], alt = "" }) {
   const [idx, setIdx] = React.useState(0);
   const src = candidates[idx] || "";
   if (!src) {
-    return (
-      <div className="kd-item-img kd-item-img-placeholder">
-        <i className="bi bi-image"></i>
-      </div>
-    );
+    return <div className="kd-item-img kd-item-img-placeholder"><i className="bi bi-image"></i></div>;
   }
-  return (
-    <img
-      className="kd-item-img"
-      src={src}
-      alt={alt}
-      onError={() => { if (idx < candidates.length - 1) setIdx(i => i + 1); }}
-    />
-  );
+  return <img className="kd-item-img" src={src} alt={alt} onError={() => { if (idx < candidates.length - 1) setIdx(i => i + 1); }} />;
+}
+
+class PageErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, message: "" };
+  }
+
+  static getDerivedStateFromError(error) {
+    return {
+      hasError: true,
+      message: String(error?.message || "Unexpected render error"),
+    };
+  }
+
+  componentDidCatch(error) {
+    console.error("Page render error:", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <section className="container py-5">
+          <div className="alert alert-danger d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span>Manage Menu failed to render: {this.state.message}</span>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-danger"
+              onClick={() => {
+                window.location.hash = "/merchant/dashboard";
+              }}
+            >
+              Back to Merchant Dashboard
+            </button>
+          </div>
+        </section>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 function App() {
@@ -303,7 +332,9 @@ function App() {
         if (myRestaurant && (myRestaurant.id || myRestaurant.Id)) {
           setMerchantRestaurantIdForUi(myRestaurant.id ?? myRestaurant.Id);
         }
-      } catch {}
+      } catch (error) {
+        console.error(error);
+      }
     };
     tryAssignMerchantRestaurantId();
   }, [isMerchantRole, currentUser]);
@@ -2067,14 +2098,24 @@ function App() {
   };
 
   useEffect(() => {
+    import("bootstrap/dist/js/bootstrap.bundle.min.js").catch((error) => {
+      console.error("Failed to load bootstrap JS bundle", error);
+    });
+  }, []);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
     fetchCategories();
     if (token) fetchCurrentUser();
   }, [token]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const stored = loadCartFromStorage();
     setCartItems(stored);
   }, []);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     localStorage.setItem(ORDER_CART_KEY, JSON.stringify(cartItems));
@@ -2082,6 +2123,7 @@ function App() {
     setCartCount(totalQty);
   }, [cartItems]);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const hydrateCartItemsFromMenu = async () => {
       const hasMissingImage = cartItems.some((item) => item?.menuItemId && !item?.image);
@@ -2115,6 +2157,7 @@ function App() {
 
     hydrateCartItemsFromMenu();
   }, [cartItems]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     if (deliveryAddress) return;
@@ -2140,10 +2183,28 @@ function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const syncRouteFromHash = async () => {
       const route = getRouteState();
-      const { page, restaurantId, orderId } = route;
+
+      // Restrict merchant role strictly to merchant dashboard/menu/orders dashboard
+      if (isMerchantRole) {
+        // Allowed: merchantDashboard, merchantMenu, myOrders (Orders Dashboard)
+        if (
+          route.page !== "merchantDashboard" &&
+          route.page !== "merchantMenu" &&
+          route.page !== "myOrders"
+        ) {
+          window.location.hash = "/merchant/dashboard";
+          setPage("merchantDashboard");
+          setActiveRestaurantId(null);
+          setActiveBranchId("");
+          setTrackOrderId("");
+          return;
+        }
+      }
+
       setPage(route.page);
       setActiveRestaurantId(route.restaurantId);
       setActiveBranchId(route.branchId || "");
@@ -2231,8 +2292,10 @@ function App() {
     return () => {
       window.removeEventListener("hashchange", syncRouteFromHash);
     };
-  }, [token, normalizedCurrentUserRole]);
+  }, [token, normalizedCurrentUserRole, isMerchantRole]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const shouldUseRealtime = page === "myOrders" && Boolean(token);
     if (!shouldUseRealtime) {
@@ -2320,6 +2383,7 @@ function App() {
       isDisposed = true;
     };
   }, [page, token]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   useEffect(() => {
     if (page !== "myOrders" || !token) return;
@@ -2332,6 +2396,8 @@ function App() {
 
   // ── MERCHANT POLLING: detect new Pending orders ──
   const audioCtxRef = React.useRef(null);
+  const audioUnlockedRef = React.useRef(false);
+  const pendingBeepRef = React.useRef(false);
   const pageRef = React.useRef(page);
   React.useEffect(() => { pageRef.current = page; }, [page]);
 
@@ -2340,7 +2406,10 @@ function App() {
     if (!audioCtxRef.current) {
       try {
         audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      } catch (_) { return null; }
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
     }
     return audioCtxRef.current;
   }, []);
@@ -2390,13 +2459,22 @@ function App() {
 
   // Called from polling (outside user gesture) — resumes ctx then plays
   const playNewOrderSound = React.useCallback(async () => {
-    const ctx = audioCtxRef.current;
-    if (!ctx) return; // no user gesture yet, skip
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
     try {
       if (ctx.state !== "running") await ctx.resume();
-      doBeeps(ctx);
-    } catch (_) {}
-  }, [doBeeps]);
+      if (ctx.state === "running") {
+        audioUnlockedRef.current = true;
+        doBeeps(ctx);
+        pendingBeepRef.current = false;
+      } else {
+        pendingBeepRef.current = true;
+      }
+    } catch (error) {
+      console.error(error);
+      pendingBeepRef.current = true;
+    }
+  }, [ensureAudioCtx, doBeeps]);
 
   // Called directly from button click — guaranteed to work
   const playTestSound = React.useCallback(() => {
@@ -2405,12 +2483,84 @@ function App() {
     // If suspended, resume() returns a promise but we can still schedule
     // because the resume happens synchronously from the gesture context
     if (ctx.state === "suspended") {
-      ctx.resume().then(() => doBeeps(ctx)).catch(() => {});
+      ctx.resume().then(() => {
+        audioUnlockedRef.current = true;
+        doBeeps(ctx);
+      }).catch(() => {});
     } else {
+      audioUnlockedRef.current = true;
       doBeeps(ctx);
     }
   }, [ensureAudioCtx, doBeeps]);
 
+  // Prime/unlock audio from any normal click path (login/nav) so alerts can play later
+  const primeAudioFromGesture = React.useCallback(() => {
+    const ctx = ensureAudioCtx();
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().then(() => {
+        if (ctx.state === "running") {
+          audioUnlockedRef.current = true;
+          if (pendingBeepRef.current) {
+            doBeeps(ctx);
+            pendingBeepRef.current = false;
+          }
+        }
+      }).catch(() => {});
+      return;
+    }
+
+    if (ctx.state === "running") {
+      audioUnlockedRef.current = true;
+      if (pendingBeepRef.current) {
+        doBeeps(ctx);
+        pendingBeepRef.current = false;
+      }
+    }
+  }, [ensureAudioCtx, doBeeps]);
+
+  useEffect(() => {
+    if (!isMerchantRole || !token || audioUnlockedRef.current) return undefined;
+
+    const unlockAudio = async () => {
+      const ctx = ensureAudioCtx();
+      if (!ctx) return;
+
+      try {
+        if (ctx.state !== "running") {
+          await ctx.resume();
+        }
+
+        if (ctx.state === "running") {
+          audioUnlockedRef.current = true;
+
+          if (pendingBeepRef.current) {
+            doBeeps(ctx);
+            pendingBeepRef.current = false;
+          }
+
+          window.removeEventListener("pointerdown", unlockAudio);
+          window.removeEventListener("keydown", unlockAudio);
+          window.removeEventListener("touchstart", unlockAudio);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    window.addEventListener("pointerdown", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+    window.addEventListener("touchstart", unlockAudio);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+      window.removeEventListener("touchstart", unlockAudio);
+    };
+  }, [isMerchantRole, token, ensureAudioCtx, doBeeps]);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (!isMerchantRole || !token) {
       clearInterval(pollingIntervalRef.current);
@@ -2479,7 +2629,9 @@ function App() {
             fetchOperationalOrders();
           }
         }
-      } catch (_) {}
+      } catch (error) {
+        console.error(error);
+      }
     };
 
     // Run once immediately, then every 5s
@@ -2491,6 +2643,7 @@ function App() {
       pollingIntervalRef.current = null;
     };
   }, [isMerchantRole, token, currentUser, page]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   return (
     <>
@@ -2526,6 +2679,7 @@ function App() {
            <button
            className="btn btn-outline-info"
             onClick={() => {
+           primeAudioFromGesture();
            window.location.hash = "/merchant/dashboard";
              }}
     >
@@ -2595,6 +2749,7 @@ function App() {
                 <button
                   className="btn btn-outline-primary nav-orders-btn"
                   onClick={() => {
+                    primeAudioFromGesture();
                     setNewOrderCount(0);
                     window.location.hash = "/my-orders";
                   }}
@@ -2704,7 +2859,15 @@ function App() {
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-              <button className="btn btn-primary" onClick={handleLogin}>Login</button>
+              <button
+                className="btn btn-primary"
+                onClick={() => {
+                  primeAudioFromGesture();
+                  handleLogin();
+                }}
+              >
+                Login
+              </button>
             </div>
           </div>
         </div>
@@ -2787,39 +2950,37 @@ function App() {
             nearbyError={nearbyError}
           />
         )}
-         {page === "merchantDashboard" && (
-        <MerchantDashboard 
-          token={token} 
-          onBack={() => {
-            window.location.hash = "/";
-          }}
-          
+        {page === "merchantDashboard" && (
+          <MerchantDashboard 
+            token={token} 
+            onBack={() => { window.location.hash = "/"; }}
+          />
+        )}
+        {page === "driverDashboard" && (
+          <DriverDashboard token={token} onBack={() => { window.location.hash = "/"; }} />
+        )}
+        {page === "merchantMenu" && (
+          <section className="container py-4" style={{ marginTop: "96px" }}>
+            <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+              <h2 className="mb-0">Manage Menu</h2>
+              <div className="small text-muted">
+                Restaurant ID: {activeRestaurantId ? String(activeRestaurantId) : "not detected"}
+              </div>
+            </div>
 
-        />
-
-
-      )}
+            <PageErrorBoundary>
+              <MenuManagement
+                key={String(activeRestaurantId || "none")}
+                token={token}
+                restaurantId={Number(activeRestaurantId) || null}
+                onBack={() => { window.location.hash = "/merchant/dashboard"; }}
+              />
+            </PageErrorBoundary>
+          </section>
+        )}
         {page === "trackOrder" && (
-    <OrderTracking orderId={route.orderId} token={token} />
-  )}
-    {page === "driverDashboard" && (
-    <DriverDashboard token={token} onBack={() => { window.location.hash = "/"; }} />
-  )}
-{page === "merchantMenu" && (
-  <MenuManagement
-    token={token}
-    restaurantId={parseInt(route.restaurantId)}
-    onBack={() => {
-      window.location.hash = "/merchant/dashboard";
-    }}
-  />
-)}
-      {page === "trackOrder" && (
-  <OrderTracking 
-    orderId={trackOrderId} 
-    token={token} 
-  />
-)}
+          <OrderTracking orderId={trackOrderId} token={token} />
+        )}
         {page === "restaurants" && (
           <RestaurantsPage
             selectedCategory={selectedCategory}
@@ -3420,12 +3581,36 @@ function App() {
             </div>
           </section>
         )}
-          {page === "driverDashboard" && (
-    <DriverDashboard 
-      token={token} 
-      onBack={() => { window.location.hash = "/"; }}
-    />
-  )}
+
+        {![
+          "home",
+          "merchantDashboard",
+          "driverDashboard",
+          "merchantMenu",
+          "trackOrder",
+          "restaurants",
+          "myOrders",
+          "restaurantDetails",
+          "branchMenu",
+          "cart",
+        ].includes(page) && (
+          <section className="container py-5">
+            <div className="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
+              <span>Unknown page state: {String(page || "empty")}. Redirecting options are available below.</span>
+              <div className="d-flex gap-2">
+                {isMerchantRole ? (
+                  <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => { window.location.hash = "/merchant/dashboard"; }}>
+                    Go to Merchant Dashboard
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => { window.location.hash = "/"; }}>
+                    Go to Home
+                  </button>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
       </Suspense>
     </>
   );

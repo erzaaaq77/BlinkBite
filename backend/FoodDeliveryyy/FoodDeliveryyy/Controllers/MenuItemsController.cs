@@ -19,12 +19,14 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<MenuItems>>> GetMenuItems()
     {
         return await _context.MenuItems.ToListAsync();
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<MenuItems>> GetMenuItem(int id)
     {
         var menuItem = await _context.MenuItems.FindAsync(id);
@@ -39,6 +41,13 @@ public class MenuItemsController : ControllerBase
     [Authorize (Roles ="Merchant,Admin")]
     public async Task<ActionResult<MenuItems>> CreateMenuItem(MenuItems menuItem)
     {
+        if (!await _context.MenuCategories.AnyAsync(c => c.Id == menuItem.CategoryId))
+        {
+            return BadRequest("Invalid categoryId.");
+        }
+
+        // Accept client payloads with nested category object, but persist by FK only.
+        menuItem.Category = null;
         _context.MenuItems.Add(menuItem);
         await _context.SaveChangesAsync();
 
@@ -55,7 +64,26 @@ public class MenuItemsController : ControllerBase
             return BadRequest();
         }
 
-        _context.Entry(menuItem).State = EntityState.Modified;
+        if (!await _context.MenuCategories.AnyAsync(c => c.Id == menuItem.CategoryId))
+        {
+            return BadRequest("Invalid categoryId.");
+        }
+
+        var existing = await _context.MenuItems.FindAsync(id);
+        if (existing == null)
+        {
+            return NotFound();
+        }
+
+        // Only update scalar fields on MenuItem; category relationship is by FK.
+        existing.Emertimi = menuItem.Emertimi;
+        existing.Pershkrimi = menuItem.Pershkrimi;
+        existing.Cmimi = menuItem.Cmimi;
+        existing.Foto = menuItem.Foto;
+        existing.Disponueshme = menuItem.Disponueshme;
+        existing.Alergjene = menuItem.Alergjene;
+        existing.Kalori = menuItem.Kalori;
+        existing.CategoryId = menuItem.CategoryId;
 
         try
         {

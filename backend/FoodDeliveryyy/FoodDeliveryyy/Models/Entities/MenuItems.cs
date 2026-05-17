@@ -34,5 +34,5 @@ public class MenuItems
     public int CategoryId { get; set; }
 
     [ForeignKey("CategoryId")]
-    public virtual MenuCategory Category { get; set; } = null!;
+    public virtual MenuCategory? Category { get; set; }
 }

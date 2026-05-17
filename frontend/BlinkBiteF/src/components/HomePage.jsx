@@ -1,7 +1,7 @@
 import React from "react";
-import merchantImage from "../assets/Merchant.png";
-import courierImage from "../assets/Courier.png";
-import communityImage from "../assets/Community.png";
+import merchantImage from "../assets/Merchant.webp";
+import courierImage from "../assets/Courier.webp";
+import communityImage from "../assets/Community.webp";
 
 function HomePage({
   categories,
