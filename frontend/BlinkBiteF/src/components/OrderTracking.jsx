@@ -19,7 +19,8 @@ const truckIcon = L.divIcon({
   popupAnchor: [0, -15],
 });
 
-const API_BASE_URL = "http://localhost:5063";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 const DEFAULT_POS = [42.6629, 21.1655];
 
 const STATUS_LABELS = {
@@ -66,7 +67,7 @@ const OrderTracking = ({ orderId, token }) => {
   useEffect(() => {
     const fetchOrderInfo = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/Orders/${orderId}`, {
+        const response = await fetch(`${API_ORIGIN}/api/Orders/${orderId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (response.ok) {
@@ -89,7 +90,7 @@ const OrderTracking = ({ orderId, token }) => {
 
       try {
         const connection = new signalR.HubConnectionBuilder()
-          .withUrl(`${API_BASE_URL}/locationHub`, {
+          .withUrl(`${API_ORIGIN}/locationHub`, {
             accessTokenFactory: () => token
           })
           .withAutomaticReconnect()

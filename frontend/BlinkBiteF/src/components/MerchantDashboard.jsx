@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import "./MerchantDashboard.css";
 
-const API_BASE_URL = "http://localhost:5063/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 
 const ORDER_STATUS_LABELS = {
   1: "Pending",

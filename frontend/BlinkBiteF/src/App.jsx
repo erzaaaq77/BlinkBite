@@ -12,7 +12,7 @@ const OrderTracking = lazy(() => import("./components/OrderTracking"));
 
 
 
-const API_BASE = "http://localhost:5063/api";
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 const ACCESS_TOKEN_KEY = "access_token";
 const NEARBY_COORDS_KEY = "nearby_coords";
 const DELIVERY_GEO_CACHE_KEY = "blinkbite_geo_cache_v1";

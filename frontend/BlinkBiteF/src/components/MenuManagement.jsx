@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
-const API_BASE_URL = "http://localhost:5063/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
 const RESTAURANT_CUSTOMIZATION_KEY = "blinkbite_restaurant_customizations_v1";

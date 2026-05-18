@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback, useRef } from "react";
 import axios from "axios";
 import * as signalR from "@microsoft/signalr";
 
-const API_BASE_URL = "http://localhost:5063/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 const DRIVER_ORDERS_BATCH_SIZE = 5;
 
 const STATUS_MAP = {
@@ -114,7 +115,7 @@ const DriverDashboard = ({ token, onBack }) => {
     }
     try {
       const connection = new signalR.HubConnectionBuilder()
-        .withUrl(`http://localhost:5063/locationHub`, { accessTokenFactory: () => token })
+        .withUrl(`${API_ORIGIN}/locationHub`, { accessTokenFactory: () => token })
         .withAutomaticReconnect()
         .build();
       await connection.start();
