@@ -459,7 +459,12 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       return;
     }
 
-    const payload = {
+    const ingredientsList = normalizeTextList(formData.perberesit);
+    const requestOptionsList = mergeRequestOptionsWithIngredients(formData.perberesit, formData.requestOptions);
+    const ingredientsCsv = ingredientsList.join(", ");
+    const requestOptionsCsv = requestOptionsList.join(", ");
+
+    const payloadBase = {
       emertimi: String(formData.emertimi || "").trim(),
       pershkrimi: String(formData.pershkrimi || "").trim(),
       cmimi: normalizedPrice,
@@ -467,42 +472,99 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       disponueshme: Boolean(formData.disponueshme),
       alergjene: String(formData.alergjene || "").trim(),
       kalori: normalizedCalories,
-      perberesit: normalizeTextList(formData.perberesit).join(", "),
-      requestOptions: mergeRequestOptionsWithIngredients(formData.perberesit, formData.requestOptions).join(", "),
       categoryId: normalizedCategoryId,
+    };
+
+    const payloadString = {
+      ...payloadBase,
+      perberesit: ingredientsCsv,
+      requestOptions: requestOptionsCsv,
+      ingredients: ingredientsList,
+      requestOptionsList,
+      customizationOptions: requestOptionsList,
+    };
+
+    const payloadArray = {
+      ...payloadBase,
+      perberesit: ingredientsList,
+      requestOptions: requestOptionsList,
+      Perberesit: ingredientsList,
+      RequestOptions: requestOptionsList,
+      ingredients: ingredientsList,
+      Ingredients: ingredientsList,
+      customizationOptions: requestOptionsList,
+      CustomizationOptions: requestOptionsList,
     };
 
     const selectedCategory = restaurantCategories.find(
       (category) => Number(category?.id ?? category?.Id) === normalizedCategoryId
     );
 
-    if (selectedCategory) {
-      payload.category = {
+    const categoryPayload = selectedCategory
+      ? {
         id: selectedCategory?.id ?? selectedCategory?.Id ?? normalizedCategoryId,
         emertimi: selectedCategory?.emertimi ?? selectedCategory?.Emertimi ?? "",
         pershkrimi: selectedCategory?.pershkrimi ?? selectedCategory?.Pershkrimi ?? "",
         renditja: Number(selectedCategory?.renditja ?? selectedCategory?.Renditja ?? 0),
         restaurantId: Number(selectedCategory?.restaurantId ?? selectedCategory?.RestaurantId ?? restaurantId),
-      };
+      }
+      : null;
+
+    if (categoryPayload) {
+      payloadString.category = categoryPayload;
+      payloadArray.category = categoryPayload;
     }
+
+    const saveWithPayloadFallback = async (requestFactory) => {
+      const candidates = [payloadString, payloadArray];
+      let lastError = null;
+
+      for (let index = 0; index < candidates.length; index += 1) {
+        try {
+          return await requestFactory(candidates[index]);
+        } catch (err) {
+          lastError = err;
+
+          if (index === candidates.length - 1) {
+            break;
+          }
+
+          const status = err?.response?.status;
+          const responseText = JSON.stringify(err?.response?.data || "").toLowerCase();
+          const likelyJsonShapeIssue =
+            status === 400 &&
+            /(json|convert|deserialize|array|string|requestoptions|ingredients|perberesit)/i.test(responseText);
+
+          if (!likelyJsonShapeIssue) {
+            break;
+          }
+        }
+      }
+
+      throw lastError;
+    };
 
     try {
       let savedItemId = null;
 
       if (editingItem) {
         const editingItemId = editingItem.id ?? editingItem.Id;
-        await axios.put(
-          `${API_BASE_URL}/MenuItems/${editingItemId}`,
-          { ...payload, id: editingItemId },
-          { headers: { Authorization: `Bearer ${token}` } }
+        await saveWithPayloadFallback((candidatePayload) =>
+          axios.put(
+            `${API_BASE_URL}/MenuItems/${editingItemId}`,
+            { ...candidatePayload, id: editingItemId },
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
         );
         savedItemId = editingItemId;
         showToast("Menu item updated.", "success");
       } else {
-        const createResponse = await axios.post(
-          `${API_BASE_URL}/MenuItems`,
-          payload,
-          { headers: { Authorization: `Bearer ${token}` } }
+        const createResponse = await saveWithPayloadFallback((candidatePayload) =>
+          axios.post(
+            `${API_BASE_URL}/MenuItems`,
+            candidatePayload,
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
         );
         savedItemId = createResponse?.data?.id ?? createResponse?.data?.Id ?? null;
         showToast("Menu item created.", "success");
