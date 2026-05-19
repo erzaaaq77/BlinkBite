@@ -176,18 +176,38 @@ const saveRestaurantCustomizations = (nextMap) => {
   }
 };
 
+const resolveItemIngredients = (item) =>
+  normalizeTextList(
+    item?.perberesit ??
+      item?.Perberesit ??
+      item?.perberes ??
+      item?.Perberes ??
+      item?.ingredients ??
+      item?.Ingredients
+  );
+
+const resolveItemRequestOptions = (item) =>
+  normalizeTextList(
+    item?.requestOptions ??
+      item?.RequestOptions ??
+      item?.customizationOptions ??
+      item?.CustomizationOptions ??
+      item?.opsionePersonalizimi ??
+      item?.OpsionePersonalizimi
+  );
+
 const mergeCustomizationIntoItem = (item, override) => {
-  if (!override || typeof override !== "object") return item;
+  const safeOverride = override && typeof override === "object" ? override : {};
 
   const ingredientList =
-    normalizeTextList(override.ingredients).length > 0
-      ? normalizeTextList(override.ingredients)
-      : normalizeTextList(item?.perberesit ?? item?.Perberesit ?? item?.ingredients ?? item?.Ingredients);
+    normalizeTextList(safeOverride.ingredients).length > 0
+      ? normalizeTextList(safeOverride.ingredients)
+      : resolveItemIngredients(item);
 
   const requestList =
-    normalizeTextList(override.requestOptions).length > 0
-      ? normalizeTextList(override.requestOptions)
-      : normalizeTextList(item?.requestOptions ?? item?.RequestOptions ?? item?.customizationOptions ?? item?.CustomizationOptions);
+    normalizeTextList(safeOverride.requestOptions).length > 0
+      ? normalizeTextList(safeOverride.requestOptions)
+      : resolveItemRequestOptions(item);
 
   return {
     ...item,
@@ -201,12 +221,10 @@ const mergeCustomizationIntoItem = (item, override) => {
 };
 
 const getItemIngredients = (item) =>
-  normalizeTextList(item?.perberesit ?? item?.Perberesit ?? item?.ingredients ?? item?.Ingredients);
+  resolveItemIngredients(item);
 
 const getItemRequestOptions = (item) =>
-  normalizeTextList(
-    item?.requestOptions ?? item?.RequestOptions ?? item?.customizationOptions ?? item?.CustomizationOptions
-  );
+  resolveItemRequestOptions(item);
 
 const getAssetUrlCandidates = (rawValue) => {
   const raw = String(rawValue || "").trim();
@@ -437,10 +455,10 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         disponueshme: item.disponueshme ?? item.Disponueshme ?? true,
         alergjene: item.alergjene ?? item.Alergjene ?? "",
         kalori: item.kalori ?? item.Kalori ?? "",
-        perberesit: listToCsv(item.perberesit ?? item.Perberesit ?? item.ingredients ?? item.Ingredients),
+        perberesit: listToCsv(resolveItemIngredients(item)),
         requestOptions: mergeRequestOptionsWithIngredients(
-          item.perberesit ?? item.Perberesit ?? item.ingredients ?? item.Ingredients,
-          item.requestOptions ?? item.RequestOptions ?? item.customizationOptions ?? item.CustomizationOptions
+          resolveItemIngredients(item),
+          resolveItemRequestOptions(item)
         ).join(", "),
         restaurantId: restaurantId,
         categoryId: item.categoryId ?? item.CategoryId ?? 1
