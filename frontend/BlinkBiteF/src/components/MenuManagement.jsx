@@ -176,6 +176,49 @@ const saveRestaurantCustomizations = (nextMap) => {
   }
 };
 
+const extractListByKeyHints = (source, keyHints = [], depth = 0) => {
+  if (!source || depth > 2) return [];
+
+  if (Array.isArray(source)) {
+    const primitiveList = normalizeTextList(source);
+    if (primitiveList.length > 0) return primitiveList;
+
+    for (const entry of source) {
+      const nested = extractListByKeyHints(entry, keyHints, depth + 1);
+      if (nested.length > 0) return nested;
+    }
+    return [];
+  }
+
+  if (typeof source !== "object") {
+    return normalizeTextList(source);
+  }
+
+  const entries = Object.entries(source);
+
+  for (const [key, value] of entries) {
+    const normalizedKey = String(key || "").toLowerCase();
+    const matched = keyHints.some((hint) => normalizedKey.includes(hint));
+    if (!matched) continue;
+
+    const asList = normalizeTextList(value);
+    if (asList.length > 0) return asList;
+
+    if (value && typeof value === "object") {
+      const nested = extractListByKeyHints(value, keyHints, depth + 1);
+      if (nested.length > 0) return nested;
+    }
+  }
+
+  for (const [, value] of entries) {
+    if (!value || typeof value !== "object") continue;
+    const nested = extractListByKeyHints(value, keyHints, depth + 1);
+    if (nested.length > 0) return nested;
+  }
+
+  return [];
+};
+
 const resolveItemIngredients = (item) =>
   normalizeTextList(
     item?.perberesit ??
@@ -184,7 +227,16 @@ const resolveItemIngredients = (item) =>
       item?.Perberes ??
       item?.ingredients ??
       item?.Ingredients
-  );
+  ).length > 0
+    ? normalizeTextList(
+        item?.perberesit ??
+          item?.Perberesit ??
+          item?.perberes ??
+          item?.Perberes ??
+          item?.ingredients ??
+          item?.Ingredients
+      )
+    : extractListByKeyHints(item, ["perber", "ingred", "component"]);
 
 const resolveItemRequestOptions = (item) =>
   normalizeTextList(
@@ -194,7 +246,16 @@ const resolveItemRequestOptions = (item) =>
       item?.CustomizationOptions ??
       item?.opsionePersonalizimi ??
       item?.OpsionePersonalizimi
-  );
+  ).length > 0
+    ? normalizeTextList(
+        item?.requestOptions ??
+          item?.RequestOptions ??
+          item?.customizationOptions ??
+          item?.CustomizationOptions ??
+          item?.opsionePersonalizimi ??
+          item?.OpsionePersonalizimi
+      )
+    : extractListByKeyHints(item, ["request", "option", "opsion", "custom"]);
 
 const mergeCustomizationIntoItem = (item, override) => {
   const safeOverride = override && typeof override === "object" ? override : {};
