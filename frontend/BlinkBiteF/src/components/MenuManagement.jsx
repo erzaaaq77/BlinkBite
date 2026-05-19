@@ -6,6 +6,14 @@ const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
 const RESTAURANT_CUSTOMIZATION_KEY = "blinkbite_restaurant_customizations_v1";
 
+const getApiHostLabel = () => {
+  try {
+    return new URL(API_BASE_URL).origin;
+  } catch {
+    return API_BASE_URL;
+  }
+};
+
 const toNumberId = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
@@ -644,6 +652,9 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       ? menuItems.items
       : [];
 
+  const debugApiHost = getApiHostLabel();
+  const debugRestaurantId = toNumberId(restaurantId);
+
   const formatPrice = (value) => {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric.toFixed(2) : "0.00";
@@ -671,6 +682,10 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
             + Add Item
           </button>
         </div>
+      </div>
+
+      <div className="alert alert-secondary py-2 px-3 small" role="status">
+        <strong>Debug:</strong> API Host: {debugApiHost} | API Base: {API_BASE_URL} | Restaurant ID: {debugRestaurantId ?? "missing"}
       </div>
 
       <div className="card mb-3">
