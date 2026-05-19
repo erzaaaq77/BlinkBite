@@ -200,6 +200,14 @@ const mergeCustomizationIntoItem = (item, override) => {
   };
 };
 
+const getItemIngredients = (item) =>
+  normalizeTextList(item?.perberesit ?? item?.Perberesit ?? item?.ingredients ?? item?.Ingredients);
+
+const getItemRequestOptions = (item) =>
+  normalizeTextList(
+    item?.requestOptions ?? item?.RequestOptions ?? item?.customizationOptions ?? item?.CustomizationOptions
+  );
+
 const getAssetUrlCandidates = (rawValue) => {
   const raw = String(rawValue || "").trim();
   if (!raw) return [];
@@ -676,6 +684,18 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
 
   const debugApiHost = getApiHostLabel();
   const debugRestaurantId = toNumberId(restaurantId);
+  const itemsWithIngredientsCount = normalizedMenuItems.filter((item) => getItemIngredients(item).length > 0).length;
+  const itemsWithRequestOptionsCount = normalizedMenuItems.filter((item) => getItemRequestOptions(item).length > 0).length;
+  const debugSampleItems = normalizedMenuItems
+    .slice(0, 3)
+    .map((item) => {
+      const itemId = item?.id ?? item?.Id ?? "?";
+      const name = item?.emertimi ?? item?.Emertimi ?? "Item";
+      const ingredients = getItemIngredients(item);
+      const options = getItemRequestOptions(item);
+      return `#${itemId} ${name} [ing=${ingredients.length}, req=${options.length}]`;
+    })
+    .join(" | ");
 
   const formatPrice = (value) => {
     const numeric = Number(value);
@@ -710,6 +730,8 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         <strong>Debug:</strong> API Host: {debugApiHost} | API Base: {API_BASE_URL} | Restaurant ID: {debugRestaurantId ?? "missing"}
         <br />
         Counts: allItems={debugStats.allItemsCount} | byCategory={debugStats.byCategoryCount} | byRestaurant={debugStats.byRestaurantCount} | selected={debugStats.selectedCount} | categories={debugStats.categoriesCount}
+        <br />
+        Data: withIngredients={itemsWithIngredientsCount} | withRequestOptions={itemsWithRequestOptionsCount} | sample={debugSampleItems || "no items"}
       </div>
 
       <div className="card mb-3">
