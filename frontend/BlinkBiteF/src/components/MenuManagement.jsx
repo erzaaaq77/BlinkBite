@@ -254,6 +254,13 @@ const applyImageFallbackCandidate = (event, candidates, finalFallback = "") => {
 const MenuManagement = ({ token, restaurantId, onBack }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [restaurantCategories, setRestaurantCategories] = useState([]);
+  const [debugStats, setDebugStats] = useState({
+    allItemsCount: 0,
+    byCategoryCount: 0,
+    byRestaurantCount: 0,
+    selectedCount: 0,
+    categoriesCount: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState({ visible: false, type: "success", message: "" });
@@ -294,6 +301,14 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         const allItems = Array.isArray(response.data) ? response.data : [];
         const scopedByCategories = scopeItemsByCategory(allItems, categories);
         const scopedItems = scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId);
+
+        setDebugStats({
+          allItemsCount: allItems.length,
+          byCategoryCount: scopedByCategories.length,
+          byRestaurantCount: filterItemsByRestaurant(allItems, restaurantId).length,
+          selectedCount: scopedItems.length,
+          categoriesCount: categories.length,
+        });
 
         const localOverrides = loadMenuCustomizations();
         setMenuItems(
@@ -601,6 +616,13 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       const allItems = Array.isArray(response.data) ? response.data : [];
       const scopedByCategories = scopeItemsByCategory(allItems, categories);
       const scopedItems = scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId);
+      setDebugStats({
+        allItemsCount: allItems.length,
+        byCategoryCount: scopedByCategories.length,
+        byRestaurantCount: filterItemsByRestaurant(allItems, restaurantId).length,
+        selectedCount: scopedItems.length,
+        categoriesCount: categories.length,
+      });
       const localOverrides = loadMenuCustomizations();
       setMenuItems(
         scopedItems.map((item) => {
@@ -686,6 +708,8 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
 
       <div className="alert alert-secondary py-2 px-3 small" role="status">
         <strong>Debug:</strong> API Host: {debugApiHost} | API Base: {API_BASE_URL} | Restaurant ID: {debugRestaurantId ?? "missing"}
+        <br />
+        Counts: allItems={debugStats.allItemsCount} | byCategory={debugStats.byCategoryCount} | byRestaurant={debugStats.byRestaurantCount} | selected={debugStats.selectedCount} | categories={debugStats.categoriesCount}
       </div>
 
       <div className="card mb-3">
