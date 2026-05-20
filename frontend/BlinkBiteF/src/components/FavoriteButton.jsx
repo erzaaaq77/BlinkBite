@@ -1,15 +1,43 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { favoriteService } from '../services/FavoriteService';
 
-const FavoriteButton = ({ type, id, size = 'medium' }) => {
+const toFavoriteBoolean = (value) => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'number') return value > 0;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0' || normalized === '') return false;
+  }
+
+  if (value && typeof value === 'object') {
+    const candidates = [
+      value.isFavorite,
+      value.favorite,
+      value.favourited,
+      value.IsFavorite,
+      value.Favorite,
+      value.data,
+      value.result,
+    ];
+
+    for (const candidate of candidates) {
+      if (candidate !== undefined) {
+        return toFavoriteBoolean(candidate);
+      }
+    }
+  }
+
+  return Boolean(value);
+};
+
+const FavoriteButton = ({ type, id, size = 'medium', onToggleComplete }) => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isPressed, setIsPressed] = useState(false);
+  const [isPopping, setIsPopping] = useState(false);
 
-  useEffect(() => {
-    checkFavoriteStatus();
-  }, [type, id]);
-
-  const checkFavoriteStatus = async () => {
+  const checkFavoriteStatus = useCallback(async () => {
     try {
       let result;
       if (type === 'restaurant') {
@@ -17,68 +45,108 @@ const FavoriteButton = ({ type, id, size = 'medium' }) => {
       } else {
         result = await favoriteService.checkMenuItemFavorite(id);
       }
-      setIsFavorite(result);
+      setIsFavorite(toFavoriteBoolean(result));
     } catch (error) {
       console.error('Error while checking favorite status:', error);
     }
-  };
+  }, [type, id]);
+
+  useEffect(() => {
+    checkFavoriteStatus();
+  }, [checkFavoriteStatus]);
+
+  useEffect(() => {
+    if (!isPopping) return undefined;
+    const timerId = window.setTimeout(() => setIsPopping(false), 180);
+    return () => window.clearTimeout(timerId);
+  }, [isPopping]);
+
+  const iconSize = size === 'small' ? 20 : 24;
 
   const toggleFavorite = async () => {
+    if (loading) return;
+
+    const previousFavorite = Boolean(isFavorite);
+    const nextFavorite = !previousFavorite;
+
+    // Optimistic UI so the color changes immediately on click.
+    setIsFavorite(nextFavorite);
+    if (nextFavorite) {
+      setIsPopping(true);
+    }
+
     setLoading(true);
     try {
-      if (isFavorite) {
-        if (type === 'restaurant') {
-          await favoriteService.removeRestaurantFavorite(id);
-        } else {
-          await favoriteService.removeMenuItemFavorite(id);
-        }
-      } else {
+      if (nextFavorite) {
         if (type === 'restaurant') {
           await favoriteService.addRestaurantFavorite(id);
         } else {
           await favoriteService.addMenuItemFavorite(id);
         }
+      } else {
+        if (type === 'restaurant') {
+          await favoriteService.removeRestaurantFavorite(id);
+        } else {
+          await favoriteService.removeMenuItemFavorite(id);
+        }
       }
-      setIsFavorite(!isFavorite);
+
+      onToggleComplete?.(nextFavorite);
     } catch (error) {
+      // Revert only if backend operation fails.
+      setIsFavorite(previousFavorite);
       console.error('Error while toggling favorite:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const sizeClass = size === 'small' ? 'w-5 h-5' : 'w-6 h-6';
-
   return (
     <button
-      onClick={toggleFavorite}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleFavorite();
+      }}
+      onMouseDown={() => setIsPressed(true)}
+      onMouseUp={() => setIsPressed(false)}
+      onMouseLeave={() => setIsPressed(false)}
+      onTouchStart={() => setIsPressed(true)}
+      onTouchEnd={() => setIsPressed(false)}
+      onTouchCancel={() => setIsPressed(false)}
       disabled={loading}
-      className="focus:outline-none transition-transform hover:scale-110"
+      type="button"
+      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+      className="btn p-0 border-0 bg-transparent d-inline-flex align-items-center justify-content-center"
+      style={{
+        lineHeight: 1,
+        width: iconSize,
+        height: iconSize,
+        cursor: loading ? 'default' : 'pointer',
+        transform: isPressed ? 'scale(0.88)' : 'scale(1)',
+        transition: 'transform 120ms ease',
+      }}
     >
-      {isFavorite ? (
-        <svg 
-          className={`${sizeClass} text-yellow-500 fill-current`}
-          xmlns="http://www.w3.org/2000/svg" 
-          viewBox="0 0 20 20"
-        >
-          <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
-        </svg>
-      ) : (
-        <svg 
-          className={`${sizeClass} text-gray-400 hover:text-yellow-500`}
-          xmlns="http://www.w3.org/2000/svg" 
-          fill="none" 
-          viewBox="0 0 24 24" 
-          stroke="currentColor"
-        >
-          <path 
-            strokeLinecap="round" 
-            strokeLinejoin="round" 
-            strokeWidth={2} 
-            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-          />
-        </svg>
-      )}
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: isPopping ? 'scale(1.18)' : 'scale(1)',
+          transition: 'transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+        }}
+      >
+        <i
+          className={isFavorite ? 'bi bi-star-fill' : 'bi bi-star'}
+          style={{
+            fontSize: `${iconSize}px`,
+            color: isFavorite ? '#f4b400' : '#7b7b7b',
+            lineHeight: 1,
+            transition: 'color 140ms ease',
+          }}
+          aria-hidden="true"
+        ></i>
+      </span>
     </button>
   );
 };

@@ -1,5 +1,7 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Identity;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,6 +34,18 @@ public class MenuCategoriesController : ControllerBase
     [HttpGet("by-restaurant/{restaurantId}")]
     public async Task<ActionResult<IEnumerable<MenuCategory>>> GetByRestaurant(int restaurantId)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        {
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
+            if (restaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
         var categories = await _context.MenuCategories
             .Where(c => c.RestaurantId == restaurantId)
             .OrderBy(c => c.Renditja)

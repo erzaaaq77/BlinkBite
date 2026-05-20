@@ -41,6 +41,11 @@ public class MenuItems
     [Required]
     public int CategoryId { get; set; }
 
+    public int? RestaurantAddressId { get; set; }
+
     [ForeignKey("CategoryId")]
     public virtual MenuCategory? Category { get; set; }
+
+    [ForeignKey("RestaurantAddressId")]
+    public virtual RestaurantAddress? RestaurantAddress { get; set; }
 }

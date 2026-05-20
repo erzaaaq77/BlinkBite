@@ -15,6 +15,8 @@ public class Orders : IValidatableObject{
 
     [Required (ErrorMessage = "RestaurantId is required")]
     public int RestaurantId { get; set; }
+
+    public int? RestaurantAddressId { get; set; }
     [Required (ErrorMessage = "Delivery Address is required")]
     [StringLength(500, MinimumLength =5,ErrorMessage = "Address must be at least 5 characters long.")]
 
@@ -57,6 +59,9 @@ public class Orders : IValidatableObject{
 
     [ForeignKey("RestaurantId")]
     public virtual Restaurant? Restaurant { get; set; }
+
+    [ForeignKey("RestaurantAddressId")]
+    public virtual RestaurantAddress? RestaurantAddress { get; set; }
 
     public virtual ICollection<OrderItems> OrderItems { get; set; } = new List<OrderItems>();
 

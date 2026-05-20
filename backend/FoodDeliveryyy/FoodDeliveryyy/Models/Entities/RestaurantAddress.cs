@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using FoodDeliveryyy.Models.Identity;
 namespace FoodDeliveryyy.Models.Entities
 {
     public class RestaurantAddress
@@ -8,6 +9,8 @@ namespace FoodDeliveryyy.Models.Entities
         public int Id { get; set; }
         [Required]
         public int RestaurantId { get; set; }
+
+        public string? MerchantUserId { get; set; }
 
 
         [Required]
@@ -30,5 +33,8 @@ namespace FoodDeliveryyy.Models.Entities
 
         [ForeignKey("RestaurantId")]
         public virtual Restaurant? Restaurant { get; set; }
+
+        [ForeignKey("MerchantUserId")]
+        public virtual User? MerchantUser { get; set; }
     }
 }

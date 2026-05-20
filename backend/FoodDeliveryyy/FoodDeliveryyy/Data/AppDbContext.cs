@@ -73,6 +73,42 @@ namespace FoodDeliveryyy.Data
             builder.Entity<RestaurantAddress>()
                 .HasIndex(r => r.Qyteti);
 
+            builder.Entity<RestaurantAddress>()
+                .HasIndex(r => r.MerchantUserId);
+
+            builder.Entity<RestaurantAddress>()
+                .HasOne(r => r.MerchantUser)
+                .WithMany()
+                .HasForeignKey(r => r.MerchantUserId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<MenuItems>()
+                .HasIndex(mi => mi.RestaurantAddressId);
+
+            builder.Entity<MenuItems>()
+                .HasOne(mi => mi.RestaurantAddress)
+                .WithMany()
+                .HasForeignKey(mi => mi.RestaurantAddressId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Orders>()
+                .HasIndex(o => o.RestaurantAddressId);
+
+            builder.Entity<Orders>()
+                .HasOne(o => o.RestaurantAddress)
+                .WithMany()
+                .HasForeignKey(o => o.RestaurantAddressId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            builder.Entity<Promotions>()
+                .HasIndex(p => p.RestaurantAddressId);
+
+            builder.Entity<Promotions>()
+                .HasOne(p => p.RestaurantAddress)
+                .WithMany()
+                .HasForeignKey(p => p.RestaurantAddressId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             builder.Entity<Orders>()
                 .HasIndex(o => o.Statusi);
 

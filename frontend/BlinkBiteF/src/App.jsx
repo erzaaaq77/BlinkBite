@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, useCallback, lazy, Suspense } from "react";
 import * as signalR from "@microsoft/signalr";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -6,9 +6,11 @@ import "./index.css";
 import logo from "./assets/LogoBB.webp";
 import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
+import { favoriteService } from "./services/FavoriteService";
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
+const FavoritesPage = lazy(() => import("./components/FavoritesPage.jsx"));
 
 
 
@@ -17,6 +19,7 @@ const ACCESS_TOKEN_KEY = "access_token";
 const NEARBY_COORDS_KEY = "nearby_coords";
 const DELIVERY_GEO_CACHE_KEY = "blinkbite_geo_cache_v1";
 const ORDER_CART_KEY = "blinkbite_cart_v1";
+const FAVORITE_RESTAURANTS_CACHE_KEY = "blinkbite_favorite_restaurants_v1";
 const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
 const RESTAURANT_CUSTOMIZATION_KEY = "blinkbite_restaurant_customizations_v1";
 const ORDERS_LIST_BATCH_SIZE = 10;
@@ -193,11 +196,15 @@ function App() {
     const hash = window.location.hash || "#/";
 
     if (hash.startsWith("#/merchant/menu/")) {
-  const restaurantId = hash.replace("#/merchant/menu/", "");
-  return {
-    page: "merchantMenu",
-    restaurantId: restaurantId,
-  };
+      const afterPrefix = hash.replace("#/merchant/menu/", "");
+      const [rawRestaurantId, queryString = ""] = afterPrefix.split("?");
+      const params = new URLSearchParams(queryString);
+      const branchParam = params.get("branchId") || "";
+      return {
+        page: "merchantMenu",
+        restaurantId: rawRestaurantId,
+        branchId: decodeURIComponent(branchParam),
+      };
 }
     if (hash.startsWith("#/track/")) {
   const orderId = hash.replace("#/track/", "");
@@ -231,6 +238,15 @@ function App() {
     if (hash.startsWith("#/my-orders")) {
       return {
         page: "myOrders",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
+    if (hash.startsWith("#/favorites")) {
+      return {
+        page: "favorites",
         category: "",
         restaurantId: null,
         branchId: "",
@@ -292,6 +308,23 @@ function App() {
   };
 
   const initialRoute = getRouteState();
+  const loadFavoriteRestaurantsCache = () => {
+    try {
+      const raw = localStorage.getItem(FAVORITE_RESTAURANTS_CACHE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch {
+      return {};
+    }
+  };
+  const persistFavoriteRestaurantsCache = (nextMap) => {
+    try {
+      localStorage.setItem(FAVORITE_RESTAURANTS_CACHE_KEY, JSON.stringify(nextMap || {}));
+    } catch {
+      // Ignore storage write failures.
+    }
+  };
   const [restaurants, setRestaurants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
@@ -345,6 +378,13 @@ function App() {
   const [kanbanDetailOrder, setKanbanDetailOrder] = useState(null);
   const [myOrderItemPreview, setMyOrderItemPreview] = useState(null);
   const [cartItemEditor, setCartItemEditor] = useState(null);
+  const [favoriteRestaurantIds, setFavoriteRestaurantIds] = useState([]);
+  const [favoriteRestaurants, setFavoriteRestaurants] = useState([]);
+  const [favoriteRestaurantsCache, setFavoriteRestaurantsCache] = useState(() => loadFavoriteRestaurantsCache());
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoritesError, setFavoritesError] = useState("");
+  const favoritesAutoRefreshRef = useRef(null);
+  const loadFavoriteRestaurantsRef = useRef(null);
 
   // New order notification state
   const [newOrderCount, setNewOrderCount] = useState(0);
@@ -390,6 +430,10 @@ function App() {
 
   const filtered = (restaurants || []).filter(r =>
     (r.name || "").toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredFavorites = (favoriteRestaurants || []).filter((r) =>
+    (r?.name || "").toLowerCase().includes(search.toLowerCase())
   );
 
   const getRoleFromJwt = () => {
@@ -765,13 +809,8 @@ function App() {
   };
 
   const loadMenuCustomizationOverrides = () => {
-    try {
-      // DB-only mode: menu ingredient/request fields must come from backend API.
-      return {};
-    } catch (err) {
-      console.error("Failed to load DB-only menu customizations", err);
-      return {};
-    }
+    // DB-only mode: menu ingredient/request fields must come from backend API.
+    return {};
   };
 
   const loadRestaurantCustomizationOverrides = () => {
@@ -1628,6 +1667,7 @@ function App() {
     const payload = {
       UserId: String(resolvedUserId || ""),
       RestaurantId: Number(referenceItem.restaurantId),
+      RestaurantAddressId: activeBranchId ? Number(activeBranchId) : null,
       AdresaDorezimit: normalizedDeliveryAddress,
       TarifaDorezimit: Number(cartDeliveryFee || 0),
       Zbritja: 0,
@@ -1791,6 +1831,205 @@ function App() {
     category: r?.category ?? r?.Category ?? r?.kategori ?? r?.Kategori ?? "",
     description: r?.description ?? r?.Description ?? r?.pershkrimi ?? r?.Pershkrimi ?? "",
   });
+
+  const extractFavoriteRestaurantIds = useCallback((payload) => {
+    const candidates = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+
+    const ids = new Set();
+    candidates.forEach((entry) => {
+      const restaurantId =
+        entry?.restaurantId ??
+        entry?.RestaurantId ??
+        entry?.restaurant?.id ??
+        entry?.restaurant?.Id ??
+        ((entry?.name ?? entry?.Name) ? (entry?.id ?? entry?.Id) : null);
+
+      if (restaurantId === null || restaurantId === undefined || restaurantId === "") return;
+      ids.add(String(restaurantId));
+    });
+
+    return Array.from(ids);
+  }, []);
+
+  const extractFavoriteRestaurants = (payload) => {
+    const candidates = Array.isArray(payload)
+      ? payload
+      : Array.isArray(payload?.items)
+        ? payload.items
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : [];
+
+    const restaurantsMap = new Map();
+
+    candidates.forEach((entry) => {
+      const embeddedRestaurant = entry?.restaurant ?? entry?.Restaurant ?? null;
+      const source = embeddedRestaurant && typeof embeddedRestaurant === "object" ? embeddedRestaurant : entry;
+
+      const sourceId =
+        source?.id ??
+        source?.Id ??
+        entry?.restaurantId ??
+        entry?.RestaurantId ??
+        null;
+
+      const sourceName = source?.name ?? source?.Name ?? source?.emertimi ?? source?.Emertimi ?? "";
+      if (sourceId === null || sourceId === undefined || sourceName === "") return;
+
+      const normalized = normalizeRestaurant({
+        ...source,
+        id: sourceId,
+      });
+
+      restaurantsMap.set(String(normalized.id), normalized);
+    });
+
+    return Array.from(restaurantsMap.values());
+  };
+
+  const loadFavoriteRestaurantIds = useCallback(async () => {
+    if (!token || !isCustomerRole) {
+      setFavoriteRestaurantIds([]);
+      return;
+    }
+
+    try {
+      const favoritesPayload = await favoriteService.getFavorites();
+      const ids = Array.from(
+        new Set([
+          ...extractFavoriteRestaurantIds(favoritesPayload),
+          ...Object.keys(favoriteRestaurantsCache || {}),
+        ])
+      );
+      setFavoriteRestaurantIds(ids);
+    } catch (err) {
+      console.error(err);
+      setFavoriteRestaurantIds(Object.keys(favoriteRestaurantsCache || {}));
+    }
+  }, [token, isCustomerRole, extractFavoriteRestaurantIds, favoriteRestaurantsCache]);
+
+  const loadFavoriteRestaurants = async () => {
+    if (!token) {
+      setFavoriteRestaurantIds([]);
+      setFavoriteRestaurants([]);
+      return;
+    }
+
+    setFavoritesLoading(true);
+    setFavoritesError("");
+
+    try {
+      const favoritesPayload = await favoriteService.getFavorites();
+      const favoritesFromPayload = extractFavoriteRestaurants(favoritesPayload);
+      const idsFromPayload = extractFavoriteRestaurantIds(favoritesPayload);
+      const cachedFavorites = Object.values(favoriteRestaurantsCache || {})
+        .map((entry) => normalizeRestaurant(entry))
+        .filter((entry) => entry?.id !== null && entry?.id !== undefined && entry?.name);
+
+      const mergedFromPayloadAndCacheMap = new Map();
+      [...cachedFavorites, ...favoritesFromPayload].forEach((entry) => {
+        if (!entry?.id) return;
+        mergedFromPayloadAndCacheMap.set(String(entry.id), entry);
+      });
+      const mergedFromPayloadAndCache = Array.from(mergedFromPayloadAndCacheMap.values());
+
+      const ids = Array.from(
+        new Set([
+          ...idsFromPayload,
+          ...mergedFromPayloadAndCache.map((entry) => String(entry?.id || "")).filter(Boolean),
+        ])
+      );
+      setFavoriteRestaurantIds(ids);
+
+      if (mergedFromPayloadAndCache.length > 0) {
+        setFavoriteRestaurants(mergedFromPayloadAndCache);
+        return;
+      }
+
+      if (ids.length === 0) {
+        setFavoriteRestaurants([]);
+        return;
+      }
+
+      const detailsRequests = ids.map(async (id) => {
+        const res = await authenticatedFetch(`${API_BASE}/restaurants/${encodeURIComponent(String(id))}`);
+        if (!res.ok) return null;
+        const payload = await res.json();
+        return normalizeRestaurant(payload);
+      });
+
+      const details = (await Promise.all(detailsRequests)).filter(Boolean);
+      if (details.length > 0) {
+        setFavoriteRestaurants(details);
+        return;
+      }
+
+      const allRestaurantsRes = await authenticatedFetch(`${API_BASE}/restaurants`);
+      if (!allRestaurantsRes.ok) {
+        throw new Error("Failed to load restaurants for favorites page");
+      }
+
+      const allRestaurantsPayload = await allRestaurantsRes.json();
+      const favoritesIdSet = new Set(ids.map((entry) => String(entry)));
+      const normalizedFavorites = (Array.isArray(allRestaurantsPayload) ? allRestaurantsPayload : [])
+        .map((entry) => normalizeRestaurant(entry))
+        .filter((entry) => favoritesIdSet.has(String(entry?.id)));
+
+      setFavoriteRestaurants(normalizedFavorites);
+    } catch (err) {
+      console.error(err);
+      setFavoritesError("Could not load your favorites right now.");
+      setFavoriteRestaurants([]);
+      setFavoriteRestaurantIds([]);
+    } finally {
+      setFavoritesLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFavoriteRestaurantsRef.current = loadFavoriteRestaurants;
+  });
+
+  const handleRestaurantFavoriteToggle = (restaurantOrId, nextFavorite) => {
+    const restaurant = restaurantOrId && typeof restaurantOrId === "object" ? restaurantOrId : null;
+    const targetId = String(restaurant?.id ?? restaurantOrId ?? "");
+    if (!targetId) return;
+
+    setFavoriteRestaurantIds((current) => {
+      const exists = current.some((entry) => String(entry) === targetId);
+      if (nextFavorite && !exists) return [...current, targetId];
+      if (!nextFavorite && exists) return current.filter((entry) => String(entry) !== targetId);
+      return current;
+    });
+
+    setFavoriteRestaurantsCache((current) => {
+      const next = { ...(current || {}) };
+      if (nextFavorite) {
+        const name = String(restaurant?.name || restaurant?.Name || "").trim();
+        if (name) {
+          next[targetId] = {
+            id: restaurant?.id ?? targetId,
+            name,
+            image: restaurant?.image ?? restaurant?.Image ?? "",
+          };
+        }
+      } else {
+        delete next[targetId];
+      }
+      persistFavoriteRestaurantsCache(next);
+      return next;
+    });
+
+    if (page === "favorites" && !nextFavorite) {
+      setFavoriteRestaurants((current) => current.filter((entry) => String(entry?.id) !== targetId));
+    }
+  };
 
   const normalizeBranch = (branch, ownerRestaurantId) => ({
     id:
@@ -2144,7 +2383,7 @@ function App() {
     };
   };
 
-  const getGeoCache = () => {
+  const getGeoCache = useCallback(() => {
     try {
       const raw = localStorage.getItem(DELIVERY_GEO_CACHE_KEY);
       if (!raw) return {};
@@ -2153,9 +2392,9 @@ function App() {
     } catch {
       return {};
     }
-  };
+  }, []);
 
-  const getCachedCoords = (cacheKey) => {
+  const getCachedCoords = useCallback((cacheKey) => {
     if (!cacheKey) return null;
     const cache = getGeoCache();
     const entry = cache[cacheKey];
@@ -2163,9 +2402,9 @@ function App() {
     const longitude = toFiniteNumber(entry?.longitude);
     if (latitude === null || longitude === null) return null;
     return { latitude, longitude };
-  };
+  }, [getGeoCache]);
 
-  const setCachedCoords = (cacheKey, coords) => {
+  const setCachedCoords = useCallback((cacheKey, coords) => {
     if (!cacheKey || !coords) return;
     const latitude = toFiniteNumber(coords?.latitude);
     const longitude = toFiniteNumber(coords?.longitude);
@@ -2182,7 +2421,7 @@ function App() {
     } catch {
       // Ignore cache write errors; runtime flow should still continue.
     }
-  };
+  }, [getGeoCache]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -2222,7 +2461,7 @@ function App() {
       isCancelled = true;
       window.clearTimeout(timerId);
     };
-  }, [deliveryAddress]);
+  }, [deliveryAddress, getCachedCoords, setCachedCoords]);
 
   useEffect(() => {
     let isCancelled = false;
@@ -2279,7 +2518,7 @@ function App() {
       isCancelled = true;
       window.clearTimeout(timerId);
     };
-  }, [activeBranch]);
+  }, [activeBranch, getCachedCoords, setCachedCoords]);
 
   const handleFindFood = async () => {
     setNearbyError("");
@@ -3289,6 +3528,28 @@ function App() {
     return () => window.clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    loadFavoriteRestaurantIds();
+  }, [loadFavoriteRestaurantIds]);
+
+  useEffect(() => {
+    if (page !== "favorites" || !token) return undefined;
+
+    const runRefresh = () => {
+      loadFavoriteRestaurantsRef.current?.();
+    };
+
+    runRefresh();
+    favoritesAutoRefreshRef.current = window.setInterval(runRefresh, 5000);
+
+    return () => {
+      if (favoritesAutoRefreshRef.current) {
+        window.clearInterval(favoritesAutoRefreshRef.current);
+        favoritesAutoRefreshRef.current = null;
+      }
+    };
+  }, [page, token]);
+
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     const syncRouteFromHash = async () => {
@@ -3334,6 +3595,24 @@ function App() {
         } else {
           await fetchMyOrders();
         }
+        return;
+      }
+
+      if (route.page === "favorites") {
+        if (!token) {
+          window.location.hash = "/";
+          return;
+        }
+
+        setSearch("");
+        setSelectedCategory("");
+        setSelectedRestaurant(null);
+        setBrandRestaurantCount(1);
+        setRestaurantBranches([]);
+        setRestaurantMenuItems([]);
+        setRestaurantOffers([]);
+        setRestaurantDetailsError("");
+        await loadFavoriteRestaurants();
         return;
       }
 
@@ -3865,6 +4144,21 @@ function App() {
               <span className="cart-badge">{cartCount || 0}</span>
             </button>
 
+            {token && isCustomerRole && (
+              <button
+                className={`btn btn-outline-warning ${page === "favorites" ? "active" : ""}`}
+                onClick={() => {
+                  window.location.hash = "/favorites";
+                }}
+              >
+                <i className="bi bi-star-fill me-1"></i>
+                Favorites
+                {favoriteRestaurantIds.length > 0 && (
+                  <span className="badge text-bg-light border ms-2">{favoriteRestaurantIds.length}</span>
+                )}
+              </button>
+            )}
+
             {token ? (
               <>
                 {!isCourierRole && (
@@ -4088,14 +4382,16 @@ function App() {
               <h2 className="mb-0">Manage Menu</h2>
               <div className="small text-muted">
                 Restaurant ID: {activeRestaurantId ? String(activeRestaurantId) : "not detected"}
+                {activeBranchId ? ` | Branch ID: ${String(activeBranchId)}` : ""}
               </div>
             </div>
 
             <PageErrorBoundary>
               <MenuManagement
-                key={String(activeRestaurantId || "none")}
+                key={`${String(activeRestaurantId || "none")}-${String(activeBranchId || "none")}`}
                 token={token}
                 restaurantId={Number(activeRestaurantId) || null}
+                restaurantAddressId={Number(activeBranchId) || null}
                 onBack={() => { window.location.hash = "/merchant/dashboard"; }}
               />
             </PageErrorBoundary>
@@ -4112,6 +4408,19 @@ function App() {
             nearbyError={nearbyError}
             locationQuery={locationQuery}
             onRestaurantSelect={handleRestaurantSelect}
+            onRestaurantFavoriteToggle={handleRestaurantFavoriteToggle}
+          />
+        )}
+
+        {page === "favorites" && (
+          <FavoritesPage
+            restaurants={filteredFavorites}
+            loading={favoritesLoading}
+            error={favoritesError}
+            onRestaurantSelect={handleRestaurantSelect}
+            onRestaurantUnfavorite={(restaurantId) => {
+              handleRestaurantFavoriteToggle(restaurantId, false);
+            }}
           />
         )}
 

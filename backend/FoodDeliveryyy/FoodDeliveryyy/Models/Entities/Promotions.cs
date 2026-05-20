@@ -13,6 +13,8 @@ public class Promotions
     [Required]
     public int RestaurantId { get; set; }
 
+    public int? RestaurantAddressId { get; set; }
+
     public string Kodi { get; set; } = string.Empty;
 
     [Required]
@@ -36,6 +38,9 @@ public class Promotions
 
     [ForeignKey("RestaurantId")]
     public virtual Restaurant? Restaurant { get; set; }
+
+    [ForeignKey("RestaurantAddressId")]
+    public virtual RestaurantAddress? RestaurantAddress { get; set; }
 
     [Required]
     [StringLength(20)]

@@ -135,6 +135,7 @@ public class OrdersController : ControllerBase
                 id = o.Id,
                 userId = o.UserId,
                 restaurantId = o.RestaurantId,
+                restaurantAddressId = o.RestaurantAddressId,
                 adresaDorezimit = o.AdresaDorezimit,
                 shumaTotale = o.ShumaTotale,
                 tarifaDorezimit = o.TarifaDorezimit,
@@ -185,6 +186,7 @@ public class OrdersController : ControllerBase
                 id = o.Id,
                 userId = o.UserId,
                 restaurantId = o.RestaurantId,
+                restaurantAddressId = o.RestaurantAddressId,
                 adresaDorezimit = o.AdresaDorezimit,
                 shumaTotale = o.ShumaTotale,
                 tarifaDorezimit = o.TarifaDorezimit,
@@ -316,6 +318,15 @@ public class OrdersController : ControllerBase
         {
             return NotFound("Restaurant not found");
         }
+
+        if (order.RestaurantAddressId.HasValue)
+        {
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId.Value);
+            if (address == null || address.RestaurantId != restaurant.Id)
+            {
+                return BadRequest("Restaurant address not found");
+            }
+        }
         if(order.ShumaTotale==0 && order.OrderItems.Any())
         { order.ShumaTotale = order.OrderItems.Sum(oi => oi.Sasia * oi.Cmimi) + order.TarifaDorezimit - order.Zbritja;
         
@@ -329,6 +340,7 @@ public class OrdersController : ControllerBase
             id = order.Id,
             userId = order.UserId,
             restaurantId = order.RestaurantId,
+            restaurantAddressId = order.RestaurantAddressId,
             adresaDorezimit = order.AdresaDorezimit,
             shumaTotale = order.ShumaTotale,
             tarifaDorezimit = order.TarifaDorezimit,

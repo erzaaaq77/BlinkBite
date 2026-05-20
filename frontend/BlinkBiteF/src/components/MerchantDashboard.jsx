@@ -302,6 +302,8 @@ const MerchantDashboard = ({ token }) => {
   }
 
   const restaurant = dashboard?.restaurant || {};
+  const addresses = Array.isArray(dashboard?.addresses) ? dashboard.addresses : [];
+  const primaryAddressId = dashboard?.primaryAddressId ?? addresses.find((entry) => entry?.isMain)?.id ?? addresses[0]?.id ?? null;
   const stats = dashboard?.orders || {};
   const revenue = dashboard?.revenue || {};
   const recentOrders = dashboard?.recentOrders || [];
@@ -468,7 +470,8 @@ const MerchantDashboard = ({ token }) => {
           <button
             className="btn btn-outline-primary"
             onClick={() => {
-              window.location.hash = `/merchant/menu/${restaurant.id}`;
+              const suffix = primaryAddressId ? `?branchId=${encodeURIComponent(String(primaryAddressId))}` : "";
+              window.location.hash = `/merchant/menu/${restaurant.id}${suffix}`;
             }}
           >
             <i className="bi bi-grid-3x3-gap-fill me-2"></i>
@@ -499,6 +502,41 @@ const MerchantDashboard = ({ token }) => {
             </p>
           </div>
         </div>
+
+        {addresses.length > 0 && (
+          <div className="merchant-card mb-4">
+            <h5 className="merchant-section-title mb-3">Locations</h5>
+            <div className="row g-3">
+              {addresses.map((address) => (
+                <div className="col-md-6 col-xl-4" key={address.id}>
+                  <div className="merchant-info-cell h-100">
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                      <div>
+                        <span className="merchant-label">{address.adresa}</span>
+                        <p className="merchant-value mb-0 small text-muted">
+                          {[address.qyteti, address.zona].filter(Boolean).join(", ") || "Location"}
+                        </p>
+                      </div>
+                      <div className="d-flex flex-column align-items-end gap-1">
+                        {address.isMain && <span className="badge text-bg-warning">Main</span>}
+                        {!address.isActive && <span className="badge text-bg-secondary">Inactive</span>}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => {
+                        window.location.hash = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}`;
+                      }}
+                    >
+                      Manage menu for this location
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="row g-4 mb-4">
           <div className="col-lg-6">

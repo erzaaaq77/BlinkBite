@@ -786,11 +786,25 @@ public static class DbInitializer
                 Console.WriteLine("Addresses inserted");
             }
         }
-
-
         else
         {
             Console.WriteLine("No new restaurants to insert.");
+        }
+
+        var addressesNeedingOwner = await context.RestaurantAddresses
+            .Include(a => a.Restaurant)
+            .Where(a => a.MerchantUserId == null && a.Restaurant != null && a.Restaurant.UserId != null)
+            .ToListAsync();
+
+        if (addressesNeedingOwner.Any())
+        {
+            foreach (var address in addressesNeedingOwner)
+            {
+                address.MerchantUserId = address.Restaurant!.UserId;
+            }
+
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Backfilled MerchantUserId for {addressesNeedingOwner.Count} restaurant addresses");
         }
 
 

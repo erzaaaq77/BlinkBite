@@ -41,13 +41,24 @@ public class MenuItemsController : ControllerBase
     [Authorize (Roles ="Merchant,Admin")]
     public async Task<ActionResult<MenuItems>> CreateMenuItem(MenuItems menuItem)
     {
-        if (!await _context.MenuCategories.AnyAsync(c => c.Id == menuItem.CategoryId))
+        var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
+        if (category == null)
         {
             return BadRequest("Invalid categoryId.");
         }
 
+        if (menuItem.RestaurantAddressId.HasValue)
+        {
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
+            if (address == null || address.RestaurantId != category.RestaurantId)
+            {
+                return BadRequest("Invalid restaurantAddressId.");
+            }
+        }
+
         // Accept client payloads with nested category object, but persist by FK only.
         menuItem.Category = null;
+        menuItem.RestaurantAddress = null;
         _context.MenuItems.Add(menuItem);
         await _context.SaveChangesAsync();
 
@@ -64,9 +75,19 @@ public class MenuItemsController : ControllerBase
             return BadRequest();
         }
 
-        if (!await _context.MenuCategories.AnyAsync(c => c.Id == menuItem.CategoryId))
+        var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
+        if (category == null)
         {
             return BadRequest("Invalid categoryId.");
+        }
+
+        if (menuItem.RestaurantAddressId.HasValue)
+        {
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
+            if (address == null || address.RestaurantId != category.RestaurantId)
+            {
+                return BadRequest("Invalid restaurantAddressId.");
+            }
         }
 
         var existing = await _context.MenuItems.FindAsync(id);
@@ -86,6 +107,7 @@ public class MenuItemsController : ControllerBase
         existing.Perberesit = menuItem.Perberesit;
         existing.RequestOptions = menuItem.RequestOptions;
         existing.CategoryId = menuItem.CategoryId;
+        existing.RestaurantAddressId = menuItem.RestaurantAddressId;
 
         try
         {

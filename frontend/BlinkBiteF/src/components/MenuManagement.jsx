@@ -29,6 +29,16 @@ const filterItemsByRestaurant = (items, rid) => {
   });
 };
 
+const filterItemsByRestaurantAddress = (items, restaurantAddressId) => {
+  const targetAddressId = toNumberId(restaurantAddressId);
+  if (!Array.isArray(items) || !targetAddressId) return [];
+
+  return items.filter((item) => {
+    const itemAddressId = toNumberId(item?.restaurantAddressId ?? item?.RestaurantAddressId);
+    return itemAddressId === targetAddressId;
+  });
+};
+
 const scopeItemsByCategory = (items, categories) => {
   if (!Array.isArray(items) || !Array.isArray(categories)) return [];
 
@@ -142,13 +152,8 @@ const mergeRequestOptionsWithIngredients = (ingredientsValue, requestOptionsValu
 };
 
 const loadMenuCustomizations = () => {
-  try {
-    // DB-only mode: use backend as single source of truth.
-    return {};
-  } catch (err) {
-    console.error("Failed to load DB-only menu customization overrides", err);
-    return {};
-  }
+  // DB-only mode: use backend as single source of truth.
+  return {};
 };
 
 const saveMenuCustomizations = (nextMap) => {
@@ -338,7 +343,7 @@ const applyImageFallbackCandidate = (event, candidates, finalFallback = "") => {
   }
 };
 
-const MenuManagement = ({ token, restaurantId, onBack }) => {
+const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBack }) => {
   const [menuItems, setMenuItems] = useState([]);
   const [restaurantCategories, setRestaurantCategories] = useState([]);
   const [debugStats, setDebugStats] = useState({
@@ -386,11 +391,15 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
           headers: { Authorization: `Bearer ${token}` }
         });
         const allItems = Array.isArray(response.data) ? response.data : [];
+        const scopedByAddress = filterItemsByRestaurantAddress(allItems, restaurantAddressId);
         const scopedByCategories = scopeItemsByCategory(allItems, categories);
-        const scopedItems = scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId);
+        const scopedItems = scopedByAddress.length > 0
+          ? scopedByAddress
+          : (scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
 
         setDebugStats({
           allItemsCount: allItems.length,
+          byAddressCount: scopedByAddress.length,
           byCategoryCount: scopedByCategories.length,
           byRestaurantCount: filterItemsByRestaurant(allItems, restaurantId).length,
           selectedCount: scopedItems.length,
@@ -435,7 +444,7 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
     }
 
     fetchMenuItems();
-  }, [restaurantId, token]);
+  }, [restaurantId, restaurantAddressId, token]);
 
   useEffect(() => {
     const map = loadRestaurantCustomizations();
@@ -522,6 +531,7 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
           resolveItemRequestOptions(item)
         ).join(", "),
         restaurantId: restaurantId,
+        restaurantAddressId: restaurantAddressId || null,
         categoryId: item.categoryId ?? item.CategoryId ?? 1
       });
     } else {
@@ -538,6 +548,7 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         perberesit: "",
         requestOptions: "",
         restaurantId: restaurantId,
+        restaurantAddressId: restaurantAddressId || null,
         categoryId: defaultCategoryId
       });
     }
@@ -583,6 +594,7 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
       alergjene: String(formData.alergjene || "").trim(),
       kalori: normalizedCalories,
       categoryId: normalizedCategoryId,
+      restaurantAddressId: restaurantAddressId || null,
     };
 
     const payloadString = {
@@ -701,10 +713,14 @@ const MenuManagement = ({ token, restaurantId, onBack }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       const allItems = Array.isArray(response.data) ? response.data : [];
+        const scopedByAddress = filterItemsByRestaurantAddress(allItems, restaurantAddressId);
       const scopedByCategories = scopeItemsByCategory(allItems, categories);
-      const scopedItems = scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId);
+        const scopedItems = scopedByAddress.length > 0
+          ? scopedByAddress
+          : (scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
       setDebugStats({
         allItemsCount: allItems.length,
+          byAddressCount: scopedByAddress.length,
         byCategoryCount: scopedByCategories.length,
         byRestaurantCount: filterItemsByRestaurant(allItems, restaurantId).length,
         selectedCount: scopedItems.length,

@@ -1,6 +1,8 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
+using FoodDeliveryyy.Models.Identity;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -44,6 +46,18 @@ public class PromotionsController : ControllerBase
     [HttpGet("by-restaurant/{restaurantId}")]
     public async Task<ActionResult<IEnumerable<Promotions>>> GetPromotionsByRestaurant(int restaurantId)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        {
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
+            if (restaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
         var promotions = await _context.Promotions
             .Where(p => p.RestaurantId == restaurantId)
             .Include(p => p.Restaurant)
@@ -71,6 +85,18 @@ public class PromotionsController : ControllerBase
     [HttpGet("active/by-restaurant/{restaurantId}")]
     public async Task<ActionResult<IEnumerable<Promotions>>> GetActivePromotionsByRestaurant(int restaurantId)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        {
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
+            if (restaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
         var tani = DateTime.Now;
 
         var promotions = await _context.Promotions
@@ -122,6 +148,15 @@ public class PromotionsController : ControllerBase
             return BadRequest("Restoranti nuk ekziston");
         }
 
+        if (promotion.RestaurantAddressId.HasValue)
+        {
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
+            if (address == null || address.RestaurantId != restaurant.Id)
+            {
+                return BadRequest("Restaurant address does not exist");
+            }
+        }
+
         var existingPromo = await _context.Promotions
             .FirstOrDefaultAsync(p => p.RestaurantId == promotion.RestaurantId && p.Kodi == promotion.Kodi);
 
@@ -165,6 +200,16 @@ public class PromotionsController : ControllerBase
         if (id != promotion.Id)
         {
             return BadRequest();
+        }
+
+        if (promotion.RestaurantAddressId.HasValue)
+        {
+            var restaurant = await _context.Restaurants.FindAsync(promotion.RestaurantId);
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
+            if (restaurant == null || address == null || address.RestaurantId != restaurant.Id)
+            {
+                return BadRequest("Restaurant address does not exist");
+            }
         }
 
         if (promotion.DataFillimit >= promotion.DataPerfundimit)

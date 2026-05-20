@@ -1,6 +1,6 @@
 import React from "react";
 import FavoriteButton from './FavoriteButton';
-function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearbyError, locationQuery, onRestaurantSelect }) {
+function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearbyError, locationQuery, onRestaurantSelect, onRestaurantFavoriteToggle }) {
   const isNearby = (selectedCategory || "").toLowerCase() === "nearby";
 
   return (
@@ -53,7 +53,12 @@ function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearb
                   aria-label={`Open ${r.name}`}
                 >
     <div className="position-absolute top-0 end-0 p-2" style={{ zIndex: 10 }} onClick={(e) => e.stopPropagation()}>
-      <FavoriteButton type="restaurant" id={r.id} size="medium" />
+      <FavoriteButton
+        type="restaurant"
+        id={r.id}
+        size="medium"
+        onToggleComplete={(nextFavorite) => onRestaurantFavoriteToggle?.(r, nextFavorite)}
+      />
     </div>
                   <img src={r.image || `https://source.unsplash.com/300x200/?${r.name}`} alt={r.name} />
                   <div className="p-2">

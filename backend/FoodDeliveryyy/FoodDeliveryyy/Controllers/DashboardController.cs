@@ -104,6 +104,29 @@ public class DashboardController : ControllerBase
         var today = DateTime.Today;
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
+        var addresses = await _context.RestaurantAddresses
+            .Where(a => a.RestaurantId == restaurant.Id)
+            .OrderByDescending(a => a.IsMain)
+            .ThenByDescending(a => a.IsActive)
+            .ThenBy(a => a.Qyteti)
+            .ThenBy(a => a.Adresa)
+            .Select(a => new
+            {
+                id = a.Id,
+                restaurantId = a.RestaurantId,
+                merchantUserId = a.MerchantUserId,
+                adresa = a.Adresa,
+                qyteti = a.Qyteti,
+                zona = a.Zona,
+                isMain = a.IsMain,
+                isActive = a.IsActive,
+                latitude = a.Latitude,
+                longitude = a.Longitude
+            })
+            .ToListAsync();
+
+        var primaryAddressId = addresses.FirstOrDefault(a => (bool)(a?.isMain ?? false))?.id
+            ?? addresses.FirstOrDefault()?.id;
 
         var dashboard =
             new
@@ -116,6 +139,9 @@ public class DashboardController : ControllerBase
                     restaurant.Rating
 
                 },
+
+                PrimaryAddressId = primaryAddressId,
+                Addresses = addresses,
 
                 Orders = new
                 {

@@ -2,9 +2,11 @@
 
 using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
+using System.Security.Claims;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -48,6 +50,18 @@ namespace FoodDeliveryyy.Controllers;
     [HttpGet("{id:int}/addresses")]
     public async Task<ActionResult> GetRestaurantAddresses(int id)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        {
+            var merchantRestaurant = await _context.Restaurants.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+            if (merchantRestaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
         var restaurant = await _context.Restaurants
             .AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id);
@@ -68,6 +82,7 @@ namespace FoodDeliveryyy.Controllers;
             {
                 id = a.Id,
                 restaurantId = a.RestaurantId,
+                merchantUserId = a.MerchantUserId,
                 adresa = a.Adresa,
                 qyteti = a.Qyteti,
                 zona = a.Zona,
