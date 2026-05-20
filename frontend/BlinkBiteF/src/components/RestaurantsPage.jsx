@@ -1,5 +1,5 @@
 import React from "react";
-
+import FavoriteButton from './FavoriteButton';
 function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearbyError, locationQuery, onRestaurantSelect }) {
   const isNearby = (selectedCategory || "").toLowerCase() === "nearby";
 
@@ -40,7 +40,7 @@ function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearb
             {filtered.map((r) => (
               <div className="col-md-3 col-6" key={r.id}>
                 <div
-                  className="restaurant-card"
+                  className="restaurant-card  position-relative"
                   onClick={() => onRestaurantSelect?.(r)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
@@ -52,6 +52,9 @@ function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearb
                   tabIndex={0}
                   aria-label={`Open ${r.name}`}
                 >
+    <div className="position-absolute top-0 end-0 p-2" style={{ zIndex: 10 }} onClick={(e) => e.stopPropagation()}>
+      <FavoriteButton type="restaurant" id={r.id} size="medium" />
+    </div>
                   <img src={r.image || `https://source.unsplash.com/300x200/?${r.name}`} alt={r.name} />
                   <div className="p-2">
                     <h6>{r.name}</h6>

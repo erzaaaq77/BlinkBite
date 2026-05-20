@@ -1,8 +1,9 @@
-﻿using Microsoft.EntityFrameworkCore;
-using FoodDeliveryyy.Models.Entities;
+﻿using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Reflection.Emit;
 
 namespace FoodDeliveryyy.Data
 {
@@ -23,6 +24,7 @@ namespace FoodDeliveryyy.Data
         public DbSet<Addresses> Addresses { get; set; } = null!;
         public DbSet<Promotions> Promotions { get; set; } = null!;
 
+        public DbSet<UserFavorite> UserFavorites { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
         public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
@@ -113,6 +115,17 @@ namespace FoodDeliveryyy.Data
                    .WithMany(u => u.RefreshTokens)
                    .HasForeignKey(r => r.UserId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<UserFavorite>()
+      .HasIndex(uf => new { uf.UserId, uf.MenuItemId })
+      .IsUnique()
+      .HasDatabaseName("IX_UserFavorites_User_MenuItem");
+
+            builder.Entity<UserFavorite>()
+                .HasIndex(uf => new { uf.UserId, uf.RestaurantId })
+                .IsUnique()
+                .HasDatabaseName("IX_UserFavorites_User_Restaurant");
         }
+
     }
 }

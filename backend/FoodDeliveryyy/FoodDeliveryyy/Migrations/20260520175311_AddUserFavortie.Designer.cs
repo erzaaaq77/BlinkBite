@@ -4,6 +4,7 @@ using FoodDeliveryyy.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260520175311_AddUserFavortie")]
+    partial class AddUserFavortie
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -594,7 +597,7 @@ namespace FoodDeliveryyy.Migrations
                     b.Property<int?>("MenuItemId")
                         .HasColumnType("int");
 
-                    b.Property<int?>("RestaurantId")
+                    b.Property<int>("RestaurantId")
                         .HasColumnType("int");
 
                     b.Property<string>("UserId")
@@ -1048,19 +1051,13 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasOne("FoodDeliveryyy.Models.Entities.Restaurant", "Restaurant")
                         .WithMany()
-                        .HasForeignKey("RestaurantId");
-
-                    b.HasOne("FoodDeliveryyy.Models.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("RestaurantId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("MenuItems");
 
                     b.Navigation("Restaurant");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Identity.RefreshToken", b =>
