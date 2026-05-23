@@ -29,6 +29,7 @@ public class OrderService : IOrderService
     {
         var order = await _context.Orders
             .Include(o => o.Restaurant)
+            .Include(o => o.RestaurantAddress)
             .Include(o => o.User)
             .Include(o => o.Delivery) 
             .FirstOrDefaultAsync(o => o.Id == orderId);
@@ -44,16 +45,24 @@ public class OrderService : IOrderService
             return false;
         }
 
-        if (role == AppRoles.Merchant && order.Restaurant.UserId != userId)
+        var normalizedRole = AppRoles.Normalize(role);
+
+        if (normalizedRole == AppRoles.Merchant && order.Restaurant.UserId != userId)
             return false;
+
+        if (normalizedRole == AppRoles.BranchManager)
+        {
+            if (!order.RestaurantAddressId.HasValue || order.RestaurantAddress?.MerchantUserId != userId)
+                return false;
+        }
 
         bool isValidTransition = (order.Statusi, newStatus) switch
         {
-            (OrderStatus.Pending, OrderStatus.Accepted) => role == AppRoles.Merchant,
-            (OrderStatus.Accepted, OrderStatus.Preparing) => role == AppRoles.Merchant,
-            (OrderStatus.Preparing, OrderStatus.Ready) => role == AppRoles.Merchant,
-            (OrderStatus.Ready, OrderStatus.Delivered) => role == AppRoles.Courier,
-            (_, OrderStatus.Cancelled) => role == AppRoles.Customer || role == AppRoles.Merchant,
+            (OrderStatus.Pending, OrderStatus.Accepted) => normalizedRole == AppRoles.Merchant || normalizedRole == AppRoles.BranchManager,
+            (OrderStatus.Accepted, OrderStatus.Preparing) => normalizedRole == AppRoles.Merchant || normalizedRole == AppRoles.BranchManager,
+            (OrderStatus.Preparing, OrderStatus.Ready) => normalizedRole == AppRoles.Merchant || normalizedRole == AppRoles.BranchManager,
+            (OrderStatus.Ready, OrderStatus.Delivered) => normalizedRole == AppRoles.Courier,
+            (_, OrderStatus.Cancelled) => normalizedRole == AppRoles.Customer || normalizedRole == AppRoles.Merchant || normalizedRole == AppRoles.BranchManager,
             _ => false
         };
 

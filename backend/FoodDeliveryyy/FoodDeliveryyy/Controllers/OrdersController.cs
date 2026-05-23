@@ -28,7 +28,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<ActionResult<IEnumerable<Orders>>> GetOrders(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10
@@ -37,7 +37,7 @@ public class OrdersController : ControllerBase
         
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         IQueryable<Orders> query = _context.Orders
             .Include(o => o.User)
@@ -51,6 +51,10 @@ public class OrdersController : ControllerBase
             {
                 query = query.Where(o => o.RestaurantId == restaurant.Id);
             }
+        }
+        else if (role == AppRoles.BranchManager)
+        {
+            query = query.Where(o => o.RestaurantAddress != null && o.RestaurantAddress.MerchantUserId == userId);
         }
         var totalCount= await query.CountAsync();
         var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -78,7 +82,7 @@ public class OrdersController : ControllerBase
     public async Task<ActionResult<Orders>> GetOrder(int id)
     {
         var userId=User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         var order = await _context.Orders
             .Include(o => o.User)
@@ -92,7 +96,7 @@ public class OrdersController : ControllerBase
             return NotFound();
         }
 
-        if (role != AppRoles.Admin && order.UserId != userId && role != AppRoles.Merchant)
+        if (role != AppRoles.Admin && order.UserId != userId && role != AppRoles.Merchant && role != AppRoles.BranchManager)
         {
             return Forbid();
         }
@@ -101,6 +105,15 @@ public class OrdersController : ControllerBase
         {
             var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
             if (restaurant == null || order.RestaurantId != restaurant.Id)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            var branch = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId && a.MerchantUserId == userId);
+            if (branch == null)
             {
                 return Forbid();
             }
@@ -215,7 +228,7 @@ public class OrdersController : ControllerBase
     }
 
     [HttpGet("by-restaurant/{restaurantId}")]
-    [Authorize(Roles =$"{ AppRoles.Admin}, {AppRoles.Merchant}")]
+    [Authorize(Roles =$"{ AppRoles.Admin}, {AppRoles.Merchant}, {AppRoles.BranchManager}")]
     public async Task<ActionResult<IEnumerable<Orders>>> GetOrdersByRestaurant(int restaurantId)
     {
 
@@ -232,6 +245,15 @@ public class OrdersController : ControllerBase
             }
         }
 
+        if (normalizedRole == AppRoles.BranchManager)
+        {
+            var canAccessRestaurant = await _context.RestaurantAddresses.AnyAsync(a => a.RestaurantId == restaurantId && a.MerchantUserId == userId);
+            if (!canAccessRestaurant)
+            {
+                return Forbid();
+            }
+        }
+
         var orders = await _context.Orders
             .Where(o => o.RestaurantId == restaurantId)
             .Include(o => o.User)
@@ -239,12 +261,22 @@ public class OrdersController : ControllerBase
             .OrderByDescending(o => o.DataPorosis)
             .ToListAsync();
 
+        if (normalizedRole == AppRoles.BranchManager)
+        {
+            orders = orders.Where(o => o.RestaurantAddressId.HasValue).ToList();
+            var managedAddressIds = await _context.RestaurantAddresses
+                .Where(a => a.MerchantUserId == userId)
+                .Select(a => a.Id)
+                .ToListAsync();
+            orders = orders.Where(o => o.RestaurantAddressId.HasValue && managedAddressIds.Contains(o.RestaurantAddressId.Value)).ToList();
+        }
+
         return Ok(orders);
     }
 
 
     [HttpGet("by-status/{status}")]
-    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<ActionResult<IEnumerable<Orders>>> GetOrdersByStatus(string status,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 10
@@ -256,7 +288,7 @@ public class OrdersController : ControllerBase
         }
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         IQueryable<Orders> query = _context.Orders
             .Where(o => o.Statusi == parsedStatus)
@@ -276,6 +308,14 @@ public class OrdersController : ControllerBase
                 
                 return Ok(new List<Orders>());
             }
+        }
+        else if (role == AppRoles.BranchManager)
+        {
+            var managedAddressIds = await _context.RestaurantAddresses
+                .Where(a => a.MerchantUserId == userId)
+                .Select(a => a.Id)
+                .ToListAsync();
+            query = query.Where(o => o.RestaurantAddressId.HasValue && managedAddressIds.Contains(o.RestaurantAddressId.Value));
         }
 
         var totalCount = await query.CountAsync();
@@ -398,21 +438,32 @@ public class OrdersController : ControllerBase
     
 
     [HttpPost("{id}/accept")]
-    [Authorize(Roles = AppRoles.Merchant)]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<IActionResult> AcceptOrder(int id, [FromBody] string? comment = null)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role= User.FindFirst(ClaimTypes.Role)?.Value;
+        var role= AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         var order=await _context.Orders.Include(o => o.Restaurant).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null)
         {
             return NotFound();
         }
-        var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
-        if(restaurant == null || order.RestaurantId != restaurant.Id)
+        if (role == AppRoles.Merchant)
         {
-            return Forbid();
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
+            if(restaurant == null || order.RestaurantId != restaurant.Id)
+            {
+                return Forbid();
+            }
+        }
+        else if (role == AppRoles.BranchManager)
+        {
+            var branch = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId && a.MerchantUserId == userId);
+            if (branch == null)
+            {
+                return Forbid();
+            }
         }
 
         var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Accepted, userId, role, comment);
@@ -423,20 +474,31 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost("{id}/prepare")]
-    [Authorize(Roles = AppRoles.Merchant)]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<IActionResult> StartPreparing (int id, [FromBody] string? comment = null)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         var order= await _context.Orders.Include(o => o.Restaurant).FirstOrDefaultAsync(o => o.Id == id);
 
         if(order == null) { return NotFound(); }
 
-        var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
-        if(restaurant == null || order.RestaurantId != restaurant.Id)
+        if (role == AppRoles.Merchant)
         {
-            return Forbid();
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
+            if(restaurant == null || order.RestaurantId != restaurant.Id)
+            {
+                return Forbid();
+            }
+        }
+        else if (role == AppRoles.BranchManager)
+        {
+            var branch = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId && a.MerchantUserId == userId);
+            if (branch == null)
+            {
+                return Forbid();
+            }
         }
 
         var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Preparing, userId, role, comment);
@@ -446,19 +508,30 @@ public class OrdersController : ControllerBase
     }
 
     [HttpPost("{id}/ready")]
-    [Authorize(Roles = AppRoles.Merchant)]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<IActionResult> MarkAsReady(int id, [FromBody] string? comment = null)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         var order = await _context.Orders.Include(o => o.Restaurant).FirstOrDefaultAsync(o => o.Id == id);
         if (order == null) return NotFound();
 
-        var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
-        if (restaurant == null || order.RestaurantId != restaurant.Id)
+        if (role == AppRoles.Merchant)
         {
-            return Forbid();
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
+            if (restaurant == null || order.RestaurantId != restaurant.Id)
+            {
+                return Forbid();
+            }
+        }
+        else if (role == AppRoles.BranchManager)
+        {
+            var branch = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId && a.MerchantUserId == userId);
+            if (branch == null)
+            {
+                return Forbid();
+            }
         }
         var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Ready, userId, role, comment);
 
@@ -472,7 +545,7 @@ public class OrdersController : ControllerBase
     public async Task<IActionResult> DeliverOrder(int id, [FromBody] string? comment = null)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Delivered, userId, role, comment);
 
@@ -506,7 +579,14 @@ public class OrdersController : ControllerBase
                 return Forbid();
         }
 
-        if (role != AppRoles.Customer && role != AppRoles.Merchant && role != AppRoles.Admin)
+        if (role == AppRoles.BranchManager)
+        {
+            var branch = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId && a.MerchantUserId == userId);
+            if (branch == null)
+                return Forbid();
+        }
+
+        if (role != AppRoles.Customer && role != AppRoles.Merchant && role != AppRoles.BranchManager && role != AppRoles.Admin)
             return Forbid();
 
         var result = await _orderService.UpdateOrderStatusAsync(id, OrderStatus.Cancelled, userId, role, comment);

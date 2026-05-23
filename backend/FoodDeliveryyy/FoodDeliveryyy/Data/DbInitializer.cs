@@ -21,7 +21,7 @@ public static class DbInitializer
 
         await context.Database.MigrateAsync();
 
-        var roles = new[] { AppRoles.Admin, AppRoles.Merchant, AppRoles.Courier, AppRoles.Customer };
+        var roles = new[] { AppRoles.Admin, AppRoles.Merchant, AppRoles.BranchManager, AppRoles.Courier, AppRoles.Customer };
         foreach (var role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -805,6 +805,111 @@ public static class DbInitializer
 
             await context.SaveChangesAsync();
             Console.WriteLine($"Backfilled MerchantUserId for {addressesNeedingOwner.Count} restaurant addresses");
+        }
+
+        var branchManagerSeeds = new[]
+        {
+            new { Username = "bm_sushico", Email = "bm_sushico@example.com", RestaurantName = "SushiCo", AddressContains = "Rr.Luan Hardinaj" },
+            // Burger King branches
+            new { Username = "bm_burger1", Email = "bm_burger1@example.com", RestaurantName = "Burger King", AddressContains = "Xhorxh Bush" }, // Qendër (Main)
+            new { Username = "bm_burger2", Email = "bm_burger2@example.com", RestaurantName = "Burger King", AddressContains = "Ahmet Krasniqi" }, // Arbëri
+            new { Username = "bm_burger3", Email = "bm_burger3@example.com", RestaurantName = "Burger King", AddressContains = "Albi Mall" }, // Veternik (Albi Mall)
+            new { Username = "bm_burger4", Email = "bm_burger4@example.com", RestaurantName = "Burger King", AddressContains = "Royal Mall" }, // Bregu i Diellit
+            new { Username = "bm_burger5", Email = "bm_burger5@example.com", RestaurantName = "Burger King", AddressContains = "Ukshin Hoti" }, // Pejton
+            new { Username = "bm_burger6", Email = "bm_burger6@example.com", RestaurantName = "Burger King", AddressContains = "Veternik" }, // Veternik (plain)
+            // KFC branch manager seed (leave as is)
+            new { Username = "bm_kfc", Email = "bm_kfc@example.com", RestaurantName = "KFC", AddressContains = "Ramiz Sadiku" }
+        };
+
+        var branchAssignments = 0;
+        foreach (var seed in branchManagerSeeds)
+        {
+            var user = await userManager.FindByNameAsync(seed.Username)
+                       ?? await userManager.FindByEmailAsync(seed.Email);
+
+            if (user == null)
+            {
+                user = new User
+                {
+                    UserName = seed.Username,
+                    Email = seed.Email,
+                    EmailConfirmed = true
+                };
+
+                var createResult = await userManager.CreateAsync(user, "Branch@1234");
+                if (!createResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"Failed to create branch manager user {seed.Username}");
+                }
+            }
+            else
+            {
+                var changed = false;
+
+                if (!string.Equals(user.UserName, seed.Username, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.UserName = seed.Username;
+                    changed = true;
+                }
+
+                if (!string.Equals(user.Email, seed.Email, StringComparison.OrdinalIgnoreCase))
+                {
+                    user.Email = seed.Email;
+                    changed = true;
+                }
+
+                if (!user.EmailConfirmed)
+                {
+                    user.EmailConfirmed = true;
+                    changed = true;
+                }
+
+                if (changed)
+                {
+                    var updateResult = await userManager.UpdateAsync(user);
+                    if (!updateResult.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed to update branch manager user {seed.Username}");
+                    }
+                }
+            }
+
+            if (!await userManager.IsInRoleAsync(user, AppRoles.BranchManager))
+            {
+                await userManager.AddToRoleAsync(user, AppRoles.BranchManager);
+            }
+
+            var restaurant = await context.Restaurants.FirstOrDefaultAsync(r => r.Emertimi == seed.RestaurantName);
+            if (restaurant == null)
+            {
+                Console.WriteLine($"Restaurant '{seed.RestaurantName}' not found for branch manager seed {seed.Username}");
+                continue;
+            }
+
+            var targetAddress = await context.RestaurantAddresses
+                .Where(a => a.RestaurantId == restaurant.Id && (a.IsActive || a.IsMain))
+                .OrderByDescending(a => a.Adresa.Contains(seed.AddressContains))
+                .ThenByDescending(a => a.IsMain)
+                .ThenBy(a => a.Id)
+                .FirstOrDefaultAsync();
+
+            if (targetAddress == null)
+            {
+                Console.WriteLine($"No address found for restaurant '{seed.RestaurantName}' while seeding {seed.Username}");
+                continue;
+            }
+
+            if (targetAddress.MerchantUserId != user.Id)
+            {
+                targetAddress.MerchantUserId = user.Id;
+                branchAssignments++;
+            }
+        }
+
+        if (branchAssignments > 0)
+        {
+            await context.SaveChangesAsync();
+            Console.WriteLine($"Assigned {branchAssignments} branch manager ownership mappings");
         }
 
 

@@ -1,14 +1,16 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FoodDeliveryyy.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles ="Merchant,Admin")]
+[Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
 public class MenuItemsController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -38,13 +40,32 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize (Roles ="Merchant,Admin")]
+    [Authorize (Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<ActionResult<MenuItems>> CreateMenuItem(MenuItems menuItem)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
         if (category == null)
         {
             return BadRequest("Invalid categoryId.");
+        }
+
+        var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == category.RestaurantId);
+        if (restaurant == null)
+        {
+            return BadRequest("Restaurant not found for this category.");
+        }
+
+        if (role == AppRoles.Merchant && restaurant.UserId != userId)
+        {
+            return Forbid();
+        }
+
+        if (role == AppRoles.BranchManager && !menuItem.RestaurantAddressId.HasValue)
+        {
+            return BadRequest("Branch managers must provide restaurantAddressId.");
         }
 
         if (menuItem.RestaurantAddressId.HasValue)
@@ -53,6 +74,11 @@ public class MenuItemsController : ControllerBase
             if (address == null || address.RestaurantId != category.RestaurantId)
             {
                 return BadRequest("Invalid restaurantAddressId.");
+            }
+
+            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
+            {
+                return Forbid();
             }
         }
 
@@ -66,10 +92,13 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Merchant,Admin")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
 
     public async Task<IActionResult> UpdateMenuItem(int id, MenuItems menuItem)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         if (id != menuItem.Id)
         {
             return BadRequest();
@@ -81,12 +110,33 @@ public class MenuItemsController : ControllerBase
             return BadRequest("Invalid categoryId.");
         }
 
+        var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == category.RestaurantId);
+        if (restaurant == null)
+        {
+            return BadRequest("Restaurant not found for this category.");
+        }
+
+        if (role == AppRoles.Merchant && restaurant.UserId != userId)
+        {
+            return Forbid();
+        }
+
+        if (role == AppRoles.BranchManager && !menuItem.RestaurantAddressId.HasValue)
+        {
+            return BadRequest("Branch managers must provide restaurantAddressId.");
+        }
+
         if (menuItem.RestaurantAddressId.HasValue)
         {
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
             if (address == null || address.RestaurantId != category.RestaurantId)
             {
                 return BadRequest("Invalid restaurantAddressId.");
+            }
+
+            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
+            {
+                return Forbid();
             }
         }
 
@@ -125,14 +175,46 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Merchant,Admin")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
 
     public async Task<IActionResult> DeleteMenuItem(int id)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         var menuItem = await _context.MenuItems.FindAsync(id);
         if (menuItem == null)
         {
             return NotFound();
+        }
+
+        if (role == AppRoles.Merchant)
+        {
+            var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
+            if (category == null)
+            {
+                return BadRequest("Invalid categoryId.");
+            }
+
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == category.RestaurantId);
+            if (restaurant == null || restaurant.UserId != userId)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            if (!menuItem.RestaurantAddressId.HasValue)
+            {
+                return Forbid();
+            }
+
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
+            if (address == null || address.MerchantUserId != userId)
+            {
+                return Forbid();
+            }
         }
 
         _context.MenuItems.Remove(menuItem);

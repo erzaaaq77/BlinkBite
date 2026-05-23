@@ -24,7 +24,9 @@ const ORDER_STATUS_CODES = {
 
 const MERCHANT_ORDERS_BATCH_SIZE = 8;
 
-const MerchantDashboard = ({ token }) => {
+const MerchantDashboard = ({ token, currentUserRole = "" }) => {
+  const normalizedRole = String(currentUserRole || "").trim().toLowerCase();
+  const isBranchManagerRole = normalizedRole === "branchmanager";
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -470,12 +472,14 @@ const MerchantDashboard = ({ token }) => {
           <button
             className="btn btn-outline-primary"
             onClick={() => {
-              const suffix = primaryAddressId ? `?branchId=${encodeURIComponent(String(primaryAddressId))}` : "";
+              const suffix = isBranchManagerRole && primaryAddressId
+                ? `?branchId=${encodeURIComponent(String(primaryAddressId))}`
+                : "";
               window.location.hash = `/merchant/menu/${restaurant.id}${suffix}`;
             }}
           >
             <i className="bi bi-grid-3x3-gap-fill me-2"></i>
-            Manage Menu
+            {isBranchManagerRole ? "Manage Menu" : "Manage Menu (All Branches)"}
           </button>
 
           <button

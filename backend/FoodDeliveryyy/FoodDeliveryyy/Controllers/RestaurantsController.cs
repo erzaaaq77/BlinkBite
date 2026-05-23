@@ -3,6 +3,7 @@
 using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
@@ -51,12 +52,24 @@ namespace FoodDeliveryyy.Controllers;
     public async Task<ActionResult> GetRestaurantAddresses(int id)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        if (role == AppRoles.Merchant)
         {
             var merchantRestaurant = await _context.Restaurants.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
             if (merchantRestaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            var hasBranchAccess = await _context.RestaurantAddresses
+                .AsNoTracking()
+                .AnyAsync(a => a.RestaurantId == id && a.MerchantUserId == userId);
+
+            if (!hasBranchAccess)
             {
                 return Forbid();
             }
@@ -71,9 +84,16 @@ namespace FoodDeliveryyy.Controllers;
             return NotFound("Restaurant not found.");
         }
 
-        var addresses = await _context.RestaurantAddresses
+        var addressQuery = _context.RestaurantAddresses
             .AsNoTracking()
-            .Where(a => a.RestaurantId == id)
+            .Where(a => a.RestaurantId == id);
+
+        if (role == AppRoles.BranchManager)
+        {
+            addressQuery = addressQuery.Where(a => a.MerchantUserId == userId);
+        }
+
+        var addresses = await addressQuery
             .OrderByDescending(a => a.IsMain)
             .ThenByDescending(a => a.IsActive)
             .ThenBy(a => a.Qyteti)
@@ -97,27 +117,72 @@ namespace FoodDeliveryyy.Controllers;
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult<Restaurant>> CreateRestaurant(Restaurant restaurant)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
+        if (role == AppRoles.Merchant)
+        {
+            if (string.IsNullOrWhiteSpace(userId))
+            {
+                return Unauthorized();
+            }
+
+            restaurant.UserId = userId;
+        }
+
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id }, restaurant);
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult> UpdateRestaurant(int id, Restaurant restaurant)
     {
         if (id != restaurant.Id) return BadRequest();
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
+        if (role == AppRoles.Merchant)
+        {
+            var existing = await _context.Restaurants.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
+            if (existing == null)
+            {
+                return NotFound();
+            }
+
+            if (existing.UserId != userId)
+            {
+                return Forbid();
+            }
+
+            restaurant.UserId = existing.UserId;
+        }
+
         _context.Entry(restaurant).State = EntityState.Modified;
         await _context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult> DeleteRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FindAsync(id);
         if (restaurant == null) return NotFound();
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
+        if (role == AppRoles.Merchant && restaurant.UserId != userId)
+        {
+            return Forbid();
+        }
+
         _context.Restaurants.Remove(restaurant);
         await _context.SaveChangesAsync();
         return NoContent();

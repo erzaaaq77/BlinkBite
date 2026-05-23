@@ -4,6 +4,7 @@ public static class AppRoles
 {
     public const string Admin = "Admin";
     public const string Merchant = "Merchant";
+    public const string BranchManager = "BranchManager";
     public const string Courier = "Courier";
     public const string Customer = "Customer";
 
@@ -20,6 +21,7 @@ public static class AppRoles
 
         if (trimmed.Equals(Admin, System.StringComparison.OrdinalIgnoreCase)) return Admin;
         if (trimmed.Equals(Merchant, System.StringComparison.OrdinalIgnoreCase)) return Merchant;
+        if (trimmed.Equals(BranchManager, System.StringComparison.OrdinalIgnoreCase)) return BranchManager;
         if (trimmed.Equals(Courier, System.StringComparison.OrdinalIgnoreCase)) return Courier;
         if (trimmed.Equals(Customer, System.StringComparison.OrdinalIgnoreCase)) return Customer;
 
