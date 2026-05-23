@@ -495,8 +495,10 @@ function App() {
   const isCustomerRole = ["customer", "user"].includes(normalizedCurrentUserRole);
   const isAdminRole = normalizedCurrentUserRole === "admin";
   const isMerchantRole = normalizedCurrentUserRole === "merchant";
+  const isBranchManagerRole = normalizedCurrentUserRole === "branchmanager";
+  const isMerchantLikeRole = isMerchantRole || isBranchManagerRole;
   const isCourierRole = normalizedCurrentUserRole === "courier";
-  const canManageOperationalOrders = isAdminRole || isMerchantRole || isCourierRole;
+  const canManageOperationalOrders = isAdminRole || isMerchantLikeRole || isCourierRole;
   const [merchantRestaurantIdForUi, setMerchantRestaurantIdForUi] = useState("");
 
   useEffect(() => {
@@ -519,7 +521,7 @@ function App() {
 
   useEffect(() => {
     const tryAssignMerchantRestaurantId = async () => {
-      if (!isMerchantRole || !currentUser?.id) return;
+      if (!isMerchantLikeRole || !currentUser?.id) return;
       if (
         currentUser?.restaurantId ||
         currentUser?.RestaurantId ||
@@ -553,7 +555,7 @@ function App() {
       }
     };
     tryAssignMerchantRestaurantId();
-  }, [isMerchantRole, currentUser]);
+  }, [isMerchantLikeRole, currentUser]);
 
   const extractErrorMessage = (payload, fallbackMessage) => {
     if (!payload) return fallbackMessage;
@@ -1530,8 +1532,10 @@ function App() {
     if (isAdminRole) {
       return "Admin: can monitor all orders and move statuses across all stages.";
     }
-    if (isMerchantRole) {
-      return "Merchant: can process own orders from Pending to Accepted, Preparing, and Ready.";
+    if (isMerchantLikeRole) {
+      return isBranchManagerRole
+        ? "Branch Manager: can process only assigned branch orders from Pending to Ready."
+        : "Merchant Owner: can process owned restaurant orders from Pending to Ready.";
     }
     if (isCourierRole) {
       return "Courier: can view Ready orders and complete delivery.";
@@ -1546,7 +1550,7 @@ function App() {
     const currentStatus = normalizeStatusLabel(order?.statusLabel).toLowerCase();
     const actions = [];
 
-    if (isAdminRole || isMerchantRole) {
+    if (isAdminRole || isMerchantLikeRole) {
       if (currentStatus === "pending") {
         actions.push({ nextStatus: "Accepted", buttonClass: "btn btn-sm btn-primary", label: "Accept" });
       }
@@ -2845,7 +2849,7 @@ function App() {
             `${API_BASE}/orders/all`,
             `${API_BASE}/orders`,
           ]
-        : isMerchantRole
+        : isMerchantLikeRole
           ? [
               ...merchantRestaurantEndpoints,
             //  `${API_BASE}/orders/merchant`,
@@ -3557,7 +3561,7 @@ function App() {
       const route = getRouteState();
 
       // Restrict merchant role strictly to merchant dashboard/menu/orders dashboard
-      if (isMerchantRole) {
+      if (isMerchantLikeRole) {
         // Allowed: merchantDashboard, merchantMenu, myOrders (Orders Dashboard)
         if (
           route.page !== "merchantDashboard" &&
@@ -3688,7 +3692,7 @@ function App() {
     return () => {
       window.removeEventListener("hashchange", syncRouteFromHash);
     };
-  }, [token, normalizedCurrentUserRole, isMerchantRole]);
+  }, [token, normalizedCurrentUserRole, isMerchantLikeRole]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   /* eslint-disable react-hooks/exhaustive-deps */
@@ -3917,7 +3921,7 @@ function App() {
   }, [ensureAudioCtx, doBeeps]);
 
   useEffect(() => {
-    if (!isMerchantRole || !token || audioUnlockedRef.current) return undefined;
+    if (!isMerchantLikeRole || !token || audioUnlockedRef.current) return undefined;
 
     const unlockAudio = async () => {
       const ctx = ensureAudioCtx();
@@ -3954,11 +3958,11 @@ function App() {
       window.removeEventListener("keydown", unlockAudio);
       window.removeEventListener("touchstart", unlockAudio);
     };
-  }, [isMerchantRole, token, ensureAudioCtx, doBeeps]);
+  }, [isMerchantLikeRole, token, ensureAudioCtx, doBeeps]);
 
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
-    if (!isMerchantRole || !token) {
+    if (!isMerchantLikeRole || !token) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
       knownOrderIdsRef.current = null;
@@ -4038,7 +4042,7 @@ function App() {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     };
-  }, [isMerchantRole, token, currentUser, page]);
+  }, [isMerchantLikeRole, token, currentUser, page]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   const visibleRoleOrders = roleOrders.slice(0, roleOrdersVisibleCount);
@@ -4076,7 +4080,7 @@ function App() {
           </div>
 
           <div className="d-flex align-items-center gap-2">
-            {token && isMerchantRole && (
+            {token && isMerchantLikeRole && (
            <button
            className="btn btn-outline-info"
             onClick={() => {
@@ -4370,7 +4374,8 @@ function App() {
         )}
         {page === "merchantDashboard" && (
           <MerchantDashboard 
-            token={token} 
+            token={token}
+            currentUserRole={normalizedCurrentUserRole}
             onBack={() => { window.location.hash = "/"; }}
           />
         )}
@@ -4393,6 +4398,7 @@ function App() {
                 token={token}
                 restaurantId={Number(activeRestaurantId) || null}
                 restaurantAddressId={Number(activeBranchId) || null}
+                currentUserRole={normalizedCurrentUserRole}
                 onBack={() => { window.location.hash = "/merchant/dashboard"; }}
               />
             </PageErrorBoundary>
@@ -4447,7 +4453,7 @@ function App() {
               <h2 className="mb-1">{canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}</h2>
               <p className="small text-muted mb-0">{getRoleCapabilitiesLabel()}</p>
             </div>
-            {isMerchantRole && (
+            {isMerchantLikeRole && (
               <button
                 type="button"
                 className="btn btn-sm btn-outline-secondary mb-3"
@@ -4468,7 +4474,7 @@ function App() {
               ) : roleOrders.length === 0 ? (
                 <div className="restaurant-menu">
                   <p className="text-muted mb-0">No operational orders found for this role.</p>
-                  {isMerchantRole && (
+                  {isMerchantLikeRole && (
                     <div className="small text-muted mt-2">
                       <div>
                         Merchant debug: RestaurantId on your account is {merchantRestaurantIdForUi ? String(merchantRestaurantIdForUi) : "not assigned"}.
@@ -4484,7 +4490,7 @@ function App() {
                     </p>
                   )}
                 </div>
-              ) : isMerchantRole ? (
+              ) : isMerchantLikeRole ? (
                 /* ── MERCHANT KANBAN BOARD ── */
                 <div className="kanban-board">
                   {[
@@ -5558,7 +5564,7 @@ function App() {
             <div className="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">
               <span>Unknown page state: {String(page || "empty")}. Redirecting options are available below.</span>
               <div className="d-flex gap-2">
-                {isMerchantRole ? (
+                {isMerchantLikeRole ? (
                   <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => { window.location.hash = "/merchant/dashboard"; }}>
                     Go to Merchant Dashboard
                   </button>

@@ -160,6 +160,72 @@ namespace FoodDeliveryyy.Controllers
             });
         }
 
+        [HttpPost("admin/assign-branch-manager")]
+        [Authorize(Roles = AppRoles.Admin)]
+        public async Task<IActionResult> AssignBranchManager([FromBody] AssignBranchManagerDto dto)
+        {
+            var normalizedCredential = dto.UsernameOrEmail.Trim();
+            if (string.IsNullOrWhiteSpace(normalizedCredential))
+            {
+                return BadRequest(new { message = "Username or email is required." });
+            }
+
+            var branch = await _context.RestaurantAddresses
+                .Include(a => a.Restaurant)
+                .FirstOrDefaultAsync(a => a.Id == dto.RestaurantAddressId);
+
+            if (branch == null)
+            {
+                return NotFound(new { message = "Branch address not found." });
+            }
+
+            User? user;
+            if (normalizedCredential.Contains("@"))
+            {
+                user = await _userManager.FindByEmailAsync(normalizedCredential);
+            }
+            else
+            {
+                user = await _userManager.FindByNameAsync(normalizedCredential);
+            }
+
+            if (user == null)
+            {
+                return NotFound(new { message = "User not found." });
+            }
+
+            var currentRoles = await _userManager.GetRolesAsync(user);
+            if (currentRoles.Any())
+            {
+                var removeResult = await _userManager.RemoveFromRolesAsync(user, currentRoles);
+                if (!removeResult.Succeeded)
+                {
+                    return BadRequest(removeResult.Errors);
+                }
+            }
+
+            var addResult = await _userManager.AddToRoleAsync(user, AppRoles.BranchManager);
+            if (!addResult.Succeeded)
+            {
+                return BadRequest(addResult.Errors);
+            }
+
+            branch.MerchantUserId = user.Id;
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Branch manager assigned.",
+                userId = user.Id,
+                userName = user.UserName,
+                role = AppRoles.BranchManager,
+                branchId = branch.Id,
+                restaurantId = branch.RestaurantId,
+                branchAddress = branch.Adresa,
+                city = branch.Qyteti
+            });
+        }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {

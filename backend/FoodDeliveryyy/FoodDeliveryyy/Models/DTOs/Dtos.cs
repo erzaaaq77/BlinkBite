@@ -42,3 +42,12 @@ public class SetUserRoleDto
     [Required]
     public string Role { get; set; } = string.Empty;
 }
+
+public class AssignBranchManagerDto
+{
+    [Required]
+    public string UsernameOrEmail { get; set; } = string.Empty;
+
+    [Required]
+    public int RestaurantAddressId { get; set; }
+}

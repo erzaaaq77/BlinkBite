@@ -3,6 +3,7 @@ using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
 using FoodDeliveryyy.Models.Identity;
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,12 +48,22 @@ public class PromotionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<Promotions>>> GetPromotionsByRestaurant(int restaurantId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        if (role == AppRoles.Merchant)
         {
             var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
             if (restaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            var hasBranchAccess = await _context.RestaurantAddresses
+                .AnyAsync(a => a.RestaurantId == restaurantId && a.MerchantUserId == userId);
+            if (!hasBranchAccess)
             {
                 return Forbid();
             }
@@ -86,12 +97,22 @@ public class PromotionsController : ControllerBase
     public async Task<ActionResult<IEnumerable<Promotions>>> GetActivePromotionsByRestaurant(int restaurantId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = User.FindFirst(ClaimTypes.Role)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        if (AppRoles.Normalize(role) == AppRoles.Merchant)
+        if (role == AppRoles.Merchant)
         {
             var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
             if (restaurant == null)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            var hasBranchAccess = await _context.RestaurantAddresses
+                .AnyAsync(a => a.RestaurantId == restaurantId && a.MerchantUserId == userId);
+            if (!hasBranchAccess)
             {
                 return Forbid();
             }
@@ -140,12 +161,26 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<ActionResult<Promotions>> CreatePromotion(Promotions promotion)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         var restaurant = await _context.Restaurants.FindAsync(promotion.RestaurantId);
         if (restaurant == null)
         {
             return BadRequest("Restoranti nuk ekziston");
+        }
+
+        if (role == AppRoles.Merchant && restaurant.UserId != userId)
+        {
+            return Forbid();
+        }
+
+        if (role == AppRoles.BranchManager && !promotion.RestaurantAddressId.HasValue)
+        {
+            return BadRequest("Branch managers must provide restaurantAddressId.");
         }
 
         if (promotion.RestaurantAddressId.HasValue)
@@ -154,6 +189,11 @@ public class PromotionsController : ControllerBase
             if (address == null || address.RestaurantId != restaurant.Id)
             {
                 return BadRequest("Restaurant address does not exist");
+            }
+
+            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
+            {
+                return Forbid();
             }
         }
 
@@ -195,20 +235,44 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<IActionResult> UpdatePromotion(int id, Promotions promotion)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         if (id != promotion.Id)
         {
             return BadRequest();
         }
 
+        var restaurant = await _context.Restaurants.FindAsync(promotion.RestaurantId);
+        if (restaurant == null)
+        {
+            return BadRequest("Restoranti nuk ekziston");
+        }
+
+        if (role == AppRoles.Merchant && restaurant.UserId != userId)
+        {
+            return Forbid();
+        }
+
+        if (role == AppRoles.BranchManager && !promotion.RestaurantAddressId.HasValue)
+        {
+            return BadRequest("Branch managers must provide restaurantAddressId.");
+        }
+
         if (promotion.RestaurantAddressId.HasValue)
         {
-            var restaurant = await _context.Restaurants.FindAsync(promotion.RestaurantId);
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
             if (restaurant == null || address == null || address.RestaurantId != restaurant.Id)
             {
                 return BadRequest("Restaurant address does not exist");
+            }
+
+            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
+            {
+                return Forbid();
             }
         }
 
@@ -250,12 +314,39 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpPatch("{id}/status")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<IActionResult> UpdatePromotionStatus(int id, [FromBody] PromotionStatus status)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         var promotion = await _context.Promotions.FindAsync(id);
         if (promotion == null)
         {
             return NotFound();
+        }
+
+        if (role == AppRoles.Merchant)
+        {
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == promotion.RestaurantId);
+            if (restaurant == null || restaurant.UserId != userId)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            if (!promotion.RestaurantAddressId.HasValue)
+            {
+                return Forbid();
+            }
+
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
+            if (address == null || address.MerchantUserId != userId)
+            {
+                return Forbid();
+            }
         }
 
         if (!Enum.IsDefined(typeof(PromotionStatus), status))
@@ -270,12 +361,39 @@ public class PromotionsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<IActionResult> DeletePromotion(int id)
     {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
         var promotion = await _context.Promotions.FindAsync(id);
         if (promotion == null)
         {
             return NotFound();
+        }
+
+        if (role == AppRoles.Merchant)
+        {
+            var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == promotion.RestaurantId);
+            if (restaurant == null || restaurant.UserId != userId)
+            {
+                return Forbid();
+            }
+        }
+
+        if (role == AppRoles.BranchManager)
+        {
+            if (!promotion.RestaurantAddressId.HasValue)
+            {
+                return Forbid();
+            }
+
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
+            if (address == null || address.MerchantUserId != userId)
+            {
+                return Forbid();
+            }
         }
 
         _context.Promotions.Remove(promotion);

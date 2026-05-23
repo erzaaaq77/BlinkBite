@@ -92,38 +92,93 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("Merchant")]
-    [Authorize(Roles = AppRoles.Merchant)]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<IActionResult> GetMerchantDashboard()
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        if (restaurant == null)
-            return NotFound("No restaurant found for this merchant");
+        Restaurant? restaurant;
+        List<dynamic> addresses;
+
+        if (role == AppRoles.BranchManager)
+        {
+            var branchAddresses = await _context.RestaurantAddresses
+                .Where(a => a.MerchantUserId == userId)
+                .OrderByDescending(a => a.IsMain)
+                .ThenByDescending(a => a.IsActive)
+                .ThenBy(a => a.Qyteti)
+                .ThenBy(a => a.Adresa)
+                .Select(a => new
+                {
+                    id = a.Id,
+                    restaurantId = a.RestaurantId,
+                    merchantUserId = a.MerchantUserId,
+                    adresa = a.Adresa,
+                    qyteti = a.Qyteti,
+                    zona = a.Zona,
+                    isMain = a.IsMain,
+                    isActive = a.IsActive,
+                    latitude = a.Latitude,
+                    longitude = a.Longitude
+                })
+                .ToListAsync();
+
+            if (!branchAddresses.Any())
+                return NotFound("No branch found for this branch manager");
+
+            var restaurantId = branchAddresses[0].restaurantId;
+            restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId);
+            if (restaurant == null)
+                return NotFound("No restaurant found for this branch manager");
+
+            addresses = branchAddresses.Cast<dynamic>().ToList();
+        }
+        else
+        {
+            restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
+
+            if (restaurant == null)
+                return NotFound("No restaurant found for this merchant");
+
+            var ownerAddresses = await _context.RestaurantAddresses
+                .Where(a => a.RestaurantId == restaurant.Id)
+                .OrderByDescending(a => a.IsMain)
+                .ThenByDescending(a => a.IsActive)
+                .ThenBy(a => a.Qyteti)
+                .ThenBy(a => a.Adresa)
+                .Select(a => new
+                {
+                    id = a.Id,
+                    restaurantId = a.RestaurantId,
+                    merchantUserId = a.MerchantUserId,
+                    adresa = a.Adresa,
+                    qyteti = a.Qyteti,
+                    zona = a.Zona,
+                    isMain = a.IsMain,
+                    isActive = a.IsActive,
+                    latitude = a.Latitude,
+                    longitude = a.Longitude
+                })
+                .ToListAsync();
+
+                    addresses = ownerAddresses.Cast<dynamic>().ToList();
+        }
 
         var today = DateTime.Today;
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
-        var addresses = await _context.RestaurantAddresses
-            .Where(a => a.RestaurantId == restaurant.Id)
-            .OrderByDescending(a => a.IsMain)
-            .ThenByDescending(a => a.IsActive)
-            .ThenBy(a => a.Qyteti)
-            .ThenBy(a => a.Adresa)
-            .Select(a => new
-            {
-                id = a.Id,
-                restaurantId = a.RestaurantId,
-                merchantUserId = a.MerchantUserId,
-                adresa = a.Adresa,
-                qyteti = a.Qyteti,
-                zona = a.Zona,
-                isMain = a.IsMain,
-                isActive = a.IsActive,
-                latitude = a.Latitude,
-                longitude = a.Longitude
-            })
-            .ToListAsync();
+        var addressIds = addresses.Select(a => (int)a.id).ToList();
+
+        var scopedOrders = _context.Orders.AsQueryable();
+        if (role == AppRoles.BranchManager)
+        {
+            scopedOrders = scopedOrders.Where(o => o.RestaurantAddressId.HasValue && addressIds.Contains(o.RestaurantAddressId.Value));
+        }
+        else
+        {
+            scopedOrders = scopedOrders.Where(o => o.RestaurantId == restaurant.Id);
+        }
 
         var primaryAddressId = addresses.FirstOrDefault(a => (bool)(a?.isMain ?? false))?.id
             ?? addresses.FirstOrDefault()?.id;
@@ -142,30 +197,30 @@ public class DashboardController : ControllerBase
 
                 PrimaryAddressId = primaryAddressId,
                 Addresses = addresses,
+                Scope = role == AppRoles.BranchManager ? "branch" : "owner",
 
                 Orders = new
                 {
-                    Total = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id),
-                    Today = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date == today),
-                    ThisWeek = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date >= startOfWeek),
-                    ThisMonth = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date >= startOfMonth),
-                    Pending = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Pending),
-                    Accepted = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Accepted),
-                    Preparing = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Preparing),
-                    Ready = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Ready),
-                    Delivered = await _context.Orders.CountAsync(o => o.RestaurantId == restaurant.Id && o.Statusi == OrderStatus.Delivered)
+                    Total = await scopedOrders.CountAsync(),
+                    Today = await scopedOrders.CountAsync(o => o.DataPorosis.Date == today),
+                    ThisWeek = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfWeek),
+                    ThisMonth = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfMonth),
+                    Pending = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Pending),
+                    Accepted = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Accepted),
+                    Preparing = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Preparing),
+                    Ready = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Ready),
+                    Delivered = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Delivered)
                 },
 
                 Revenue = new
                 {
-                    Today = await _context.Orders.Where(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
-                    ThisWeek = await _context.Orders.Where(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date >= startOfWeek).SumAsync(o => o.ShumaTotale),
-                    ThisMonth = await _context.Orders.Where(o => o.RestaurantId == restaurant.Id && o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
-                    Total = await _context.Orders.Where(o => o.RestaurantId == restaurant.Id).SumAsync(o => o.ShumaTotale)
+                    Today = await scopedOrders.Where(o => o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
+                    ThisWeek = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfWeek).SumAsync(o => o.ShumaTotale),
+                    ThisMonth = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
+                    Total = await scopedOrders.SumAsync(o => o.ShumaTotale)
                 },
 
-                RecentOrders = await _context.Orders
-                .Where(o => o.RestaurantId == restaurant.Id)
+                RecentOrders = await scopedOrders
                 .OrderByDescending(o => o.DataPorosis)
                 .Take(10)
                 .Select(o => new
