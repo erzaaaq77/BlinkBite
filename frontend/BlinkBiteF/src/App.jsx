@@ -8,6 +8,7 @@ import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
 import { favoriteService } from "./services/FavoriteService";
 import AiChat from './components/AiChat';
+import { tokenService } from './services/tokenService';
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
@@ -582,14 +583,12 @@ function App() {
 
   const persistToken = (nextToken) => {
     if (nextToken) {
-      sessionStorage.setItem(ACCESS_TOKEN_KEY, nextToken);
-      localStorage.removeItem(ACCESS_TOKEN_KEY);
-      setToken(nextToken);
-      return;
+     tokenService.setToken(nextToken);
+     setToken(nextToken);
+     return;
     }
 
-    sessionStorage.removeItem(ACCESS_TOKEN_KEY);
-    localStorage.removeItem(ACCESS_TOKEN_KEY);
+      tokenService.removeToken();
     setToken("");
   };
 
@@ -3202,6 +3201,8 @@ function App() {
       }
       if (data.token) {
         persistToken(data.token);
+        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event ('focus'));
         setLoginMessage("Login successful! Welcome back");
         await fetchCurrentUser();
         setTimeout(async () => {

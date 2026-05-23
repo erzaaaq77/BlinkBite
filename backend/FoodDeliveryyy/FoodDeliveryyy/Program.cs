@@ -84,6 +84,27 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero
     };
+
+    // Add debug event handlers
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"❌ JWT Auth Failed: {context.Exception.Message}");
+            Console.WriteLine($"   Token: {context.Request.Headers["Authorization"]}");
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            Console.WriteLine($"✅ JWT Token Valid for: {context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value}");
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Console.WriteLine($"⚠️ JWT Challenge: {context.ErrorDescription}");
+            return Task.CompletedTask;
+        }
+    };
 });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IOrderService, OrderService>();
