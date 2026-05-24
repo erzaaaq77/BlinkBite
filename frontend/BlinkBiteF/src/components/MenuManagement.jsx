@@ -807,7 +807,11 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
       const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
       setRestaurantCategories(categories);
 
-      const response = await axios.get(`${API_BASE_URL}/MenuItems`, {
+      let menuUrl = `${API_BASE_URL}/MenuItems`;
+      if (isBranchManagerRole && restaurantAddressId) {
+        menuUrl += `?branchId=${restaurantAddressId}`;
+      }
+      const response = await axios.get(menuUrl, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const allItems = Array.isArray(response.data) ? response.data : [];

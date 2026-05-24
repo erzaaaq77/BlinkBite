@@ -94,20 +94,13 @@ public static class DbInitializer
                     Email = seed.Email,
                     EmailConfirmed = true
                 };
-                var createResult = await userManager.CreateAsync(user, "Branch@1234");
+                var createResult = await userManager.CreateAsync(user, "Merchant@1234");
                 if (!createResult.Succeeded)
                 {
-                    throw new InvalidOperationException($"Failed to create branch manager user {username}");
+                    throw new InvalidOperationException($"Failed to create merchant user {seed.Username}");
                 }
+                Console.WriteLine($"Merchant user {seed.Username} created");
             }
-            if (!await userManager.IsInRoleAsync(user, AppRoles.BranchManager))
-            {
-                await userManager.AddToRoleAsync(user, AppRoles.BranchManager);
-            }
-            branch.MerchantUserId = user.Id;
-            branchCounter++;
-        }
-        await context.SaveChangesAsync();
             else
             {
                 var changed = false;
@@ -195,7 +188,7 @@ public static class DbInitializer
             new Category { Name = "Burgers", ImageUrl = "/uploads/categories/burgersIcon.png" },
             new Category { Name = "Dessert", ImageUrl = "/uploads/categories/dessertIcon.png" },
             new Category { Name = "Traditional", ImageUrl = "/uploads/categories/TraditionalIcon.png" },
-            
+
             new Category { Name = "Seafood", ImageUrl = "/uploads/categories/seafoodIcon.png" },
             new Category { Name = "Korean", ImageUrl = "/uploads/categories/koreanIcon.png" }
         };
@@ -6084,23 +6077,23 @@ public static class DbInitializer
                 }
             }
 
-                var categoryMap = await context.Categories
-                    .ToDictionaryAsync(c => c.Name.ToLower().Trim(), c => c.Id);
+            var categoryMap = await context.Categories
+                .ToDictionaryAsync(c => c.Name.ToLower().Trim(), c => c.Id);
 
-                var restaurantsWithoutCategoryId = await context.Restaurants
-                    .Where(r => r.CategoryId == null && !string.IsNullOrWhiteSpace(r.Kategori))
-                    .ToListAsync();
+            var restaurantsWithoutCategoryId = await context.Restaurants
+                .Where(r => r.CategoryId == null && !string.IsNullOrWhiteSpace(r.Kategori))
+                .ToListAsync();
 
-                foreach (var restaurant in restaurantsWithoutCategoryId)
+            foreach (var restaurant in restaurantsWithoutCategoryId)
+            {
+                var normalizedCategory = restaurant.Kategori.ToLower().Trim();
+                if (categoryMap.TryGetValue(normalizedCategory, out var categoryId))
                 {
-                    var normalizedCategory = restaurant.Kategori.ToLower().Trim();
-                    if (categoryMap.TryGetValue(normalizedCategory, out var categoryId))
-                    {
-                        restaurant.CategoryId = categoryId;
-                    }
+                    restaurant.CategoryId = categoryId;
                 }
+            }
 
-                await context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
             var categoriesSaray = new List<MenuCategory>();
             var saray = context.Restaurants.FirstOrDefault(r => r.Emertimi == "Saray Sweets");
@@ -10946,7 +10939,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Soy,Eggs",
                     Kalori = 300,
-                    CategoryId = fries.Id 
+                    CategoryId = fries.Id
                 },
                 new MenuItems
                 {
@@ -10957,7 +10950,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Soy,Eggs",
                     Kalori = 800,
-                    CategoryId = fries.Id 
+                    CategoryId = fries.Id
                 },
                 new MenuItems
                 {
@@ -10968,7 +10961,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Soy,Eggs,Milk",
                     Kalori = 600,
-                    CategoryId = fries.Id 
+                    CategoryId = fries.Id
                 },
                 new MenuItems
                 {
@@ -10979,7 +10972,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "None",
                     Kalori = 600,
-                    CategoryId = fries.Id 
+                    CategoryId = fries.Id
                 },
                 new MenuItems
                 {
@@ -10990,7 +10983,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "None",
                     Kalori = 250,
-                    CategoryId = fries.Id 
+                    CategoryId = fries.Id
                 }
                 };
                 context.MenuItems.AddRange(friesItems);
@@ -11019,7 +11012,7 @@ public static class DbInitializer
                         Kalori = 450,
                         CategoryId = burgers.Id
                     },
-               
+
                     new MenuItems{
                         Emertimi = "Hash Brown Beef Burger",
                         Pershkrimi = "Juicy beef patty topped with crispy hash brown, melted cheese, fresh lettuce, and creamy sauce in a toasted bun.",
@@ -11042,9 +11035,9 @@ public static class DbInitializer
                     }
                 };
                 context.MenuItems.AddRange(burgerItems);
-                 context.SaveChanges();
+                context.SaveChanges();
 
-                var hotdogItems = new List<MenuItems> 
+                var hotdogItems = new List<MenuItems>
                 {
                 new MenuItems
                 {
@@ -11055,7 +11048,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Gluten, Soy, Eggs",
                     Kalori = 300,
-                    CategoryId = hotdog.Id 
+                    CategoryId = hotdog.Id
                 },
                 new MenuItems
                 {
@@ -11066,7 +11059,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Gluten, Soy, Eggs",
                     Kalori = 400,
-                    CategoryId = hotdog.Id 
+                    CategoryId = hotdog.Id
                 },
                 new MenuItems
                 {
@@ -11077,7 +11070,7 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Gluten, Soy, Eggs,Milk",
                     Kalori = 350,
-                    CategoryId = hotdog.Id 
+                    CategoryId = hotdog.Id
                 },
                 new MenuItems
                 {
@@ -11088,13 +11081,13 @@ public static class DbInitializer
                     Disponueshme = true,
                     Alergjene = "Gluten, Soy, Eggs",
                     Kalori = 750,
-                    CategoryId = hotdog.Id 
+                    CategoryId = hotdog.Id
                 }
                 };
                 context.MenuItems.AddRange(hotdogItems);
                 context.SaveChanges();
 
-                var sandwichItems = new List <MenuItems> 
+                var sandwichItems = new List<MenuItems>
                 {
                 new MenuItems
                 {
@@ -11134,7 +11127,7 @@ public static class DbInitializer
                 context.MenuItems.AddRange(sandwichItems);
                 context.SaveChanges();
 
-                var drinkItems = new List<MenuItems> { 
+                var drinkItems = new List<MenuItems> {
                 new MenuItems
                  {
                     Emertimi = "Coca Cola",
@@ -11157,7 +11150,7 @@ public static class DbInitializer
                     Kalori = 150,
                     CategoryId = drinks.Id
                 },
-                
+
                 new MenuItems
                  {
                     Emertimi = "Sprite",
@@ -11180,20 +11173,20 @@ public static class DbInitializer
                     Kalori = 0,
                     CategoryId = drinks.Id
                 }
-                
-                
-                
-                
+
+
+
+
                 };
                 context.MenuItems.AddRange(drinkItems);
                 context.SaveChanges();
             }
-            
-
-                }
 
 
         }
+
+
+    }
 
     private static async Task MigrateLegacyRoleAsync(
         RoleManager<Role> roleManager,
