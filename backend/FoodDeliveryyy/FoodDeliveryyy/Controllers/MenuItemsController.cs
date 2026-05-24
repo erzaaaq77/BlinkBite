@@ -22,9 +22,37 @@ public class MenuItemsController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<MenuItems>>> GetMenuItems()
+    public async Task<ActionResult<IEnumerable<object>>> GetMenuItems([FromQuery] int? branchId = null)
     {
-        return await _context.MenuItems.ToListAsync();
+        var items = await _context.MenuItems
+            .Include(m => m.BranchDetails)
+            .ToListAsync();
+
+        if (branchId == null)
+        {
+            return Ok(items);
+        }
+
+        // Për çdo produkt, bashko të dhënat bazë me ato të branch-it nëse ekzistojnë
+        var result = items.Select(item => {
+            var branch = item.BranchDetails?.FirstOrDefault(b => b.RestaurantAddressId == branchId);
+            return new {
+                item.Id,
+                item.Emertimi,
+                item.Pershkrimi,
+                Cmimi = branch?.Cmimi ?? item.Cmimi,
+                item.Foto,
+                Disponueshme = branch?.Disponueshme ?? item.Disponueshme,
+                Alergjene = item.Alergjene,
+                Kalori = item.Kalori,
+                Perberesit = branch?.Perberesit ?? item.Perberesit,
+                RequestOptions = branch?.RequestOptions ?? item.RequestOptions,
+                item.CategoryId,
+                item.RestaurantAddressId,
+                BranchCustom = branch
+            };
+        });
+        return Ok(result);
     }
 
     [HttpGet("{id}")]

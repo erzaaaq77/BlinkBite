@@ -48,4 +48,7 @@ public class MenuItems
 
     [ForeignKey("RestaurantAddressId")]
     public virtual RestaurantAddress? RestaurantAddress { get; set; }
+
+    // Lidhje me branch customizations
+    public virtual ICollection<MenuItemBranch>? BranchDetails { get; set; }
 }

@@ -343,9 +343,14 @@ const applyImageFallbackCandidate = (event, candidates, finalFallback = "") => {
   }
 };
 
-const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBack }) => {
+const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, currentUserRole = "", onBack }) => {
+  const normalizedRole = String(currentUserRole || "").trim().toLowerCase();
+  const isBranchManagerRole = normalizedRole === "branchmanager";
   const [menuItems, setMenuItems] = useState([]);
   const [restaurantCategories, setRestaurantCategories] = useState([]);
+  const [branchOptions, setBranchOptions] = useState([]);
+  const [branchesLoading, setBranchesLoading] = useState(false);
+  const [branchFetchDebug, setBranchFetchDebug] = useState({ endpoint: '', status: '', error: '', response: '' });
   const [debugStats, setDebugStats] = useState({
     allItemsCount: 0,
     byCategoryCount: 0,
@@ -362,6 +367,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
   const [showModal, setShowModal] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const toastTimerRef = useRef(null);
+  const canManageMenuInScope = !isBranchManagerRole || Boolean(restaurantAddressId);
   const [formData, setFormData] = useState({
     emertimi: "",
     pershkrimi: "",
@@ -375,6 +381,62 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
     restaurantId: restaurantId,
     categoryId: 1
   });
+
+  useEffect(() => {
+    const fetchBranches = async () => {
+      if (!token || !restaurantId) {
+        setBranchOptions([]);
+        setBranchFetchDebug({ endpoint: '', status: '', error: 'Missing token or restaurantId', response: '' });
+        return;
+      }
+
+      setBranchesLoading(true);
+      setBranchFetchDebug({ endpoint: '', status: '', error: '', response: '' });
+
+
+      // Use the same endpoint as MerchantDashboard for branch list
+      const endpoint = `${API_BASE_URL}/Dashboard/Merchant`;
+      try {
+        const response = await axios.get(endpoint, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setBranchFetchDebug({ endpoint, status: response.status, error: '', response: JSON.stringify(response.data) });
+
+        // addresses are in response.data.addresses
+        const rows = Array.isArray(response.data?.addresses)
+          ? response.data.addresses
+          : [];
+
+        const normalized = rows
+          .map((entry) => {
+            const id = toNumberId(entry?.id ?? entry?.Id);
+            if (!id) return null;
+            return {
+              id,
+              address: String(entry?.adresa ?? entry?.address ?? "").trim(),
+              city: String(entry?.qyteti ?? entry?.city ?? "").trim(),
+              zone: String(entry?.zona ?? entry?.zone ?? "").trim(),
+              isMain: Boolean(entry?.isMain),
+            };
+          })
+          .filter(Boolean);
+
+        setBranchOptions(normalized);
+      } catch (err) {
+        setBranchFetchDebug({
+          endpoint,
+          status: err?.response?.status || '',
+          error: err?.message || String(err),
+          response: err?.response ? JSON.stringify(err.response.data) : '',
+        });
+        setBranchOptions([]);
+      }
+
+      setBranchesLoading(false);
+    };
+
+    fetchBranches();
+  }, [restaurantId, token]);
 
   useEffect(() => {
     const fetchMenuItems = async () => {
@@ -443,8 +505,15 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
       return;
     }
 
+    if (isBranchManagerRole && !restaurantAddressId) {
+      setMenuItems([]);
+      setError("Branch Manager account must open menu with a valid branch scope.");
+      setLoading(false);
+      return;
+    }
+
     fetchMenuItems();
-  }, [restaurantId, restaurantAddressId, token]);
+  }, [restaurantId, restaurantAddressId, token, isBranchManagerRole]);
 
   useEffect(() => {
     const map = loadRestaurantCustomizations();
@@ -505,6 +574,18 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
     };
     saveRestaurantCustomizations(map);
     showToast("Restaurant customization saved.", "success");
+  };
+
+  const handleBranchScopeChange = (event) => {
+    const nextBranchId = String(event.target.value || "").trim();
+    if (!restaurantId) return;
+
+    if (!nextBranchId) {
+      window.location.hash = `/merchant/menu/${restaurantId}`;
+      return;
+    }
+
+    window.location.hash = `/merchant/menu/${restaurantId}?branchId=${encodeURIComponent(nextBranchId)}`;
   };
 
   useEffect(() => {
@@ -671,15 +752,32 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
 
       if (editingItem) {
         const editingItemId = editingItem.id ?? editingItem.Id;
-        await saveWithPayloadFallback((candidatePayload) =>
-          axios.put(
-            `${API_BASE_URL}/MenuItems/${editingItemId}`,
-            { ...candidatePayload, id: editingItemId },
+        if (isBranchManagerRole && restaurantAddressId) {
+          // Branch manager: update only branch-specific fields
+          await axios.put(
+            `${API_BASE_URL}/MenuItemBranch/${editingItemId}/branch/${restaurantAddressId}`,
+            {
+              cmimi: Number(formData.cmimi),
+              disponueshme: Boolean(formData.disponueshme),
+              perberesit: formData.perberesit,
+              requestOptions: formData.requestOptions
+            },
             { headers: { Authorization: `Bearer ${token}` } }
-          )
-        );
-        savedItemId = editingItemId;
-        showToast("Menu item updated.", "success");
+          );
+          savedItemId = editingItemId;
+          showToast("Branch menu item updated.", "success");
+        } else {
+          // Merchant kryesor: update produktin global
+          await saveWithPayloadFallback((candidatePayload) =>
+            axios.put(
+              `${API_BASE_URL}/MenuItems/${editingItemId}`,
+              { ...candidatePayload, id: editingItemId },
+              { headers: { Authorization: `Bearer ${token}` } }
+            )
+          );
+          savedItemId = editingItemId;
+          showToast("Menu item updated.", "success");
+        }
       } else {
         const createResponse = await saveWithPayloadFallback((candidatePayload) =>
           axios.post(
@@ -815,9 +913,61 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
           <button className="btn btn-outline-secondary me-2" onClick={onBack}>
             ← Back
           </button>
-          <button className="btn btn-primary" onClick={() => openModal()}>
+          <button className="btn btn-primary" onClick={() => openModal()} disabled={!canManageMenuInScope}>
             + Add Item
           </button>
+        </div>
+      </div>
+
+      <div className="card mb-3">
+        <div className="card-body py-3">
+          <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h6 className="mb-1">Menu Scope</h6>
+              <p className="small text-muted mb-0">
+                {restaurantAddressId
+                  ? `Showing menu for branch ID ${restaurantAddressId}.`
+                  : "Showing full restaurant menu (all branches)."}
+              </p>
+            </div>
+          {/* Debug overlay removed for production UI cleanliness */}
+
+            {!isBranchManagerRole && (
+              <div className="d-flex align-items-center gap-2">
+                <label htmlFor="menu-branch-scope" className="small text-muted mb-0">
+                  Branch view
+                </label>
+                <select
+                  id="menu-branch-scope"
+                  className="form-select form-select-sm"
+                  style={{ minWidth: "220px" }}
+                  value={restaurantAddressId ? String(restaurantAddressId) : ""}
+                  onChange={handleBranchScopeChange}
+                >
+                  <option value="">All branches</option>
+                  {branchOptions.map((branch) => {
+                    const place = [branch.city, branch.zone].filter(Boolean).join(", ");
+                    const label = `${branch.address || `Branch ${branch.id}`}${place ? ` (${place})` : ""}${branch.isMain ? " - Main" : ""}`;
+                    return (
+                      <option key={branch.id} value={String(branch.id)}>
+                        {label}
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {branchesLoading && !isBranchManagerRole && (
+            <p className="small text-muted mt-2 mb-0">Loading branch list...</p>
+          )}
+
+          {!canManageMenuInScope && (
+            <div className="alert alert-warning mt-3 mb-0 py-2">
+              Branch Manager can manage menu only when a branch is selected in URL.
+            </div>
+          )}
         </div>
       </div>
 
@@ -941,8 +1091,8 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
                     </span>
                   </td>
                   <td>
-                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(item)}>Edit</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id ?? item.Id)}>Delete</button>
+                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(item)} disabled={!canManageMenuInScope}>Edit</button>
+                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id ?? item.Id)} disabled={!canManageMenuInScope}>Delete</button>
                   </td>
                 </tr>
               ))}
@@ -1009,7 +1159,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, onBac
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave} disabled={restaurantCategories.length === 0}>Save</button>
+                <button className="btn btn-primary" onClick={handleSave} disabled={restaurantCategories.length === 0 || !canManageMenuInScope}>Save</button>
               </div>
             </div>
           </div>

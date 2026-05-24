@@ -33,6 +33,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+  const [orderLocationFilter, setOrderLocationFilter] = useState("all");
   const [orderSearch, setOrderSearch] = useState("");
   const [orderSort, setOrderSort] = useState("newest");
   const [showActionableOnly, setShowActionableOnly] = useState(false);
@@ -107,7 +108,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
 
   useEffect(() => {
     setVisibleOrdersCount(MERCHANT_ORDERS_BATCH_SIZE);
-  }, [orderStatusFilter, orderSearch, orderSort, showActionableOnly]);
+  }, [orderStatusFilter, orderLocationFilter, orderSearch, orderSort, showActionableOnly]);
 
   const getStatusColor = (status) => {
     const statusLower = String(status || "").toLowerCase();
@@ -311,6 +312,14 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const recentOrders = dashboard?.recentOrders || [];
   const reviews = dashboard?.reviews || {};
   const restaurantName = restaurant.emertimi || restaurant.name || "Restaurant";
+  const addressMap = new Map(
+    addresses
+      .map((address) => {
+        const id = Number(address?.id);
+        return Number.isFinite(id) ? [id, address] : null;
+      })
+      .filter(Boolean)
+  );
 
   const formatCurrency = (value) => `€${Number(value || 0).toFixed(2)}`;
 
@@ -348,6 +357,21 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     const statusName = getStatusName(order.statusi);
     const createdAtMs = parseCreatedAtMs(order);
     const totalAmount = parseNumericValue(order.shumaTotale ?? order.total ?? order.totalAmount);
+    const branchAddressId = Number(
+      order?.restaurantAddressId ??
+      order?.RestaurantAddressId ??
+      order?.branchId ??
+      order?.BranchId ??
+      order?.addressId ??
+      order?.AddressId
+    );
+    const matchedAddress = Number.isFinite(branchAddressId) ? addressMap.get(branchAddressId) : null;
+    const branchLabel =
+      matchedAddress?.adresa ||
+      matchedAddress?.address ||
+      order?.branchAddress ||
+      order?.restaurantAddress ||
+      "";
     const orderItems = Array.isArray(order.items) ? order.items : [];
     const itemSearchText = orderItems
       .map((item) => item?.name || item?.menuItemName || item?.menuItem?.emertimi || "")
@@ -364,12 +388,15 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       statusName,
       statusKey: String(statusName || "unknown").toLowerCase(),
       customerLabel,
+      branchAddressId: Number.isFinite(branchAddressId) ? branchAddressId : null,
+      branchLabel: String(branchLabel || "").trim(),
       createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
       totalAmount: Number.isFinite(totalAmount) ? totalAmount : 0,
       searchableText: [
         String(order.id || ""),
         customerLabel,
         String(statusName || ""),
+        String(branchLabel || ""),
         itemSearchText,
         addressLabel,
         noteLabel,
@@ -400,9 +427,25 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     return order.statusKey === statusFilter;
   };
 
+  const matchesLocationFilter = (order, locationFilter) => {
+    if (locationFilter === "all") return true;
+    if (locationFilter === "main") {
+      return Number(order.branchAddressId) === Number(primaryAddressId);
+    }
+    if (!locationFilter.startsWith("branch:")) return true;
+
+    const branchId = Number(locationFilter.replace("branch:", ""));
+    if (!Number.isFinite(branchId)) return true;
+
+    return Number(order.branchAddressId) === branchId;
+  };
+
   const filteredOrders = normalizedRecentOrders.filter((order) => {
     const passesStatus = matchesStatusFilter(order, orderStatusFilter);
     if (!passesStatus) return false;
+
+    const passesLocation = matchesLocationFilter(order, orderLocationFilter);
+    if (!passesLocation) return false;
 
     if (showActionableOnly && getOrderActions(order.statusName).length === 0) {
       return false;
@@ -454,16 +497,33 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
 
   const hasActiveFilters =
     orderStatusFilter !== "all" ||
+    orderLocationFilter !== "all" ||
     orderSearch.trim().length > 0 ||
     orderSort !== "newest" ||
     showActionableOnly;
 
   const clearOrderFilters = () => {
     setOrderStatusFilter("all");
+    setOrderLocationFilter("all");
     setOrderSearch("");
     setOrderSort("newest");
     setShowActionableOnly(false);
   };
+
+  const locationFilterOptions = [
+    { value: "all", label: "All locations" },
+    ...(primaryAddressId ? [{ value: "main", label: "Main branch" }] : []),
+    ...addresses.map((address) => {
+      const id = Number(address?.id);
+      const title = address?.adresa || address?.address || `Branch ${id}`;
+      const cityZone = [address?.qyteti, address?.zona].filter(Boolean).join(", ");
+      const suffix = cityZone ? ` (${cityZone})` : "";
+      return {
+        value: `branch:${id}`,
+        label: `${title}${suffix}`,
+      };
+    }),
+  ];
 
   return (
     <section className="merchant-dashboard-page">
@@ -654,6 +714,22 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
                   onChange={(e) => setOrderStatusFilter(e.target.value)}
                 >
                   {statusFilterOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="merchant-filter-group">
+                <label className="form-label mb-1" htmlFor="merchant-order-location">Location</label>
+                <select
+                  id="merchant-order-location"
+                  className="form-select form-select-sm"
+                  value={orderLocationFilter}
+                  onChange={(e) => setOrderLocationFilter(e.target.value)}
+                >
+                  {locationFilterOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
                     </option>

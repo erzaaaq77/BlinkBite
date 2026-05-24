@@ -94,13 +94,20 @@ public static class DbInitializer
                     Email = seed.Email,
                     EmailConfirmed = true
                 };
-                var createResult = await userManager.CreateAsync(user, "Merchant@1234");
+                var createResult = await userManager.CreateAsync(user, "Branch@1234");
                 if (!createResult.Succeeded)
                 {
-                    throw new InvalidOperationException($"Failed to create merchant user {seed.Username}");
+                    throw new InvalidOperationException($"Failed to create branch manager user {username}");
                 }
-                Console.WriteLine($"Merchant user {seed.Username} created");
             }
+            if (!await userManager.IsInRoleAsync(user, AppRoles.BranchManager))
+            {
+                await userManager.AddToRoleAsync(user, AppRoles.BranchManager);
+            }
+            branch.MerchantUserId = user.Id;
+            branchCounter++;
+        }
+        await context.SaveChangesAsync();
             else
             {
                 var changed = false;
