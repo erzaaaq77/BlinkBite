@@ -809,17 +809,71 @@ public static class DbInitializer
 
         var branchManagerSeeds = new[]
         {
-            new { Username = "bm_sushico", Email = "bm_sushico@example.com", RestaurantName = "SushiCo", AddressContains = "Rr.Luan Hardinaj" },
+            // SushiCo branches
+            new { Username = "bm_sushico", Email = "bm_sushico@example.com", RestaurantName = "SushiCo", AddressContains = "Rr. Luan Hardinaj, Pallati i Rinisë, Qendër" },
             // Burger King branches
-            new { Username = "bm_burger1", Email = "bm_burger1@example.com", RestaurantName = "Burger King", AddressContains = "Xhorxh Bush" }, // Qendër (Main)
-            new { Username = "bm_burger2", Email = "bm_burger2@example.com", RestaurantName = "Burger King", AddressContains = "Ahmet Krasniqi" }, // Arbëri
-            new { Username = "bm_burger3", Email = "bm_burger3@example.com", RestaurantName = "Burger King", AddressContains = "Albi Mall" }, // Veternik (Albi Mall)
-            new { Username = "bm_burger4", Email = "bm_burger4@example.com", RestaurantName = "Burger King", AddressContains = "Royal Mall" }, // Bregu i Diellit
-            new { Username = "bm_burger5", Email = "bm_burger5@example.com", RestaurantName = "Burger King", AddressContains = "Ukshin Hoti" }, // Pejton
-            new { Username = "bm_burger6", Email = "bm_burger6@example.com", RestaurantName = "Burger King", AddressContains = "Veternik" }, // Veternik (plain)
+            new { Username = "bm_burger1", Email = "bm_burger1@example.com", RestaurantName = "Burger King", AddressContains = "Xhorxh Bush" },
+            new { Username = "bm_burger2", Email = "bm_burger2@example.com", RestaurantName = "Burger King", AddressContains = "Ahmet Krasniqi" },
+            new { Username = "bm_burger3", Email = "bm_burger3@example.com", RestaurantName = "Burger King", AddressContains = "Albi Mall" },
+            new { Username = "bm_burger4", Email = "bm_burger4@example.com", RestaurantName = "Burger King", AddressContains = "Royal Mall" },
+            new { Username = "bm_burger5", Email = "bm_burger5@example.com", RestaurantName = "Burger King", AddressContains = "Ukshin Hoti" },
+            new { Username = "bm_burger6", Email = "bm_burger6@example.com", RestaurantName = "Burger King", AddressContains = "Veternik" }, 
             // KFC branch manager seed (leave as is)
-            new { Username = "bm_kfc", Email = "bm_kfc@example.com", RestaurantName = "KFC", AddressContains = "Ramiz Sadiku" }
-        };
+            new { Username = "bm_kfc1", Email = "bm_kfc1@example.com", RestaurantName = "KFC", AddressContains = "Kompleksi ish-Ramiz Sadiku, Pejton" },
+            new { Username = "bm_kfc2", Email = "bm_kfc2@example.com", RestaurantName = "KFC", AddressContains = "Arbëri" },
+            new { Username = "bm_kfc3", Email = "bm_kfc3@example.com", RestaurantName = "KFC", AddressContains = "Lagja Marigona, Çagllavicë" },
+            new { Username = "bm_kfc4", Email = "bm_kfc4@example.com", RestaurantName = "KFC", AddressContains = "Prishtina Mall, Çagllavicë" },
+            new { Username = "bm_kfc5", Email = "bm_kfc5@example.com", RestaurantName = "KFC", AddressContains = "Qendra Tregtare Albi Mall, Veternik" },
+            new { Username = "bm_kfc6", Email = "bm_kfc6@example.com", RestaurantName = "KFC", AddressContains = "Rruga B, Bregu i Diellit" },
+            new { Username = "bm_kfc7", Email = "bm_kfc7@example.com", RestaurantName = "KFC", AddressContains = "Veternik" },
+
+            //Frix branches
+            new { Username = "bm_frix1", Email = "bm_frix1@example.com", RestaurantName = "Frix", AddressContains = "Albi Mall, Veternik" },
+            new { Username = "bm_frix2", Email = "bm_frix2@example.com", RestaurantName = "Frix", AddressContains = "Prishtina Mall, Zona Industriale, Çagllavicë" },
+
+            //HeavyHit branches
+            new { Username = "bm_heavyhit", Email = "bm_heavyhit@example.com", RestaurantName = "Heavy Hit", AddressContains = "Veternik" },
+            //Popeyes branches
+            new { Username = "bm_popeyes", Email = "bm_popeyes@example.com", RestaurantName = "Popeyes", AddressContains = "Prishtina Mall, Çagllavicë" },
+
+            //Capvin 13 branches
+            new { Username = "bm_capvin13", Email = "bm_capvin13@example.com", RestaurantName = "Capvin 13", AddressContains = "Rr Hyzri Talla, Bregu i Diellit" },
+            //Smash Burger CO branches
+            new { Username = "bm_smashburger", Email = "bm_smashburger@example.com", RestaurantName = "Smash Burger CO", AddressContains = "Ramiz Sadiku, Pejton" },
+            //Buffalo Burgers branches
+            new { Username = "bm_buffalo1", Email = "bm_buffalo1@example.com", RestaurantName = "Buffalo Burgers", AddressContains = "Rr Nurije Zeka, Qendër" },
+            new { Username = "bm_buffalo2", Email = "bm_buffalo2@example.com", RestaurantName = "Buffalo Burgers", AddressContains = "Rruga Muharrem Fejza, Bregu i Diellit" },
+            //Agusholli branches    
+            new { Username = "bm_agusholli1", Email = "bm_agusholli1@example.com", RestaurantName = "Agusholli", AddressContains = "Bill Clinton" },
+            new { Username = "bm_agusholli2", Email = "bm_agusholli2@example.com", RestaurantName = "Agusholli", AddressContains = "M9 Fushë Kosovë" },
+            //Saray Sweets branches
+            new { Username = "bm_saray", Email = "bm_saray@example.com", RestaurantName = "Saray Sweets", AddressContains = "Bulevardi Nënë Tereza" },
+
+            //Green and Protein branches
+            new { Username = "bm_greenprotein", Email = "bm_greenprotein@example.com", RestaurantName = "Green and Protein", AddressContains = "Prime Residence, Lakrishte" },
+            //Fika Eatery branches
+            new { Username = "bm_fikaeatery", Email = "bm_fikaeatery@example.com", RestaurantName = "Fika Eatery", AddressContains = "Bashkim Fehmiu 47, Lakrishte" },
+            //Pasta Fasta branches
+            new { Username = "bm_pastafasta", Email = "bm_pastafasta@example.com", RestaurantName = "Pasta Fasta", AddressContains = "Rr Hajdar Dushi nr 12, Qendër" },
+            //Gjiks&Chiks branches  
+            new { Username = "bm_gjiks", Email = "bm_gjiks@example.com", RestaurantName = "Gjiks&Chiks", AddressContains = "Rruga Vicianum, Arbëri" },
+            //Propper Pizza branches
+            new { Username = "bm_proper1", Email = "bm_proper1@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rr Rexhep Luci, Qendër" },
+            new { Username = "bm_proper2", Email = "bm_proper2@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rr Ferid Curri, Arbëri" },
+            new { Username = "bm_proper3", Email = "bm_proper3@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rr Haxhi Zeka, Kolovcë" },
+            new { Username = "bm_proper4", Email = "bm_proper4@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rr Hyzri Talla, Bregu i Diellit" },
+            new { Username = "bm_proper5", Email = "bm_proper5@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rr Robert Doll, Pejton" },
+            new { Username = "bm_proper6", Email = "bm_proper6@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rrethi i Çagllavicës, Çagllavicë" },
+            new { Username = "bm_proper7", Email = "bm_proper7@example.com", RestaurantName = "Proper Pizza", AddressContains = "Rr Dervish Hima, Emshir" },
+            //Hook Fish&Chips branches
+            new { Username = "bm_hookfish", Email = "bm_hookfish@example.com", RestaurantName = "Hook Fish&Chips", AddressContains = "Rruga Hajdar Dushi, Qafa" },
+            //My Shawarma branches
+            new { Username = "bm_myshawarma", Email = "bm_myshawarma@example.com", RestaurantName = "My Shawarma", AddressContains = "Sheshi Xhorxh Bush, Qendër" },
+            //mulliri branches
+            new { Username = "bm_mulliri", Email = "bm_mulliri@example.com", RestaurantName = "Mulliri", AddressContains = "Rr Luan Haradinaj, Qendër" }
+
+
+                    };
 
         var branchAssignments = 0;
         foreach (var seed in branchManagerSeeds)
