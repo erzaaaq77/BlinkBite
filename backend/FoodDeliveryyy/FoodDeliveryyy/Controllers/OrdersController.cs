@@ -375,6 +375,22 @@ public class OrdersController : ControllerBase
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();
 
+        var invoice = new Invoice
+        {
+            OrderId = order.Id,
+            InvoiceNumber = GenerateInvoiceNumber(order.Id),
+            Subtotal = order.ShumaTotale - order.TarifaDorezimit + order.Zbritja,
+            DeliveryFee = order.TarifaDorezimit,
+            Discount = order.Zbritja,
+            Total = order.ShumaTotale,
+            InvoiceDate = DateTime.UtcNow,
+            PaymentMethod = order.MetodaPageses == PaymentMethod.Cash ? "Cash" : "Other",
+            Notes = order.Shenimet
+        };
+
+        _context.Invoices.Add(invoice);
+        await _context.SaveChangesAsync();
+
         var createdOrderResponse = new
         {
             id = order.Id,
@@ -770,6 +786,11 @@ public class OrdersController : ControllerBase
         }).OrderByDescending(h =>h.OrderCount).Take(5).ToListAsync();
 
         return Ok(busiesthours);
+    }
+
+    private string GenerateInvoiceNumber(int orderId)
+    {
+        return $"INV-{DateTime.UtcNow:yyyyMMdd}-{orderId:D6}";
     }
 
 }

@@ -8,6 +8,7 @@ import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
 import { favoriteService } from "./services/FavoriteService";
 import { tokenService } from './services/tokenService';
+import InvoiceView from "./components/InvoiceView";
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
@@ -206,17 +207,30 @@ function App() {
         restaurantId: rawRestaurantId,
         branchId: decodeURIComponent(branchParam),
       };
-}
+    }
+
+    if (hash.startsWith("#/invoice/")) {
+      const orderId = hash.replace("#/invoice/", "");
+      return {
+        page: "myOrders",
+        orderId: orderId,
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
     if (hash.startsWith("#/track/")) {
-  const orderId = hash.replace("#/track/", "");
-  return {
-    page: "trackOrder",
-    orderId: orderId,
-    category: "",
-    restaurantId: null,
-    branchId: "",
-  };
-}
+      const orderId = hash.replace("#/track/", "");
+      return {
+        page: "trackOrder",
+        orderId: orderId,
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
     if (hash.startsWith("#/driver/dashboard")) {
   return {
     page: "driverDashboard",
@@ -3559,9 +3573,10 @@ function App() {
   useEffect(() => {
     const syncRouteFromHash = async () => {
       const route = getRouteState();
+      const isInvoiceRoute = window.location.hash.startsWith("#/invoice/");
 
       // Restrict merchant role strictly to merchant dashboard/menu/orders dashboard
-      if (isMerchantLikeRole) {
+      if (!isInvoiceRoute && isMerchantLikeRole) {
         // Allowed: merchantDashboard, merchantMenu, myOrders (Orders Dashboard)
         if (
           route.page !== "merchantDashboard" &&
@@ -3578,7 +3593,7 @@ function App() {
       }
 
       // Courier should use Driver Dashboard, not Orders Dashboard (/my-orders)
-      if (isCourierRole && route.page === "myOrders") {
+      if (!isInvoiceRoute && isCourierRole && route.page === "myOrders") {
         window.location.hash = "/driver/dashboard";
         setPage("driverDashboard");
         setActiveRestaurantId(null);
@@ -3591,6 +3606,10 @@ function App() {
       setActiveRestaurantId(route.restaurantId);
       setActiveBranchId(route.branchId || "");
       setTrackOrderId(route.orderId || "");
+
+      if (isInvoiceRoute) {
+        return;
+      }
 
       if (route.page === "myOrders") {
         if (canManageOperationalOrders) {
@@ -4431,7 +4450,17 @@ function App() {
           />
         )}
 
-        {page === "myOrders" && (
+        {page === "myOrders" && window.location.hash.startsWith("#/invoice/") && (
+          <section className="cart-page pb-5">
+            <InvoiceView
+              orderId={trackOrderId}
+              token={token}
+              onBack={() => window.location.hash = "/my-orders"}
+            />
+          </section>
+        )}
+
+        {page === "myOrders" && !window.location.hash.startsWith("#/invoice/") && (
           <section className="container cart-page pb-5">
             <div className="mb-4 restaurants-back-wrap d-flex gap-2 flex-wrap">
               <button
@@ -4710,6 +4739,12 @@ function App() {
                         onClick={() => { window.location.hash = `/track/${order.id}`; }}
                       >
                         <i className="bi bi-geo-alt me-1"></i>Track Order
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-info"
+                        onClick={() => window.location.hash = `/invoice/${order.id}`}
+                      >
+                        🧾 Invoice
                       </button>
                     </div>
 
