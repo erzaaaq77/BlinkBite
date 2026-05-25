@@ -33,6 +33,8 @@ namespace FoodDeliveryyy.Data
         public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
 
         public DbSet<Invoice> Invoices { get; set; }
+        public DbSet<RestaurantApplication> RestaurantApplications { get; set; } = null!;
+        public DbSet<CourierApplication> CourierApplications { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
