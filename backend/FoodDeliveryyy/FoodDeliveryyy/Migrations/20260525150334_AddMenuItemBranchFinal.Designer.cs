@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260524133911_AddMenuItemBranchTable")]
-    partial class AddMenuItemBranchTable
+    [Migration("20260525150334_AddMenuItemBranchFinal")]
+    partial class AddMenuItemBranchFinal
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -221,6 +221,9 @@ namespace FoodDeliveryyy.Migrations
                     b.Property<int>("MenuItemId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MenuItemsId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Perberesit")
                         .HasColumnType("longtext");
 
@@ -236,6 +239,8 @@ namespace FoodDeliveryyy.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MenuItemId");
+
+                    b.HasIndex("MenuItemsId");
 
                     b.HasIndex("RestaurantAddressId");
 
@@ -977,10 +982,14 @@ namespace FoodDeliveryyy.Migrations
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuItemBranch", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Entities.MenuItems", "MenuItem")
-                        .WithMany("BranchDetails")
+                        .WithMany()
                         .HasForeignKey("MenuItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("FoodDeliveryyy.Models.Entities.MenuItems", null)
+                        .WithMany("BranchDetails")
+                        .HasForeignKey("MenuItemsId");
 
                     b.HasOne("FoodDeliveryyy.Models.Entities.RestaurantAddress", "RestaurantAddress")
                         .WithMany()

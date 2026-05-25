@@ -163,6 +163,20 @@ namespace FoodDeliveryyy.Data
                 .HasIndex(uf => new { uf.UserId, uf.RestaurantId })
                 .IsUnique()
                 .HasDatabaseName("IX_UserFavorites_User_Restaurant");
+            builder.Entity<MenuItemBranch>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+
+                entity.HasOne(e => e.MenuItem)
+                    .WithMany()  // Nqs MenuItems nuk ka koleksion te MenuItemBranch
+                    .HasForeignKey(e => e.MenuItemId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.RestaurantAddress)
+                    .WithMany()
+                    .HasForeignKey(e => e.RestaurantAddressId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
         }
 
     }

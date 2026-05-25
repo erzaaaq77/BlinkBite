@@ -218,6 +218,9 @@ namespace FoodDeliveryyy.Migrations
                     b.Property<int>("MenuItemId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MenuItemsId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Perberesit")
                         .HasColumnType("longtext");
 
@@ -233,6 +236,8 @@ namespace FoodDeliveryyy.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MenuItemId");
+
+                    b.HasIndex("MenuItemsId");
 
                     b.HasIndex("RestaurantAddressId");
 
@@ -974,10 +979,14 @@ namespace FoodDeliveryyy.Migrations
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuItemBranch", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Entities.MenuItems", "MenuItem")
-                        .WithMany("BranchDetails")
+                        .WithMany()
                         .HasForeignKey("MenuItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("FoodDeliveryyy.Models.Entities.MenuItems", null)
+                        .WithMany("BranchDetails")
+                        .HasForeignKey("MenuItemsId");
 
                     b.HasOne("FoodDeliveryyy.Models.Entities.RestaurantAddress", "RestaurantAddress")
                         .WithMany()
