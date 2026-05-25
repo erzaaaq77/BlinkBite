@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 namespace FoodDeliveryyy.Migrations
 {
     /// <inheritdoc />
-    public partial class AddMenuItemBranchTable : Migration
+    public partial class CreateMenuItemBranchTable_Fix : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

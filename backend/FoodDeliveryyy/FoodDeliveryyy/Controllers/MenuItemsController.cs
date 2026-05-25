@@ -24,35 +24,48 @@ public class MenuItemsController : ControllerBase
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<object>>> GetMenuItems([FromQuery] int? branchId = null)
     {
-        var items = await _context.MenuItems
-            .Include(m => m.BranchDetails)
-            .ToListAsync();
-
-        if (branchId == null)
+        try
         {
-            return Ok(items);
-        }
+            var items = await _context.MenuItems
+                .Include(m => m.BranchDetails)
+                .ToListAsync();
 
-        // Për çdo produkt, bashko të dhënat bazë me ato të branch-it nëse ekzistojnë
-        var result = items.Select(item => {
-            var branch = item.BranchDetails?.FirstOrDefault(b => b.RestaurantAddressId == branchId);
-            return new {
-                item.Id,
-                item.Emertimi,
-                item.Pershkrimi,
-                Cmimi = branch?.Cmimi ?? item.Cmimi,
-                item.Foto,
-                Disponueshme = branch?.Disponueshme ?? item.Disponueshme,
-                Alergjene = item.Alergjene,
-                Kalori = item.Kalori,
-                Perberesit = branch?.Perberesit ?? item.Perberesit,
-                RequestOptions = branch?.RequestOptions ?? item.RequestOptions,
-                item.CategoryId,
-                item.RestaurantAddressId,
-                BranchCustom = branch
-            };
-        });
-        return Ok(result);
+            // Project to a simple DTO to avoid serialization of EF tracking/proxy types
+            var result = items.Select(item => {
+                var branch = branchId.HasValue ? item.BranchDetails?.FirstOrDefault(b => b.RestaurantAddressId == branchId.Value) : null;
+                return new {
+                    item.Id,
+                    item.Emertimi,
+                    item.Pershkrimi,
+                    Cmimi = branch?.Cmimi ?? item.Cmimi,
+                    item.Foto,
+                    Disponueshme = branch?.Disponueshme ?? item.Disponueshme,
+                    Alergjene = item.Alergjene,
+                    Kalori = item.Kalori,
+                    Perberesit = branch?.Perberesit ?? item.Perberesit,
+                    RequestOptions = branch?.RequestOptions ?? item.RequestOptions,
+                    item.CategoryId,
+                    item.RestaurantAddressId,
+                    BranchCustom = branch == null ? null : new {
+                        branch.Id,
+                        branch.MenuItemId,
+                        branch.RestaurantAddressId,
+                        branch.Cmimi,
+                        branch.Disponueshme,
+                        branch.Perberesit,
+                        branch.RequestOptions,
+                        branch.PromotionId
+                    }
+                };
+            });
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            // Return a generic error payload; in development you may include ex.Message
+            return StatusCode(500, new { message = "An error occurred while fetching menu items.", error = ex.Message });
+        }
     }
 
     [HttpGet("{id}")]

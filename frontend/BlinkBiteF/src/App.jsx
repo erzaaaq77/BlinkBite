@@ -7,7 +7,6 @@ import logo from "./assets/LogoBB.webp";
 import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
 import { favoriteService } from "./services/FavoriteService";
-import AiChat from './components/AiChat';
 import { tokenService } from './services/tokenService';
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
@@ -5579,7 +5578,6 @@ function App() {
           </section>
         )}
       </Suspense>
-      <AiChat />
     </>
   );
 }

@@ -4,6 +4,7 @@ using FoodDeliveryyy.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260525121644_CreateMenuItemBranchTable_Fix")]
+    partial class CreateMenuItemBranchTable_Fix
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,7 +65,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Addresses", (string)null);
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Category", b =>
@@ -88,7 +91,7 @@ namespace FoodDeliveryyy.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Categories", (string)null);
+                    b.ToTable("Categories");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Deliveries", b =>
@@ -126,7 +129,7 @@ namespace FoodDeliveryyy.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("Deliveries", (string)null);
+                    b.ToTable("Deliveries");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.DeliveryDrivers", b =>
@@ -167,7 +170,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("DeliveryDrivers", (string)null);
+                    b.ToTable("DeliveryDrivers");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
@@ -198,7 +201,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("MenuCategories", (string)null);
+                    b.ToTable("MenuCategories");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuItemBranch", b =>
@@ -236,7 +239,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("RestaurantAddressId");
 
-                    b.ToTable("MenuItemBranch", (string)null);
+                    b.ToTable("MenuItemBranch");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuItems", b =>
@@ -294,7 +297,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("RestaurantAddressId");
 
-                    b.ToTable("MenuItems", (string)null);
+                    b.ToTable("MenuItems");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.OrderItems", b =>
@@ -328,7 +331,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderItems", (string)null);
+                    b.ToTable("OrderItems");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.OrderStatusHistory", b =>
@@ -364,7 +367,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("OrderStatusHistories", (string)null);
+                    b.ToTable("OrderStatusHistories");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Orders", b =>
@@ -427,7 +430,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders", (string)null);
+                    b.ToTable("Orders");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Promotions", b =>
@@ -475,7 +478,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("Promotions", (string)null);
+                    b.ToTable("Promotions");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Restaurant", b =>
@@ -543,7 +546,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Restaurants", (string)null);
+                    b.ToTable("Restaurants");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.RestaurantAddress", b =>
@@ -594,7 +597,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("RestaurantId");
 
-                    b.ToTable("RestaurantAddresses", (string)null);
+                    b.ToTable("RestaurantAddresses");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Reviews", b =>
@@ -635,7 +638,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Reviews", (string)null);
+                    b.ToTable("Reviews");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.UserFavorite", b =>
@@ -673,7 +676,7 @@ namespace FoodDeliveryyy.Migrations
                         .IsUnique()
                         .HasDatabaseName("IX_UserFavorites_User_Restaurant");
 
-                    b.ToTable("UserFavorites", (string)null);
+                    b.ToTable("UserFavorites");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Identity.RefreshToken", b =>
@@ -705,7 +708,7 @@ namespace FoodDeliveryyy.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Identity.Role", b =>

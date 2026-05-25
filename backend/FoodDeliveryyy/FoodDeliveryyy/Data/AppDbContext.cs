@@ -24,6 +24,7 @@ namespace FoodDeliveryyy.Data
         public DbSet<Addresses> Addresses { get; set; } = null!;
 
         public DbSet<MenuItemBranch> MenuItemBranch { get; set; } = null!;
+
         public DbSet<Promotions> Promotions { get; set; } = null!;
 
         public DbSet<UserFavorite> UserFavorites { get; set; }
