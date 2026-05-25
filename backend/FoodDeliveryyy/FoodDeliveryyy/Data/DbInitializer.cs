@@ -873,7 +873,7 @@ public static class DbInitializer
             new { Username = "bm_mulliri", Email = "bm_mulliri@example.com", RestaurantName = "Mulliri", AddressContains = "Rr Luan Haradinaj, Qendër" }
 
 
-                    };
+                    }; 
 
         var branchAssignments = 0;
         foreach (var seed in branchManagerSeeds)

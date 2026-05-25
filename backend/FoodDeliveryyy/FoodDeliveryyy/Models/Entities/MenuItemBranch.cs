@@ -15,15 +15,15 @@ public class MenuItemBranch
     public int RestaurantAddressId { get; set; }
 
     [Column(TypeName = "decimal(10,2)")]
-    public decimal? Cmimi { get; set; } // Çmimi specifik për branch
+    public decimal? Cmimi { get; set; }
 
-    public bool? Disponueshme { get; set; } // Statusi për branch
+    public bool? Disponueshme { get; set; }
 
-    public string? Perberesit { get; set; } // Përbërësit për branch
+    public string? Perberesit { get; set; }
 
-    public string? RequestOptions { get; set; } // Request options për branch
+    public string? RequestOptions { get; set; }
 
-    public int? PromotionId { get; set; } // Oferta specifike për branch
+    public int? PromotionId { get; set; }
 
     [ForeignKey("MenuItemId")]
     public virtual MenuItems? MenuItem { get; set; }
