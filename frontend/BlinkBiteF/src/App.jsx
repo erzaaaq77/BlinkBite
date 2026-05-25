@@ -9,6 +9,9 @@ import MenuManagement from "./components/MenuManagement";
 import { favoriteService } from "./services/FavoriteService";
 import { tokenService } from './services/tokenService';
 import InvoiceView from "./components/InvoiceView";
+import MerchantApplicationPage from "./components/MerchantApplicationPage";
+import CourierApplicationPage from "./components/CourierApplicationPage";
+import AdminApplicationsPage from "./components/AdminApplicationsPage";
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
@@ -313,6 +316,31 @@ function App() {
         branchId: "",
       };
     }
+    if (hash === "#/apply/merchant") {
+    return {
+      page: "applyMerchant",
+      category: "",
+      restaurantId: null,
+      branchId: "",
+    };
+  }
+
+  if (hash === "#/apply/courier") {
+    return {
+      page: "applyCourier",
+      category: "",
+      restaurantId: null,
+      branchId: "",
+    };
+  }
+  if (hash === "#/admin/applications") {
+  return {
+    page: "adminApplications",
+    category: "",
+    restaurantId: null,
+    branchId: "",
+  };
+}
 
     return {
       page: "home",
@@ -4449,6 +4477,16 @@ function App() {
             }}
           />
         )}
+         {page === "applyMerchant" && (
+    <MerchantApplicationPage />
+  )}
+  
+  {page === "applyCourier" && (
+    <CourierApplicationPage />
+  )}
+  {page === "adminApplications" && (
+  <AdminApplicationsPage />
+)}
 
         {page === "myOrders" && window.location.hash.startsWith("#/invoice/") && (
           <section className="cart-page pb-5">
@@ -5594,6 +5632,9 @@ function App() {
           "restaurantDetails",
           "branchMenu",
           "cart",
+          "applyMerchant",    
+          "applyCourier",
+          "adminApplications",  
         ].includes(page) && (
           <section className="container py-5">
             <div className="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">

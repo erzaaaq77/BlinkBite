@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260525121644_CreateMenuItemBranchTable_Fix")]
-    partial class CreateMenuItemBranchTable_Fix
+    [Migration("20260525203140_AddApplicationsTables")]
+    partial class AddApplicationsTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -92,6 +92,55 @@ namespace FoodDeliveryyy.Migrations
                         .IsUnique();
 
                     b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.CourierApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("AppliedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LicensePlate")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("VehicleType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("WorkingArea")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("CourierApplications");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Deliveries", b =>
@@ -173,6 +222,49 @@ namespace FoodDeliveryyy.Migrations
                     b.ToTable("DeliveryDrivers");
                 });
 
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Invoice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("DeliveryFee")
+                        .HasColumnType("decimal(10.2)");
+
+                    b.Property<decimal>("Discount")
+                        .HasColumnType("decimal(10.2)");
+
+                    b.Property<DateTime>("InvoiceDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("InvoiceNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(10.2)");
+
+                    b.Property<decimal>("Total")
+                        .HasColumnType("decimal(10.2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId");
+
+                    b.ToTable("Invoices");
+                });
+
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
                 {
                     b.Property<int>("Id")
@@ -221,6 +313,9 @@ namespace FoodDeliveryyy.Migrations
                     b.Property<int>("MenuItemId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("MenuItemsId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Perberesit")
                         .HasColumnType("longtext");
 
@@ -236,6 +331,8 @@ namespace FoodDeliveryyy.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("MenuItemId");
+
+                    b.HasIndex("MenuItemsId");
 
                     b.HasIndex("RestaurantAddressId");
 
@@ -598,6 +695,58 @@ namespace FoodDeliveryyy.Migrations
                     b.HasIndex("RestaurantId");
 
                     b.ToTable("RestaurantAddresses");
+                });
+
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.RestaurantApplication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("AdminNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("AppliedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Category")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RestaurantDescription")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RestaurantName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("RestaurantApplications");
                 });
 
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Reviews", b =>
@@ -963,6 +1112,17 @@ namespace FoodDeliveryyy.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("FoodDeliveryyy.Models.Entities.Invoice", b =>
+                {
+                    b.HasOne("FoodDeliveryyy.Models.Entities.Orders", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+                });
+
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuCategory", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Entities.Restaurant", "Restaurant")
@@ -977,10 +1137,14 @@ namespace FoodDeliveryyy.Migrations
             modelBuilder.Entity("FoodDeliveryyy.Models.Entities.MenuItemBranch", b =>
                 {
                     b.HasOne("FoodDeliveryyy.Models.Entities.MenuItems", "MenuItem")
-                        .WithMany("BranchDetails")
+                        .WithMany()
                         .HasForeignKey("MenuItemId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("FoodDeliveryyy.Models.Entities.MenuItems", null)
+                        .WithMany("BranchDetails")
+                        .HasForeignKey("MenuItemsId");
 
                     b.HasOne("FoodDeliveryyy.Models.Entities.RestaurantAddress", "RestaurantAddress")
                         .WithMany()

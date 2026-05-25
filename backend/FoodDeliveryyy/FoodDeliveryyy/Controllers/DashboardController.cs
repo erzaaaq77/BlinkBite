@@ -7,7 +7,6 @@ using System.Security.Claims;
 using FoodDeliveryyy.Models.Identity;
 using FoodDeliveryyy.Models.Enums;
 
-
 namespace FoodDeliveryyy.Controllers;
 
 [Route("api/[controller]")]
@@ -15,18 +14,18 @@ namespace FoodDeliveryyy.Controllers;
 public class DashboardController : ControllerBase
 {
     private readonly AppDbContext _context;
-    public DashboardController(AppDbContext context)
+    private readonly IWebHostEnvironment _environment;
+
+    public DashboardController(AppDbContext context, IWebHostEnvironment environment)
     {
         _context = context;
+        _environment = environment;
     }
-
-
 
     [HttpGet("Admin")]
     [Authorize(Roles = AppRoles.Admin)]
     public async Task<IActionResult> GetAdminDashboard()
     {
-
         var today = DateTime.Today;
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
@@ -53,15 +52,12 @@ public class DashboardController : ControllerBase
                 Delivered = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Delivered),
                 Cancelled = await _context.Orders.CountAsync(o => o.Statusi == OrderStatus.Cancelled)
             },
-
             Revenue = new
             {
                 Today = await _context.Orders.Where(o => o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
-
                 ThisMonth = await _context.Orders.Where(o => o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
                 Total = await _context.Orders.SumAsync(o => o.ShumaTotale)
             },
-
             Users = new
             {
                 Total = allUsers.Count(),
@@ -69,22 +65,18 @@ public class DashboardController : ControllerBase
                 Merchants = merchants,
                 Couriers = couriers,
                 NewToday = await _context.Users.CountAsync(u => u.CreatedAt.Date == today)
-
             },
-
             Restaurants = new
             {
                 Total = await _context.Restaurants.CountAsync(),
                 Active = await _context.Restaurants.CountAsync(r => r.Statusi == RestaurantStatus.Active),
                 Pending = await _context.Restaurants.CountAsync(r => r.Statusi == RestaurantStatus.Pending)
             },
-
             Reviews = new
             {
                 AverageRating = await _context.Reviews.AverageAsync(r => r.Vlersimi),
                 Total = await _context.Reviews.CountAsync(),
                 Today = await _context.Reviews.CountAsync(r => r.DataKrijimit.Date == today)
-
             }
         };
 
@@ -162,7 +154,7 @@ public class DashboardController : ControllerBase
                 })
                 .ToListAsync();
 
-                    addresses = ownerAddresses.Cast<dynamic>().ToList();
+            addresses = ownerAddresses.Cast<dynamic>().ToList();
         }
 
         var today = DateTime.Today;
@@ -183,44 +175,39 @@ public class DashboardController : ControllerBase
         var primaryAddressId = addresses.FirstOrDefault(a => (bool)(a?.isMain ?? false))?.id
             ?? addresses.FirstOrDefault()?.id;
 
-        var dashboard =
-            new
+        var dashboard = new
+        {
+            Restaurant = new
             {
-                Restaurant = new
-                {
-                    restaurant.Id,
-                    restaurant.Emertimi,
-                    restaurant.Statusi,
-                    restaurant.Rating
-
-                },
-
-                PrimaryAddressId = primaryAddressId,
-                Addresses = addresses,
-                Scope = role == AppRoles.BranchManager ? "branch" : "owner",
-
-                Orders = new
-                {
-                    Total = await scopedOrders.CountAsync(),
-                    Today = await scopedOrders.CountAsync(o => o.DataPorosis.Date == today),
-                    ThisWeek = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfWeek),
-                    ThisMonth = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfMonth),
-                    Pending = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Pending),
-                    Accepted = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Accepted),
-                    Preparing = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Preparing),
-                    Ready = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Ready),
-                    Delivered = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Delivered)
-                },
-
-                Revenue = new
-                {
-                    Today = await scopedOrders.Where(o => o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
-                    ThisWeek = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfWeek).SumAsync(o => o.ShumaTotale),
-                    ThisMonth = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
-                    Total = await scopedOrders.SumAsync(o => o.ShumaTotale)
-                },
-
-                RecentOrders = await scopedOrders
+                restaurant.Id,
+                restaurant.Emertimi,
+                restaurant.Statusi,
+                restaurant.Rating,
+                restaurant.Logo
+            },
+            PrimaryAddressId = primaryAddressId,
+            Addresses = addresses,
+            Scope = role == AppRoles.BranchManager ? "branch" : "owner",
+            Orders = new
+            {
+                Total = await scopedOrders.CountAsync(),
+                Today = await scopedOrders.CountAsync(o => o.DataPorosis.Date == today),
+                ThisWeek = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfWeek),
+                ThisMonth = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfMonth),
+                Pending = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Pending),
+                Accepted = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Accepted),
+                Preparing = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Preparing),
+                Ready = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Ready),
+                Delivered = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Delivered)
+            },
+            Revenue = new
+            {
+                Today = await scopedOrders.Where(o => o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
+                ThisWeek = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfWeek).SumAsync(o => o.ShumaTotale),
+                ThisMonth = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
+                Total = await scopedOrders.SumAsync(o => o.ShumaTotale)
+            },
+            RecentOrders = await scopedOrders
                 .OrderByDescending(o => o.DataPorosis)
                 .Take(10)
                 .Select(o => new
@@ -232,14 +219,99 @@ public class DashboardController : ControllerBase
                     CustomerName = o.User.UserName
                 })
                 .ToListAsync(),
-
-                Reviews = new
-                {
-                    Average = restaurant.Rating,
-                    Total = await _context.Reviews.CountAsync(r => r.RestaurantId == restaurant.Id)
-                }
-            };
+            Reviews = new
+            {
+                Average = restaurant.Rating,
+                Total = await _context.Reviews.CountAsync(r => r.RestaurantId == restaurant.Id)
+            }
+        };
         return Ok(dashboard);
+    }
+
+    // POST: api/Dashboard/Merchant/upload-logo?restaurantId=123
+    [HttpPost("Merchant/upload-logo")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
+    public async Task<IActionResult> UploadLogo([FromQuery] int restaurantId, IFormFile logo)
+    {
+        try
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
+            Restaurant? restaurant = null;
+
+            if (role == AppRoles.BranchManager)
+            {
+                // Branch manager: verifiko që i përket një branch-i të këtij restoranti
+                var branchAddress = await _context.RestaurantAddresses
+                    .FirstOrDefaultAsync(a => a.Id == restaurantId && a.MerchantUserId == userId);
+
+                if (branchAddress == null)
+                    return NotFound(new { message = "Restoranti nuk u gjet për këtë branch manager" });
+
+                restaurant = await _context.Restaurants
+                    .FirstOrDefaultAsync(r => r.Id == branchAddress.RestaurantId);
+            }
+            else
+            {
+                // Merchant i zakonshëm
+                restaurant = await _context.Restaurants
+                    .FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
+            }
+
+            if (restaurant == null)
+                return NotFound(new { message = "Restoranti nuk u gjet" });
+
+            if (logo == null || logo.Length == 0)
+                return BadRequest(new { message = "Ju lutemi zgjidhni një foto" });
+
+            // Krijo direktorinë
+            var webRootPath = _environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsFolder = Path.Combine(webRootPath, "uploads", "logos");
+            if (!Directory.Exists(uploadsFolder))
+                Directory.CreateDirectory(uploadsFolder);
+
+            // Ruaj foton
+            var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(logo.FileName)}";
+            var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await logo.CopyToAsync(stream);
+            }
+
+            // Ruaj logon e vjetër për ta fshirë (nëse ka)
+            var oldLogoPath = !string.IsNullOrEmpty(restaurant.Logo)
+                ? Path.Combine(webRootPath, restaurant.Logo.TrimStart('/'))
+                : null;
+
+            // Përditëso logon
+            restaurant.Logo = $"/uploads/logos/{uniqueFileName}";
+            await _context.SaveChangesAsync();
+
+            // Fshij logon e vjetër
+            if (oldLogoPath != null && System.IO.File.Exists(oldLogoPath))
+            {
+                try
+                {
+                    System.IO.File.Delete(oldLogoPath);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not delete old logo: {ex.Message}");
+                }
+            }
+
+            return Ok(new
+            {
+                message = "Logo u ngarkua me sukses!",
+                logoUrl = restaurant.Logo
+            });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = $"Gabim gjatë ngarkimit: {ex.Message}" });
+        }
     }
 
     [HttpGet("Driver")]
@@ -277,15 +349,13 @@ public class DashboardController : ControllerBase
                 driver.Statusi,
                 driver.Vlersimi
             },
-
             Deliveries = new
             {
                 Total = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id),
-                Today = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.DataMarrjes !=null && d.DataMarrjes.Value.Date== today),
-                ThisWeek = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.DataMarrjes !=null && d.DataMarrjes.Value.Date >= startOfWeek),
+                Today = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.DataMarrjes != null && d.DataMarrjes.Value.Date == today),
+                ThisWeek = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.DataMarrjes != null && d.DataMarrjes.Value.Date >= startOfWeek),
                 Completed = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.Statusi == DeliveryStatus.Delivered)
             },
-
             CurrentOrders = await _context.Orders
                 .Where(o => _context.Deliveries.Any(d => d.OrderId == o.Id && d.DriverId == driver.Id)
                          && o.Statusi != OrderStatus.Delivered
@@ -301,7 +371,6 @@ public class DashboardController : ControllerBase
                     o.DataPorosis
                 })
                 .ToListAsync(),
-
             DeliveryHistory = await _context.Orders
                 .Where(o => _context.Deliveries.Any(d => d.OrderId == o.Id && d.DriverId == driver.Id)
                          && o.Statusi == OrderStatus.Delivered)
@@ -319,7 +388,6 @@ public class DashboardController : ControllerBase
                     DeliveredAt = o.Delivery != null ? o.Delivery.DataDorezimit : (DateTime?)null
                 })
                 .ToListAsync(),
-
             AvailableOrders = await _context.Orders
                 .Where(o => o.Statusi == OrderStatus.Ready
                          && !_context.Deliveries.Any(d => d.OrderId == o.Id))
@@ -333,7 +401,6 @@ public class DashboardController : ControllerBase
                     o.DataPorosis
                 })
                 .ToListAsync(),
-
             Performance = new
             {
                 Rating = driver.Vlersimi,

@@ -102,7 +102,15 @@ function HomePage({
               <li>Reach more customers and increase visibility across your city.</li>
               <li>Get clear insights on popular menu items and order trends.</li>
             </ul>
-            <button type="button" className="btn btn-outline-dark">Join Us</button>
+            <button 
+              type="button" 
+              className="btn btn-outline-dark"
+              onClick={() => {
+                window.location.hash = "/apply/merchant";
+              }}
+            >
+              Join Us
+            </button>
           </div>
         </div>
 
@@ -118,7 +126,15 @@ function HomePage({
               <li>Increase your income with each completed delivery.</li>
               <li>Move through the city with easy, reliable task flow.</li>
             </ul>
-            <button type="button" className="btn btn-outline-dark">Join Us</button>
+            <button 
+              type="button" 
+              className="btn btn-outline-dark"
+              onClick={() => {
+                window.location.hash = "/apply/courier";
+              }}
+            >
+              Join Us
+            </button>
           </div>
         </div>
 
@@ -134,7 +150,15 @@ function HomePage({
               <li>Support neighborhood businesses with every order.</li>
               <li>Create shared moments through food, speed, and convenience.</li>
             </ul>
-            <button type="button" className="btn btn-outline-dark">Join Us</button>
+            <button 
+              type="button" 
+              className="btn btn-outline-dark"
+              onClick={() => {
+                window.location.hash = "/apply/merchant";
+              }}
+            >
+              Join Us
+            </button>
           </div>
         </div>
       </section>
