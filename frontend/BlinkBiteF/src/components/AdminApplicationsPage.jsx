@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import CategoryManagement from "./CategoryManagement";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
-
 const AdminApplicationsPage = () => {
   const [restaurantApps, setRestaurantApps] = useState([]);
   const [courierApps, setCourierApps] = useState([]);
@@ -10,6 +10,8 @@ const AdminApplicationsPage = () => {
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
+  const [showCategoryManagement, setShowCategoryManagement] = useState(false);
+
 
   const getToken = () => sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
 
@@ -113,13 +115,22 @@ const AdminApplicationsPage = () => {
       setActionLoading(null);
     }
   };
-
+  if (showCategoryManagement) {
+    return (
+      <div className="container py-4" style={{ marginTop: "120px" }}>
+        <CategoryManagement 
+          token={getToken()} 
+          onBack={() => setShowCategoryManagement(false)} 
+        />
+      </div>
+    );
+  }
   const applications = activeTab === "restaurants" ? restaurantApps : courierApps;
   const pendingCount = applications.filter(a => a.status === "Pending").length;
 
   if (loading) {
     return (
-      <div className="container py-5 text-center" style={{ marginTop: "80px" }}>
+      <div className="container py-5 text-center" style={{ marginTop: "120px" }}>
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -129,13 +140,21 @@ const AdminApplicationsPage = () => {
   }
 
   return (
-    <div className="container py-5" style={{ marginTop: "80px" }}>
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>📋 Application Management</h2>
+   <div className="container py-5" style={{ marginTop: "120px" }}>
+    <div className="d-flex justify-content-between align-items-center mb-4">
+      <h2>📋 Admin Dashboard</h2>
+      <div>
+        <button 
+          className="btn btn-outline-primary me-2"
+          onClick={() => setShowCategoryManagement(true)}
+        >
+          🏷️ Manage Categories
+        </button>
         <button className="btn btn-outline-secondary btn-sm" onClick={fetchApplications}>
           🔄 Refresh
         </button>
       </div>
+    </div>
 
       <div className="mb-4">
         <button 

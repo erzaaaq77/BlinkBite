@@ -12,6 +12,7 @@ import InvoiceView from "./components/InvoiceView";
 import MerchantApplicationPage from "./components/MerchantApplicationPage";
 import CourierApplicationPage from "./components/CourierApplicationPage";
 import AdminApplicationsPage from "./components/AdminApplicationsPage";
+import CategoryManagement from "./components/CategoryManagement";
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
@@ -211,6 +212,12 @@ function App() {
         branchId: decodeURIComponent(branchParam),
       };
     }
+
+    if (hash.startsWith("#/admin/categories")) {
+  return {
+    page: "adminCategories",
+  };
+}
 
     if (hash.startsWith("#/invoice/")) {
       const orderId = hash.replace("#/invoice/", "");
@@ -4427,6 +4434,15 @@ function App() {
             findingFood={findingFood}
             nearbyError={nearbyError}
           />
+        )}
+
+        {page === "adminCategories" && (
+          <section className="container py-4" style={{ marginTop: "96px" }}>
+            <CategoryManagement
+              token={token}
+              onBack={() => window.location.hash = "/"}
+            />
+          </section>
         )}
         {page === "merchantDashboard" && (
           <MerchantDashboard 
