@@ -28,7 +28,12 @@ public class AdminApplicationController : ControllerBase
         _roleManager = roleManager;
     }
 
-    // GET: api/admin/applications/restaurants
+    [HttpGet]
+    public IActionResult Test()
+    {
+        return Ok(new { message = "Admin controller is working!" });
+    }
+
     [HttpGet("restaurants")]
     public async Task<IActionResult> GetRestaurantApplications([FromQuery] string? status = null)
     {
@@ -40,7 +45,6 @@ public class AdminApplicationController : ControllerBase
         return Ok(applications);
     }
 
-    // GET: api/admin/applications/couriers
     [HttpGet("couriers")]
     public async Task<IActionResult> GetCourierApplications([FromQuery] string? status = null)
     {
@@ -52,18 +56,16 @@ public class AdminApplicationController : ControllerBase
         return Ok(applications);
     }
 
-    // POST: api/admin/applications/restaurant/{id}/approve
     [HttpPost("restaurant/{id}/approve")]
     public async Task<IActionResult> ApproveRestaurant(int id, [FromBody] ApproveDto? dto)
     {
         var application = await _context.RestaurantApplications.FindAsync(id);
         if (application == null)
-            return NotFound(new { message = "Aplikimi nuk u gjet" });
+            return NotFound(new { message = "Application not found" });
 
         if (application.Status != "Pending")
-            return BadRequest(new { message = "Ky aplikim tashmë është shqyrtuar" });
+            return BadRequest(new { message = "This application has already been reviewed" });
 
-        // Krijo user-in
         var username = GenerateUsername(application.RestaurantName);
         var user = new User
         {
@@ -78,13 +80,11 @@ public class AdminApplicationController : ControllerBase
 
         if (!createResult.Succeeded)
         {
-            return BadRequest(new { message = "Nuk mund të krijohet llogaria", errors = createResult.Errors });
+            return BadRequest(new { message = "Cannot create account", errors = createResult.Errors });
         }
 
-        // Cakto rolin Merchant
         await _userManager.AddToRoleAsync(user, "Merchant");
 
-        // Krijo restorantin
         var restaurant = new Restaurant
         {
             Emertimi = application.RestaurantName,
@@ -100,7 +100,6 @@ public class AdminApplicationController : ControllerBase
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
 
-        // Krijo adresën e restorantit
         var address = new RestaurantAddress
         {
             RestaurantId = restaurant.Id,
@@ -113,40 +112,31 @@ public class AdminApplicationController : ControllerBase
         _context.RestaurantAddresses.Add(address);
         await _context.SaveChangesAsync();
 
-        // Përditëso aplikimin
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
-        // Dërgo email (për momentin vetëm console log)
-        Console.WriteLine($"=== LLOGARIA U KRIJUA ===");
-        Console.WriteLine($"Email: {application.Email}");
-        Console.WriteLine($"Username: {username}");
-        Console.WriteLine($"Password: {password}");
-        Console.WriteLine($"=========================");
-
         return Ok(new
         {
-            message = "Restoranti u miratua dhe llogaria u krijua",
+            message = "Restaurant approved and account created",
             email = application.Email,
             username = username,
-            password = password
+            password = password,
+            restaurantId = restaurant.Id
         });
     }
 
-    // POST: api/admin/applications/courier/{id}/approve
     [HttpPost("courier/{id}/approve")]
     public async Task<IActionResult> ApproveCourier(int id, [FromBody] ApproveDto? dto)
     {
         var application = await _context.CourierApplications.FindAsync(id);
         if (application == null)
-            return NotFound(new { message = "Aplikimi nuk u gjet" });
+            return NotFound(new { message = "Application not found" });
 
         if (application.Status != "Pending")
-            return BadRequest(new { message = "Ky aplikim tashmë është shqyrtuar" });
+            return BadRequest(new { message = "This application has already been reviewed" });
 
-        // Krijo user-in
         var username = GenerateUsernameFromName(application.FullName);
         var user = new User
         {
@@ -161,13 +151,11 @@ public class AdminApplicationController : ControllerBase
 
         if (!createResult.Succeeded)
         {
-            return BadRequest(new { message = "Nuk mund të krijohet llogaria", errors = createResult.Errors });
+            return BadRequest(new { message = "Cannot create account", errors = createResult.Errors });
         }
 
-        // Cakto rolin Courier
         await _userManager.AddToRoleAsync(user, "Courier");
 
-        // Krijo delivery driver-in
         var driver = new DeliveryDrivers
         {
             UserId = user.Id,
@@ -179,61 +167,88 @@ public class AdminApplicationController : ControllerBase
         };
 
         _context.DeliveryDrivers.Add(driver);
+        await _context.SaveChangesAsync();
 
-        // Përditëso aplikimin
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
-        // Dërgo email (për momentin vetëm console log)
-        Console.WriteLine($"=== LLOGARIA U KRIJUA ===");
-        Console.WriteLine($"Email: {application.Email}");
-        Console.WriteLine($"Username: {username}");
-        Console.WriteLine($"Password: {password}");
-        Console.WriteLine($"=========================");
-
         return Ok(new
         {
-            message = "Courier u miratua dhe llogaria u krijua",
+            message = "Courier approved and account created",
             email = application.Email,
             username = username,
             password = password
         });
     }
 
-    // POST: api/admin/applications/restaurant/{id}/reject
     [HttpPost("restaurant/{id}/reject")]
     public async Task<IActionResult> RejectRestaurant(int id, [FromBody] RejectDto dto)
     {
         var application = await _context.RestaurantApplications.FindAsync(id);
         if (application == null)
-            return NotFound(new { message = "Aplikimi nuk u gjet" });
+            return NotFound(new { message = "Application not found" });
 
         application.Status = "Rejected";
         application.ReviewedAt = DateTime.UtcNow;
         application.AdminNotes = dto.Reason;
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Aplikimi u refuzua" });
+        return Ok(new { message = "Application rejected" });
     }
 
-    // POST: api/admin/applications/courier/{id}/reject
     [HttpPost("courier/{id}/reject")]
     public async Task<IActionResult> RejectCourier(int id, [FromBody] RejectDto dto)
     {
         var application = await _context.CourierApplications.FindAsync(id);
         if (application == null)
-            return NotFound(new { message = "Aplikimi nuk u gjet" });
+            return NotFound(new { message = "Application not found" });
 
         application.Status = "Rejected";
         application.ReviewedAt = DateTime.UtcNow;
         application.AdminNotes = dto.Reason;
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Aplikimi u refuzua" });
+        return Ok(new { message = "Application rejected" });
     }
 
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteRestaurant(int id)
+    {
+        var application = await _context.RestaurantApplications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        var restaurant = await _context.Restaurants
+            .FirstOrDefaultAsync(r => r.Email == application.Email || r.Emertimi == application.RestaurantName);
+
+        if (restaurant == null)
+            return NotFound(new { message = "Restaurant not found" });
+
+        // Delete addresses
+        var addresses = _context.RestaurantAddresses.Where(a => a.RestaurantId == restaurant.Id);
+        _context.RestaurantAddresses.RemoveRange(addresses);
+
+        // Delete menu categories and items
+        var menuCategories = _context.MenuCategories.Where(c => c.RestaurantId == restaurant.Id);
+        foreach (var category in menuCategories)
+        {
+            var menuItems = _context.MenuItems.Where(m => m.CategoryId == category.Id);
+            _context.MenuItems.RemoveRange(menuItems);
+        }
+        _context.MenuCategories.RemoveRange(menuCategories);
+
+        // Delete the restaurant
+        _context.Restaurants.Remove(restaurant);
+
+        // 👇 DELETE THE APPLICATION TOO 👇
+        _context.RestaurantApplications.Remove(application);
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Restaurant deleted successfully" });
+    }
     private string GenerateUsername(string restaurantName)
     {
         var baseName = restaurantName.ToLower()
@@ -242,7 +257,6 @@ public class AdminApplicationController : ControllerBase
             .Replace("&", "")
             .Replace(".", "");
 
-        // Kufizo gjatësinë
         if (baseName.Length > 20)
             baseName = baseName.Substring(0, 20);
 
@@ -265,7 +279,6 @@ public class AdminApplicationController : ControllerBase
             .Replace("-", "")
             .Replace(".", "");
 
-        // Kufizo gjatësinë
         if (baseName.Length > 20)
             baseName = baseName.Substring(0, 20);
 

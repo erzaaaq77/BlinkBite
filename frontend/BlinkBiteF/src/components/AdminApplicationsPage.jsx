@@ -11,56 +11,32 @@ const AdminApplicationsPage = () => {
   const [message, setMessage] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
 
-  const getToken = () => {
-    // Provo të marrësh token nga sessionStorage ose localStorage
-    return sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
-  };
+  const getToken = () => sessionStorage.getItem("access_token") || localStorage.getItem("access_token");
 
   const fetchApplications = async () => {
     const token = getToken();
-    
     if (!token) {
-      setMessage("❌ Ju nuk jeni të loguar. Ju lutemi kyquni si admin.");
+      setMessage("❌ You are not logged in.");
       setLoading(false);
       return;
     }
 
     setLoading(true);
     try {
-      console.log("Fetching applications with token:", token.substring(0, 20) + "...");
-      
       const [restaurantsRes, couriersRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/admin/applications/restaurants`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+          headers: { Authorization: `Bearer ${token}` }
         }),
         axios.get(`${API_BASE_URL}/admin/applications/couriers`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
+          headers: { Authorization: `Bearer ${token}` }
         })
       ]);
-      
-      console.log("Restaurants response:", restaurantsRes.data);
-      console.log("Couriers response:", couriersRes.data);
-      
       setRestaurantApps(restaurantsRes.data || []);
       setCourierApps(couriersRes.data || []);
       setMessage("");
     } catch (error) {
-      console.error("Error fetching applications:", error);
-      console.error("Error response:", error.response);
-      
-      if (error.response?.status === 401) {
-        setMessage("❌ Sesioni ka skaduar. Ju lutemi kyquni përsëri si admin.");
-      } else if (error.response?.status === 403) {
-        setMessage("❌ Nuk keni autorizim për të parë këtë faqe.");
-      } else {
-        setMessage(`❌ Gabim gjatë ngarkimit: ${error.response?.data?.message || error.message}`);
-      }
+      console.error(error);
+      setMessage("❌ Error loading applications");
     } finally {
       setLoading(false);
     }
@@ -74,24 +50,32 @@ const AdminApplicationsPage = () => {
     const token = getToken();
     setActionLoading(`${type}-${id}`);
     try {
-      const response = await axios.post(`${API_BASE_URL}/admin/applications/${type}/${id}/approve`, 
+      const response = await axios.post(`${API_BASE_URL}/admin/applications/${type}/${id}/approve`,
         { notes: "" },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessage(`✅ Aplikimi u miratua!`);
+      setMessage(`✅ Application approved!`);
+      
+      // Save the restaurantId from response
+      if (response.data.restaurantId) {
+        setRestaurantApps(prev => prev.map(app => 
+          app.id === id ? { ...app, restaurantId: response.data.restaurantId } : app
+        ));
+      }
+      
       if (response.data.username && response.data.password) {
-        setMessage(prev => `${prev} Kredencialet: ${response.data.username} / ${response.data.password}`);
+        setMessage(prev => `${prev} Credentials: ${response.data.username} / ${response.data.password}`);
       }
       fetchApplications();
     } catch (error) {
-      setMessage(`❌ Gabim: ${error.response?.data?.message || "Ndodhi një gabim"}`);
+      setMessage(`❌ Error approving application: ${error.response?.data?.message || error.message}`);
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleReject = async (type, id) => {
-    const reason = prompt("Shkruani arsyen e refuzimit:");
+    const reason = prompt("Enter rejection reason:");
     if (!reason) return;
     
     const token = getToken();
@@ -101,10 +85,30 @@ const AdminApplicationsPage = () => {
         { reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessage("❌ Aplikimi u refuzua");
+      setMessage("❌ Application rejected");
       fetchApplications();
     } catch (error) {
-      setMessage("Gabim gjatë refuzimit");
+      setMessage("❌ Error rejecting application");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Delete using application ID (not restaurant ID)
+  const handleDeleteRestaurant = async (applicationId) => {
+    if (!window.confirm("Are you sure you want to delete this restaurant?")) return;
+    
+    const token = getToken();
+    setActionLoading(`delete-${applicationId}`);
+    try {
+      await axios.delete(`${API_BASE_URL}/admin/applications/${applicationId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMessage("✅ Restaurant deleted successfully!");
+      fetchApplications();
+    } catch (error) {
+      console.error("Delete error:", error);
+      setMessage(`❌ Error deleting restaurant: ${error.response?.data?.message || error.message}`);
     } finally {
       setActionLoading(null);
     }
@@ -119,7 +123,7 @@ const AdminApplicationsPage = () => {
         <div className="spinner-border text-primary" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
-        <p className="mt-2">Duke ngarkuar aplikimet...</p>
+        <p className="mt-2">Loading applications...</p>
       </div>
     );
   }
@@ -127,9 +131,18 @@ const AdminApplicationsPage = () => {
   return (
     <div className="container py-5" style={{ marginTop: "80px" }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>📋 Menaxhimi i Aplikimeve</h2>
+        <h2>📋 Application Management</h2>
         <button className="btn btn-outline-secondary btn-sm" onClick={fetchApplications}>
-          🔄 Rifresko
+          🔄 Refresh
+        </button>
+      </div>
+
+      <div className="mb-4">
+        <button 
+          className="btn btn-outline-primary"
+          onClick={() => { window.location.hash = "/"; }}
+        >
+          ← Back to Home
         </button>
       </div>
       
@@ -145,14 +158,14 @@ const AdminApplicationsPage = () => {
           <button 
             className={`nav-link ${activeTab === "restaurants" ? "active" : ""}`}
             onClick={() => setActiveTab("restaurants")}>
-            🍔 Restorantet ({restaurantApps.filter(a => a.status === "Pending").length} pending / {restaurantApps.length} total)
+            🍔 Restaurants ({restaurantApps.filter(a => a.status === "Pending").length} pending / {restaurantApps.length} total)
           </button>
         </li>
         <li className="nav-item">
           <button 
             className={`nav-link ${activeTab === "couriers" ? "active" : ""}`}
             onClick={() => setActiveTab("couriers")}>
-            🚚 Courierët ({courierApps.filter(a => a.status === "Pending").length} pending / {courierApps.length} total)
+            🚚 Couriers ({courierApps.filter(a => a.status === "Pending").length} pending / {courierApps.length} total)
           </button>
         </li>
       </ul>
@@ -160,7 +173,7 @@ const AdminApplicationsPage = () => {
       {applications.length === 0 ? (
         <div className="alert alert-info text-center py-4">
           <i className="bi bi-inbox fs-1"></i>
-          <p className="mb-0 mt-2">Nuk ka aplikime për të shfaqur</p>
+          <p className="mb-0 mt-2">No applications to display</p>
         </div>
       ) : (
         <div className="row">
@@ -169,22 +182,27 @@ const AdminApplicationsPage = () => {
               <div className="card h-100 shadow-sm border-0 rounded-3">
                 <div className="card-body">
                   <div className="d-flex justify-content-between align-items-start mb-3">
-                    <h5 className="card-title mb-0">
-                      {activeTab === "restaurants" ? app.restaurantName : app.fullName}
-                    </h5>
+                    <div>
+                      <h5 className="card-title mb-0">
+                        {activeTab === "restaurants" ? app.restaurantName : app.fullName}
+                      </h5>
+                      {activeTab === "restaurants" && app.restaurantId && (
+                        <small className="text-muted">ID: {app.restaurantId}</small>
+                      )}
+                    </div>
                     <span className={`badge ${
                       app.status === "Pending" ? "bg-warning text-dark" : 
                       app.status === "Approved" ? "bg-success" : "bg-danger"
                     }`}>
-                      {app.status === "Pending" ? "⏳ Në pritje" : 
-                       app.status === "Approved" ? "✅ I miratuar" : "❌ I refuzuar"}
+                      {app.status === "Pending" ? "⏳ Pending" : 
+                       app.status === "Approved" ? "✅ Approved" : "❌ Rejected"}
                     </span>
                   </div>
                   
                   <div className="small text-muted mb-3">
                     <div><i className="bi bi-envelope me-2"></i>{app.email}</div>
                     <div><i className="bi bi-telephone me-2"></i>{app.phone}</div>
-                    <div><i className="bi bi-calendar me-2"></i>Aplikuar: {new Date(app.appliedAt).toLocaleString()}</div>
+                    <div><i className="bi bi-calendar me-2"></i>Applied: {new Date(app.appliedAt).toLocaleString()}</div>
                     
                     {activeTab === "restaurants" && (
                       <>
@@ -199,8 +217,8 @@ const AdminApplicationsPage = () => {
                     {activeTab === "couriers" && (
                       <div className="mt-2 pt-2 border-top">
                         <div><i className="bi bi-car-front me-2"></i>{app.vehicleType}</div>
-                        {app.licensePlate && <div><i className="bi bi-card-text me-2"></i>Targa: {app.licensePlate}</div>}
-                        <div><i className="bi bi-map me-2"></i>Zona: {app.workingArea}</div>
+                        {app.licensePlate && <div><i className="bi bi-card-text me-2"></i>License: {app.licensePlate}</div>}
+                        <div><i className="bi bi-map me-2"></i>Area: {app.workingArea}</div>
                       </div>
                     )}
                   </div>
@@ -212,23 +230,34 @@ const AdminApplicationsPage = () => {
                         onClick={() => handleApprove(activeTab === "restaurants" ? "restaurant" : "courier", app.id)}
                         disabled={actionLoading === `${activeTab === "restaurants" ? "restaurant" : "courier"}-${app.id}`}>
                         {actionLoading === `${activeTab === "restaurants" ? "restaurant" : "courier"}-${app.id}` ? (
-                          <>⏳ Duke procesuar...</>
+                          <>⏳ Processing...</>
                         ) : (
-                          <>✓ Mirato</>
+                          <>✓ Approve</>
                         )}
                       </button>
                       <button 
                         className="btn btn-outline-danger btn-sm" 
                         onClick={() => handleReject(activeTab === "restaurants" ? "restaurant" : "courier", app.id)}
                         disabled={actionLoading === `${activeTab === "restaurants" ? "restaurant" : "courier"}-${app.id}`}>
-                        ✗ Refuzo
+                        ✗ Reject
                       </button>
                     </div>
                   )}
                   
+                  {/* Delete button - using application ID */}
+                  {app.status === "Approved" && activeTab === "restaurants" && (
+                    <button 
+                      className="btn btn-outline-danger btn-sm mt-3 w-100"
+                      onClick={() => handleDeleteRestaurant(app.id)}
+                      disabled={actionLoading === `delete-${app.id}`}
+                    >
+                      {actionLoading === `delete-${app.id}` ? "⏳ Deleting..." : "🗑️ Delete Restaurant"}
+                    </button>
+                  )}
+                  
                   {app.adminNotes && (
                     <div className="mt-3 p-2 bg-light rounded small">
-                      <strong>📝 Shënim:</strong> {app.adminNotes}
+                      <strong>📝 Note:</strong> {app.adminNotes}
                     </div>
                   )}
                 </div>

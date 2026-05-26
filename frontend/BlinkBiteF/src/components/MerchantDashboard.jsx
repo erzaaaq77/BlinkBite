@@ -43,8 +43,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const [statusActionError, setStatusActionError] = useState(false);
   const [orderDetailsLoadingId, setOrderDetailsLoadingId] = useState(null);
   const [visibleOrdersCount, setVisibleOrdersCount] = useState(MERCHANT_ORDERS_BATCH_SIZE);
-  
-  // State për logo
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoMessage, setLogoMessage] = useState("");
 
@@ -95,18 +93,17 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     [token]
   );
 
-  // Funksioni për upload të logos
   const handleLogoUpload = async (file) => {
     if (!file) return;
     
     if (!file.type.startsWith('image/')) {
-      setLogoMessage("❌ Ju lutemi zgjidhni një foto (JPG, PNG, GIF)");
+      setLogoMessage("❌ Please select an image (JPG, PNG, GIF)");
       setTimeout(() => setLogoMessage(""), 3000);
       return;
     }
     
     if (file.size > 2 * 1024 * 1024) {
-      setLogoMessage("❌ Logo duhet të jetë më e vogël se 2MB");
+      setLogoMessage("❌ Logo must be smaller than 2MB");
       setTimeout(() => setLogoMessage(""), 3000);
       return;
     }
@@ -118,22 +115,22 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     formData.append("logo", file);
     
     try {
-  const response = await axios.post(
-    `${API_BASE_URL}/Dashboard/Merchant/upload-logo?restaurantId=${dashboard?.restaurant?.id}`,
-    formData,
-    { 
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data"
-      } 
-    }
-  );
-      setLogoMessage("✅ Logo u ngarkua me sukses!");
+      const response = await axios.post(
+        `${API_BASE_URL}/Dashboard/Merchant/upload-logo?restaurantId=${dashboard?.restaurant?.id}`,
+        formData,
+        { 
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data"
+          } 
+        }
+      );
+      setLogoMessage("✅ Logo uploaded successfully!");
       setTimeout(() => setLogoMessage(""), 3000);
       fetchDashboard({ silent: true });
     } catch (error) {
       console.error(error);
-      setLogoMessage(error.response?.data?.message || "❌ Gabim gjatë ngarkimit të logos");
+      setLogoMessage(error.response?.data?.message || "❌ Error uploading logo");
       setTimeout(() => setLogoMessage(""), 3000);
     } finally {
       setUploadingLogo(false);
@@ -614,70 +611,69 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
           </div>
         </div>
 
-       {/* Logo Upload Section */}
-<div className="merchant-card mb-4">
-  <div className="d-flex align-items-center gap-4 flex-wrap">
-    <div className="text-center">
-      {restaurant.logo ? (
-        <img 
-          src={`http://localhost:5063${restaurant.logo}`}
-          alt="Restaurant Logo" 
-          style={{ 
-            width: "100px", 
-            height: "100px", 
-            objectFit: "cover",
-            borderRadius: "12px",
-            border: "1px solid #ddd"
-          }} 
-          onError={(e) => {
-            e.target.onerror = null;
-            e.target.style.display = "none";
-            e.target.nextSibling.style.display = "flex";
-          }}
-        />
-      ) : null}
-      <div 
-        style={{ 
-          width: "100px", 
-          height: "100px", 
-          backgroundColor: "#f0f0f0",
-          borderRadius: "12px",
-          display: restaurant.logo ? "none" : "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "1px dashed #ccc"
-        }}
-      >
-        <span className="text-muted" style={{ fontSize: "12px" }}>No Logo</span>
-      </div>
-    </div>
-    
-    <div>
-      <label className={`btn btn-outline-primary btn-sm ${uploadingLogo ? 'disabled' : ''}`}>
-        {uploadingLogo ? "⏳ Duke ngarkuar..." : "🖼️ Ndrysho Logon"}
-        <input
-          type="file"
-          accept="image/*"
-          style={{ display: "none" }}
-          onChange={(e) => {
-            if (e.target.files[0]) {
-              handleLogoUpload(e.target.files[0]);
-            }
-          }}
-          disabled={uploadingLogo}
-        />
-      </label>
-      {logoMessage && (
-        <div className={`mt-2 small ${logoMessage.includes("✅") ? "text-success" : "text-danger"}`}>
-          {logoMessage}
+        <div className="merchant-card mb-4">
+          <div className="d-flex align-items-center gap-4 flex-wrap">
+            <div className="text-center">
+              {restaurant.logo ? (
+                <img 
+                  src={`http://localhost:5063${restaurant.logo}`}
+                  alt="Restaurant Logo" 
+                  style={{ 
+                    width: "100px", 
+                    height: "100px", 
+                    objectFit: "cover",
+                    borderRadius: "12px",
+                    border: "1px solid #ddd"
+                  }} 
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = "none";
+                    e.target.nextSibling.style.display = "flex";
+                  }}
+                />
+              ) : null}
+              <div 
+                style={{ 
+                  width: "100px", 
+                  height: "100px", 
+                  backgroundColor: "#f0f0f0",
+                  borderRadius: "12px",
+                  display: restaurant.logo ? "none" : "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "1px dashed #ccc"
+                }}
+              >
+                <span className="text-muted" style={{ fontSize: "12px" }}>No Logo</span>
+              </div>
+            </div>
+            
+            <div>
+              <label className={`btn btn-outline-primary btn-sm ${uploadingLogo ? 'disabled' : ''}`}>
+                {uploadingLogo ? "Uploading..." : "Change Logo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    if (e.target.files[0]) {
+                      handleLogoUpload(e.target.files[0]);
+                    }
+                  }}
+                  disabled={uploadingLogo}
+                />
+              </label>
+              {logoMessage && (
+                <div className={`mt-2 small ${logoMessage.includes("✅") ? "text-success" : "text-danger"}`}>
+                  {logoMessage}
+                </div>
+              )}
+              <p className="small text-muted mt-2 mb-0">
+                Allowed formats: JPG, PNG, GIF (max 2MB)
+              </p>
+            </div>
+          </div>
         </div>
-      )}
-      <p className="small text-muted mt-2 mb-0">
-        Formatet e lejuara: JPG, PNG, GIF (max 2MB)
-      </p>
-    </div>
-  </div>
-</div>
 
         {addresses.length > 0 && (
           <div className="merchant-card mb-4">

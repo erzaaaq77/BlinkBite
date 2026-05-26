@@ -4128,30 +4128,40 @@ function App() {
 
           <div className="d-flex align-items-center gap-2">
             {token && isMerchantLikeRole && (
-           <button
-           className="btn btn-outline-info"
-            onClick={() => {
-           primeAudioFromGesture();
-           window.location.hash = "/merchant/dashboard";
-             }}
-    >
-                   Merchant Dashboard
-             </button>
-              )}
-           
-             {token && isCourierRole && (
-    <button
-      className="btn btn-outline-info"
-      onClick={() => {
-        window.location.hash = "/driver/dashboard";
-      }}
-    >
-      🚚 Driver Dashboard
-    </button>
-  )}
-            <button
-
+              <button
+                className="btn btn-outline-info"
+                onClick={() => {
+                  primeAudioFromGesture();
+                  window.location.hash = "/merchant/dashboard";
+                }}
+              >
+                Merchant Dashboard
+              </button>
+            )}
             
+            {token && isCourierRole && (
+              <button
+                className="btn btn-outline-info"
+                onClick={() => {
+                  window.location.hash = "/driver/dashboard";
+                }}
+              >
+                🚚 Driver Dashboard
+              </button>
+            )}
+            
+            {token && isAdminRole && (
+              <button
+                className="btn btn-outline-danger"
+                onClick={() => {
+                  window.location.hash = "/admin/applications";
+                }}
+              >
+                👑 Admin Dashboard
+              </button>
+            )}
+            
+            <button
               className="btn btn-light"
               data-bs-toggle="modal"
               data-bs-target="#locationModal"
@@ -4191,10 +4201,12 @@ function App() {
               </ul>
             </div>
 
-            <button className="btn position-relative" onClick={openCartPage}>
-              <i className="bi bi-cart3 fs-5"></i>
-              <span className="cart-badge">{cartCount || 0}</span>
-            </button>
+            {!isAdminRole && (
+              <button className="btn position-relative" onClick={openCartPage}>
+                <i className="bi bi-cart3 fs-5"></i>
+                <span className="cart-badge">{cartCount || 0}</span>
+              </button>
+            )}
 
             {token && isCustomerRole && (
               <button
@@ -4213,7 +4225,7 @@ function App() {
 
             {token ? (
               <>
-                {!isCourierRole && (
+                {!isAdminRole && (
                   <button
                     className="btn btn-outline-primary nav-orders-btn"
                     onClick={() => {
@@ -4228,7 +4240,7 @@ function App() {
                     )}
                   </button>
                 )}
-                {/* ✅ Username i rregulluar */}
+                
                 <div className="me-2">
                   <span className="small text-muted">Hi, {currentUser?.userName || "User"}</span>
                   {currentUserRole && (
@@ -4301,7 +4313,6 @@ function App() {
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div className="modal-body">
-              {/* ✅ Tani përdor loginMessage */}
               {loginMessage && (
                 <div className={`alert ${loginMessage.includes("successful") ? "alert-success" : "alert-danger"}`}>
                   {loginMessage}
@@ -4351,7 +4362,6 @@ function App() {
               <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div className="modal-body">
-              {/* ✅ Tani përdor signupMessage */}
               {signupMessage && (
                 <div className={`alert ${signupMessage.includes("successful") ? "alert-success" : "alert-danger"}`}>
                   {signupMessage}
@@ -4403,7 +4413,6 @@ function App() {
           </div>
         </div>
       </div>
-
 
       <Suspense fallback={<div className="text-center py-5">Loading page...</div>}>
         {page === "home" && (
@@ -4477,16 +4486,16 @@ function App() {
             }}
           />
         )}
-         {page === "applyMerchant" && (
-    <MerchantApplicationPage />
-  )}
-  
-  {page === "applyCourier" && (
-    <CourierApplicationPage />
-  )}
-  {page === "adminApplications" && (
-  <AdminApplicationsPage />
-)}
+        {page === "applyMerchant" && (
+          <MerchantApplicationPage />
+        )}
+        
+        {page === "applyCourier" && (
+          <CourierApplicationPage />
+        )}
+        {page === "adminApplications" && (
+          <AdminApplicationsPage />
+        )}
 
         {page === "myOrders" && window.location.hash.startsWith("#/invoice/") && (
           <section className="cart-page pb-5">
@@ -4534,7 +4543,6 @@ function App() {
             {!canManageOperationalOrders && myOrdersError && <div className="alert alert-warning">{myOrdersError}</div>}
             {canManageOperationalOrders && roleOrdersError && <div className="alert alert-warning">{roleOrdersError}</div>}
 
-
             {canManageOperationalOrders ? (
               roleOrdersLoading ? (
                 <div className="text-muted">Loading operational orders...</div>
@@ -4558,7 +4566,6 @@ function App() {
                   )}
                 </div>
               ) : isMerchantLikeRole ? (
-                /* ── MERCHANT KANBAN BOARD ── */
                 <div className="kanban-board">
                   {[
                     { key: "pending",   label: "New",       statuses: ["pending"],   color: "#f59e0b", icon: "bi-clock" },
@@ -5099,7 +5106,6 @@ function App() {
           </div>
         )}
 
-        {/* ── ROLE ACTION TOAST ── */}
         {roleActionMessage && (
           <div className={`role-toast ${roleToastVisible ? "role-toast--in" : "role-toast--out"} ${roleActionMessage.toLowerCase().includes("moved") ? "role-toast--success" : "role-toast--error"}`}>
             <i className={`bi ${roleActionMessage.toLowerCase().includes("moved") ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill"} me-2`}></i>
@@ -5107,12 +5113,9 @@ function App() {
           </div>
         )}
 
-        {/* ── KANBAN ORDER DETAIL MODAL ── */}
         {kanbanDetailOrder && (
           <div className="kd-overlay" onClick={() => setKanbanDetailOrder(null)}>
             <div className="kd-modal" onClick={e => e.stopPropagation()}>
-
-              {/* Header */}
               <div className="kd-header">
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", minWidth: 0 }}>
                   <span className="kd-order-id">Order #{kanbanDetailOrder.id}</span>
@@ -5126,7 +5129,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Customer & info */}
               <div className="kd-info-row">
                 <div className="kd-info-cell">
                   <i className="bi bi-person-circle"></i>
@@ -5158,7 +5160,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Items */}
               <div className="kd-items-title">Order Items</div>
               <div className="kd-items">
                 {(kanbanDetailOrder.items || []).length === 0 ? (
@@ -5183,7 +5184,6 @@ function App() {
                 ))}
               </div>
 
-              {/* Footer totals */}
               <div className="kd-footer">
                 {kanbanDetailOrder.deliveryFee > 0 && (
                   <div className="kd-footer-row">
@@ -5217,7 +5217,6 @@ function App() {
                 window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
                 return;
               }
-
               window.location.hash = "/";
             }}
             restaurantId={activeRestaurantId}
@@ -5240,7 +5239,6 @@ function App() {
                 window.location.hash = `/restaurant/${activeRestaurantId}`;
                 return;
               }
-
               window.location.hash = "/";
             }}
             onBackHome={() => {
@@ -5248,7 +5246,6 @@ function App() {
                 window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
                 return;
               }
-
               window.location.hash = "/";
             }}
           />
@@ -5328,9 +5325,7 @@ function App() {
                                 )}
 
                                 <div className="cart-item-note-wrap mt-2">
-                                  <label className="cart-item-note-label">
-                                    Item request
-                                  </label>
+                                  <label className="cart-item-note-label">Item request</label>
 
                                   {Array.isArray(item.ingredients) && item.ingredients.length > 0 && (
                                     <p className="cart-item-ingredients mb-2">
@@ -5389,7 +5384,6 @@ function App() {
                                       })}
                                     </div>
                                   )}
-
                                 </div>
                               </div>
                             </div>
