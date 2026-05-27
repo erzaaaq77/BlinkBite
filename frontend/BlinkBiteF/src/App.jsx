@@ -13,6 +13,8 @@ import MerchantApplicationPage from "./components/MerchantApplicationPage";
 import CourierApplicationPage from "./components/CourierApplicationPage";
 import AdminApplicationsPage from "./components/AdminApplicationsPage";
 import CategoryManagement from "./components/CategoryManagement";
+import AdminBranchRequests from "./components/AdminBranchRequests";
+
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
@@ -213,6 +215,16 @@ function App() {
       };
     }
 
+   if (hash.startsWith("#/admin/branch-requests")) {
+  return {
+    page: "adminBranchRequests",
+    category: "",
+    restaurantId: null,
+    branchId: "",
+  };
+}
+
+
     if (hash.startsWith("#/admin/categories")) {
   return {
     page: "adminCategories",
@@ -340,14 +352,14 @@ function App() {
       branchId: "",
     };
   }
-  if (hash === "#/admin/applications") {
-  return {
-    page: "adminApplications",
-    category: "",
-    restaurantId: null,
-    branchId: "",
-  };
-}
+  if (hash === "#/admin/applications" || hash === "#/admin") {
+    return {
+      page: "adminApplications",
+      category: "",
+      restaurantId: null,
+      branchId: "",
+    };
+  }
 
     return {
       page: "home",
@@ -592,7 +604,7 @@ function App() {
       }
       // Fetch all restaurants and find the one for this merchant
       try {
-        const res = await fetch("/api/restaurants");
+        const res = await fetch(`${API_BASE}/restaurants`);
         if (!res.ok) return;
         const data = await res.json();
         const myRestaurant = (Array.isArray(data) ? data : []).find(r => (r.userId ?? r.UserId) === currentUser.id);
@@ -3348,14 +3360,27 @@ function App() {
       return;
     }
 
+    const activeElement = document.activeElement;
+    if (activeElement && el.contains(activeElement) && typeof activeElement.blur === "function") {
+      activeElement.blur();
+    }
+
     const modalInstance = window.bootstrap?.Modal.getInstance(el);
     if (modalInstance) {
       modalInstance.hide();
-      window.setTimeout(resetModalUiState, 200);
+      window.setTimeout(() => {
+        resetModalUiState();
+        if (typeof document.body.focus === "function") {
+          document.body.focus();
+        }
+      }, 200);
     } else {
       el.classList.remove("show");
       el.style.display = "none";
       resetModalUiState();
+      if (typeof document.body.focus === "function") {
+        document.body.focus();
+      }
     }
   };
 
@@ -4408,7 +4433,9 @@ function App() {
               >
                 <option value="Customer">Customer</option>
                 <option value="Merchant">Merchant</option>
-                <option value="Courier">Courier</option>
+                <option value="Courier">Courier</option>    
+
+    
                 <option value="Admin">Admin</option>
               </select>
               <p className="small text-muted mb-0">Choose role during signup to test role-based APIs directly from browser.</p>
@@ -4435,6 +4462,13 @@ function App() {
             nearbyError={nearbyError}
           />
         )}
+
+      {page === "adminBranchRequests" && (
+        <AdminBranchRequests
+          token={token}
+          onBack={() => window.location.hash = "/admin/applications"}
+        />
+      )}
 
         {page === "adminCategories" && (
           <section className="container py-4" style={{ marginTop: "96px" }}>
@@ -5642,9 +5676,11 @@ function App() {
           "restaurantDetails",
           "branchMenu",
           "cart",
-          "applyMerchant",    
+          "applyMerchant",
           "applyCourier",
-          "adminApplications",  
+          "adminApplications",
+          "adminBranchRequests",
+          "adminCategories",
         ].includes(page) && (
           <section className="container py-5">
             <div className="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">

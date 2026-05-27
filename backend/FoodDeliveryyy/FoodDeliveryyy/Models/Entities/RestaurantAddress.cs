@@ -30,6 +30,9 @@ namespace FoodDeliveryyy.Models.Entities
         public double? Latitude { get; set; }
         public double? Longitude { get; set; }
 
+        // Added delivery fee property to match BranchModificationRequest.NewDeliveryFee
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal? TarifaDorezimit { get; set; }
 
         [ForeignKey("RestaurantId")]
         public virtual Restaurant? Restaurant { get; set; }

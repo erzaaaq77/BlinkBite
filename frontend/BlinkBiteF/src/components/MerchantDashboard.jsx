@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
+import toast from "react-hot-toast";
 import "./MerchantDashboard.css";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
@@ -27,6 +29,19 @@ const MERCHANT_ORDERS_BATCH_SIZE = 8;
 const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const normalizedRole = String(currentUserRole || "").trim().toLowerCase();
   const isBranchManagerRole = normalizedRole === "branchmanager";
+  const [restaurantBranches, setRestaurantBranches] = useState([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestData, setRequestData] = useState({
+    branchId: null,
+    newAddress: "",
+    newCity: "",
+    newZone: "",
+    newDeliveryFee: "",
+    reason: ""
+  });
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -45,6 +60,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const [visibleOrdersCount, setVisibleOrdersCount] = useState(MERCHANT_ORDERS_BATCH_SIZE);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoMessage, setLogoMessage] = useState("");
+  const restaurant = dashboard?.restaurant || {};
 
   const normalizeStatusLabel = (statusValue) => {
     if (typeof statusValue === "number") {
@@ -93,6 +109,53 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     [token]
   );
 
+  const submitEditRequest = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/BranchRequest/request-edit`, {
+        branchId: requestData.branchId,
+        newAddress: requestData.newAddress,
+        newCity: requestData.newCity,
+        newZone: requestData.newZone,
+        newDeliveryFee: parseFloat(requestData.newDeliveryFee),
+        reason: requestData.reason,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowEditModal(false);
+      setSelectedBranch(null);
+      setRequestData({
+        branchId: null,
+        newAddress: "",
+        newCity: "",
+        newZone: "",
+        newDeliveryFee: "",
+        reason: ""
+      });
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Submitted",
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+        background: "#d4edda",
+        color: "#155724",
+      });
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "error",
+        title: "Failed to send request",
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true,
+      });
+    }
+  };
+
   const handleLogoUpload = async (file) => {
     if (!file) return;
     
@@ -137,6 +200,62 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     }
   };
 
+
+const fetchBranches = async () => {
+  const restaurantId = dashboard?.restaurant?.id;
+  if (!restaurantId) return;
+  console.log("Fetching branches for restaurant ID:", restaurantId);
+  try {
+    const response = await axios.get(`${API_BASE_URL}/RestaurantAddresses/by-restaurant/${restaurantId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log("Branches fetched:", response.data);
+    setRestaurantBranches(response.data);
+  } catch (err) {
+    console.error("Failed to fetch branches", err);
+  }
+};
+
+  const openEditBranchModal = (branch) => {
+    setSelectedBranch(branch);
+    setRequestData({
+      branchId: branch.id ?? branch.Id ?? null,
+      newAddress: branch.adresa || branch.address || "",
+      newCity: branch.qyteti || branch.city || "",
+      newZone: branch.zona || branch.zone || "",
+      newDeliveryFee: String(branch.tarifaDorezimit ?? branch.deliveryFee ?? ""),
+      reason: ""
+    });
+    setShowEditModal(true);
+  };
+
+  const openDeleteBranchModal = (branch) => {
+    setSelectedBranch(branch);
+    setShowDeleteModal(true);
+  };
+
+  const submitDeleteRequest = async () => {
+    if (!selectedBranch) {
+      toast.error("No branch selected for deletion request.");
+      return;
+    }
+
+    try {
+      await axios.post(`${API_BASE_URL}/BranchRequest/request-delete`, {
+        branchId: selectedBranch.id ?? selectedBranch.Id,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("Delete request sent to admin for approval.");
+      setShowDeleteModal(false);
+      setSelectedBranch(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send delete request.");
+    }
+  };
+
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
@@ -151,6 +270,12 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       window.clearInterval(intervalId);
     };
   }, [fetchDashboard, token]);
+
+  useEffect(() => {
+    if (restaurant?.id) {
+      fetchBranches();
+    }
+  }, [restaurant?.id, token]);
 
   useEffect(() => {
     setVisibleOrdersCount(MERCHANT_ORDERS_BATCH_SIZE);
@@ -349,7 +474,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     );
   }
 
-  const restaurant = dashboard?.restaurant || {};
   const addresses = Array.isArray(dashboard?.addresses) ? dashboard.addresses : [];
   const primaryAddressId = dashboard?.primaryAddressId ?? addresses.find((entry) => entry?.isMain)?.id ?? addresses[0]?.id ?? null;
   const stats = dashboard?.orders || {};
@@ -1092,7 +1216,149 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
               )}
             </div>
           )}
+
+      <div className="mt-4 pt-3 border-top">
+        <div className="d-flex justify-content-between align-items-center mb-3">
+          <h5 className="merchant-section-title mb-0">🏪 Restaurant Branches</h5>
         </div>
+
+        {restaurantBranches.length === 0 ? (
+          <p className="text-muted small mb-0">No branches added yet.</p>
+        ) : (
+          <div className="row g-3">
+            {restaurantBranches.map((branch) => (
+              <div className="col-md-6 col-lg-4" key={branch.id}>
+                <div className="border rounded-3 p-3 h-100 bg-white">
+                  <div className="d-flex justify-content-between align-items-start mb-2">
+                    <div className="fw-semibold">{branch.adresa || branch.address}</div>
+                    <div className="d-flex gap-1">
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => openEditBranchModal(branch)}
+                        title="Request Edit"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => openDeleteBranchModal(branch)}
+                        title="Request Delete"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                  <div className="small text-muted">
+                    <div>{branch.qyteti || branch.city}, {branch.zona || branch.zone}</div>
+                    <div>Delivery: €{(branch.tarifaDorezimit || branch.deliveryFee || 0).toFixed(2)}</div>
+                    <div className="mt-1">
+                      <span className={`badge ${branch.isActive ? "bg-success" : "bg-secondary"}`}>
+                        {branch.isActive ? "Active" : "Inactive"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+      {showEditModal && selectedBranch && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content merchant-modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Request Branch Edit</h5>
+                <button type="button" className="btn-close" onClick={() => setShowEditModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p className="small text-muted mb-3">Submit a request for admin approval to update this branch.</p>
+                <div className="mb-3">
+                  <label className="form-label">Address</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={requestData.newAddress}
+                    onChange={(e) => setRequestData((prev) => ({ ...prev, newAddress: e.target.value }))}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">City</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={requestData.newCity}
+                    onChange={(e) => setRequestData((prev) => ({ ...prev, newCity: e.target.value }))}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Zone</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={requestData.newZone}
+                    onChange={(e) => setRequestData((prev) => ({ ...prev, newZone: e.target.value }))}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Delivery Fee</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={requestData.newDeliveryFee}
+                    onChange={(e) => setRequestData((prev) => ({ ...prev, newDeliveryFee: e.target.value }))}
+                  />
+                </div>
+                <div className="mb-3">
+                  <label className="form-label">Reason</label>
+                  <textarea
+                    className="form-control"
+                    rows="3"
+                    value={requestData.reason}
+                    onChange={(e) => setRequestData((prev) => ({ ...prev, reason: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-primary" onClick={submitEditRequest}>
+                  Send Request
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showDeleteModal && selectedBranch && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content merchant-modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Request Branch Delete</h5>
+                <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p className="mb-3">Are you sure you want to request deletion for the branch at <strong>{selectedBranch.adresa || selectedBranch.address}</strong>?</p>
+                <p className="small text-muted">This will send a delete request to an administrator for review.</p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="btn btn-danger" onClick={submitDeleteRequest}>
+                  Send Delete Request
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
         {showModal && selectedOrder && (
           <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
@@ -1176,7 +1442,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
             </div>
           </div>
         )}
-      </div>
     </section>
   );
 };

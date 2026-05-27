@@ -4,6 +4,7 @@ using FoodDeliveryyy.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FoodDeliveryyy.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260527155317_AddBranchModificationRequest")]
+    partial class AddBranchModificationRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -87,9 +90,6 @@ namespace FoodDeliveryyy.Migrations
 
                     b.Property<string>("NewCity")
                         .HasColumnType("longtext");
-
-                    b.Property<decimal?>("NewDeliveryFee")
-                        .HasColumnType("decimal(65,30)");
 
                     b.Property<bool?>("NewIsActive")
                         .HasColumnType("tinyint(1)");
@@ -742,9 +742,6 @@ namespace FoodDeliveryyy.Migrations
 
                     b.Property<int>("RestaurantId")
                         .HasColumnType("int");
-
-                    b.Property<decimal?>("TarifaDorezimit")
-                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("Zona")
                         .HasMaxLength(100)

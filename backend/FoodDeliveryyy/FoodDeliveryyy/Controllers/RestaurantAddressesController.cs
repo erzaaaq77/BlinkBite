@@ -34,7 +34,6 @@ public class RestaurantAddressesController : ControllerBase
         return Ok(all);
     }
 
-    // GET api/restaurantaddresses/by-restaurant/5
     [HttpGet("by-restaurant/{restaurantId}")]
     [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<RestaurantAddress>>> GetByRestaurant(int restaurantId)

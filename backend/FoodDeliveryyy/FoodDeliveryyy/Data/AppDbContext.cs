@@ -36,6 +36,7 @@ namespace FoodDeliveryyy.Data
         public DbSet<RestaurantApplication> RestaurantApplications { get; set; } = null!;
         public DbSet<CourierApplication> CourierApplications { get; set; } = null!;
 
+        public DbSet<BranchModificationRequest> BranchModificationRequests { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import Swal from "sweetalert2";
 import CategoryManagement from "./CategoryManagement";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
@@ -77,9 +78,28 @@ const AdminApplicationsPage = () => {
   };
 
   const handleReject = async (type, id) => {
-    const reason = prompt("Enter rejection reason:");
+    const { value: reason } = await Swal.fire({
+      title: "Reject application",
+      input: "textarea",
+      inputLabel: "Rejection reason",
+      inputPlaceholder: "Enter the reason for rejection...",
+      inputAttributes: {
+        "aria-label": "Rejection reason"
+      },
+      showCancelButton: true,
+      confirmButtonText: "Reject",
+      cancelButtonText: "Cancel",
+      preConfirm: (value) => {
+        if (!value || !value.trim()) {
+          Swal.showValidationMessage("Please enter a rejection reason.");
+        }
+        return value;
+      },
+      width: 500,
+    });
+
     if (!reason) return;
-    
+
     const token = getToken();
     setActionLoading(`${type}-${id}`);
     try {
@@ -149,6 +169,12 @@ const AdminApplicationsPage = () => {
           onClick={() => setShowCategoryManagement(true)}
         >
           🏷️ Manage Categories
+        </button>
+        <button 
+          className="btn btn-outline-info me-2"
+          onClick={() => { window.location.hash = "/admin/branch-requests"; }}
+        >
+          🏢 Branch Requests
         </button>
         <button className="btn btn-outline-secondary btn-sm" onClick={fetchApplications}>
           🔄 Refresh
