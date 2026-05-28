@@ -1,20 +1,19 @@
 using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Hubs;
 using FoodDeliveryyy.Middleware;
+using FoodDeliveryyy.Models.Converters;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
 using FoodDeliveryyy.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 using System.Text;
-using FoodDeliveryyy.Models.Converters;
 using System.Text.Json.Serialization;
-
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -85,7 +84,6 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
-    // Add debug event handlers
     options.Events = new JwtBearerEvents
     {
         OnAuthenticationFailed = context =>
@@ -124,9 +122,7 @@ builder.Services.AddCors(options =>
     });
 });
 
-
 var app = builder.Build();
-
 
 using (var scope = app.Services.CreateScope())
 {
@@ -138,17 +134,26 @@ using (var scope = app.Services.CreateScope())
         .GetAwaiter().GetResult();
 }
 
-
 if (app.Environment.IsDevelopment())
 {
-    // Show detailed exception page in Development to aid debugging
     app.UseDeveloperExceptionPage();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseStaticFiles();
+
+// STATIC FILES - PËR FOTOT
+app.UseStaticFiles(); // për wwwroot
+
+// Shërbej folderin uploads për fotot
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(
+        Path.Combine(builder.Environment.ContentRootPath, "wwwroot", "uploads")),
+    RequestPath = "/uploads"
+});
+
 app.UseCors("ReactPolicy");
 app.UseExceptionHandler();
 app.UseAuthentication();

@@ -75,6 +75,10 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     city: "Prishtinë",
     zone: "",
     deliveryFee: 0,
+    latitude: 0,
+    longitude: 0,
+    isMain: false,
+    isActive: true,
     createManager: false,
     managerName: "",
     managerEmail: ""
@@ -210,6 +214,10 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         city: newBranch.city,
         zone: newBranch.zone,
         deliveryFee: newBranch.deliveryFee,
+        latitude: newBranch.latitude || null,
+        longitude: newBranch.longitude || null,
+        isMain: newBranch.isMain,
+        isActive: newBranch.isActive,
         createBranchManager: newBranch.createManager,
         managerName: newBranch.managerName,
         managerEmail: newBranch.managerEmail
@@ -220,8 +228,17 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       toast.success(response.data.message);
       setShowAddBranchModal(false);
       setNewBranch({
-        address: "", city: "Prishtinë", zone: "", deliveryFee: 0,
-        createManager: false, managerName: "", managerEmail: ""
+        address: "",
+        city: "Prishtinë",
+        zone: "",
+        deliveryFee: 0,
+        latitude: 0,
+        longitude: 0,
+        isMain: false,
+        isActive: true,
+        createManager: false,
+        managerName: "",
+        managerEmail: ""
       });
       fetchDashboard();
       fetchBranches();
@@ -233,34 +250,39 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     }
   };
 
-  const submitEditRequest = async () => {
-    try {
-      await axios.post(`${API_BASE_URL}/BranchRequest/request-edit`, {
-        branchId: requestData.branchId,
-        newAddress: requestData.newAddress,
-        newCity: requestData.newCity,
-        newZone: requestData.newZone,
-        newDeliveryFee: parseFloat(requestData.newDeliveryFee),
-        reason: requestData.reason,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setShowEditModal(false);
-      setSelectedBranch(null);
-      setRequestData({
-        branchId: null,
-        newAddress: "",
-        newCity: "",
-        newZone: "",
-        newDeliveryFee: "",
-        reason: ""
-      });
-      toast.success("Edit request submitted for admin approval");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to send request");
-    }
-  };
+ const submitEditRequest = async () => {
+  // Kjo formë është e saktë për edit, por verifiko
+  try {
+    const response = await axios.post(`${API_BASE_URL}/BranchRequest/request-edit`, {
+      branchId: requestData.branchId,
+      newAddress: requestData.newAddress,
+      newCity: requestData.newCity,
+      newZone: requestData.newZone,
+      newDeliveryFee: parseFloat(requestData.newDeliveryFee),
+      reason: requestData.reason,
+      newIsActive: true  // shto edhe këtë nëse është e nevojshme
+    }, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    
+    console.log("Edit request response:", response.data);
+    toast.success("Edit request submitted for admin approval");
+    setShowEditModal(false);
+    setSelectedBranch(null);
+    setRequestData({
+      branchId: null,
+      newAddress: "",
+      newCity: "",
+      newZone: "",
+      newDeliveryFee: "",
+      reason: ""
+    });
+  } catch (err) {
+    console.error(err);
+    console.error("Error details:", err.response?.data);
+    toast.error(err.response?.data || "Failed to send request");
+  }
+};
 
   const handleLogoUpload = async (file) => {
     if (!file) return;
@@ -338,27 +360,36 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   };
 
   const submitDeleteRequest = async () => {
-    if (!selectedBranch) {
-      toast.error("No branch selected for deletion request.");
-      return;
-    }
+  if (!selectedBranch) {
+    toast.error("No branch selected for deletion request.");
+    return;
+  }
 
-    try {
-      await axios.post(`${API_BASE_URL}/BranchRequest/request-delete`, {
-        branchId: selectedBranch.id ?? selectedBranch.Id,
-      }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      toast.success("Delete request sent to admin for approval.");
-      setShowDeleteModal(false);
-      setSelectedBranch(null);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to send delete request.");
-    }
-  };
-
+  const branchId = selectedBranch.id ?? selectedBranch.Id;
+  
+  // Kërko arsye nga përdoruesi
+  const reason = prompt("Why do you want to delete this branch? (Optional)");
+  
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/BranchRequest/request-delete/${branchId}`,
+      reason || "",  // dërgo reason si string në body
+      { 
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    toast.success("Delete request sent to admin for approval.");
+    setShowDeleteModal(false);
+    setSelectedBranch(null);
+  } catch (err) {
+    console.error(err);
+    toast.error(err.response?.data || "Failed to send delete request.");
+  }
+};
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
@@ -930,70 +961,157 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* Add Branch Modal */}
       {showAddBranchModal && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>Add New Branch</h5><button className="btn-close" onClick={() => setShowAddBranchModal(false)}></button></div>
-          <div className="modal-body">
-            <input type="text" className="form-control mb-2" placeholder="Address" value={newBranch.address} onChange={(e) => setNewBranch({...newBranch, address: e.target.value})} />
-            <select className="form-select mb-2" value={newBranch.city} onChange={(e) => setNewBranch({...newBranch, city: e.target.value})}><option>Prishtinë</option><option>Prizren</option><option>Pejë</option><option>Gjakovë</option><option>Ferizaj</option><option>Gjilan</option><option>Mitrovicë</option></select>
-            <input type="text" className="form-control mb-2" placeholder="Zone" value={newBranch.zone} onChange={(e) => setNewBranch({...newBranch, zone: e.target.value})} />
-            <input type="number" className="form-control mb-2" placeholder="Delivery Fee" value={newBranch.deliveryFee} onChange={(e) => setNewBranch({...newBranch, deliveryFee: parseFloat(e.target.value)})} />
-            <div className="form-check mb-2"><input type="checkbox" className="form-check-input" checked={newBranch.createManager} onChange={(e) => setNewBranch({...newBranch, createManager: e.target.checked})} /><label>Create Branch Manager account</label></div>
-            {newBranch.createManager && (<><input type="text" className="form-control mb-2" placeholder="Manager Name" value={newBranch.managerName} onChange={(e) => setNewBranch({...newBranch, managerName: e.target.value})} /><input type="email" className="form-control mb-2" placeholder="Manager Email" value={newBranch.managerEmail} onChange={(e) => setNewBranch({...newBranch, managerEmail: e.target.value})} /></>)}
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>Add New Branch</h5>
+                <button className="btn-close" onClick={() => setShowAddBranchModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <input type="text" className="form-control mb-2" placeholder="Address *" value={newBranch.address} onChange={e => setNewBranch({...newBranch, address: e.target.value})} />
+                <select className="form-select mb-2" value={newBranch.city} onChange={e => setNewBranch({...newBranch, city: e.target.value})}>
+                  <option>Prishtinë</option><option>Prizren</option><option>Pejë</option>
+                  <option>Gjakovë</option><option>Ferizaj</option><option>Gjilan</option><option>Mitrovicë</option>
+                </select>
+                <input type="text" className="form-control mb-2" placeholder="Zone" value={newBranch.zone} onChange={e => setNewBranch({...newBranch, zone: e.target.value})} />
+                <input type="number" step="any" className="form-control mb-2" placeholder="Latitude" value={newBranch.latitude} onChange={e => setNewBranch({...newBranch, latitude: parseFloat(e.target.value) || 0})} />
+                <input type="number" step="any" className="form-control mb-2" placeholder="Longitude" value={newBranch.longitude} onChange={e => setNewBranch({...newBranch, longitude: parseFloat(e.target.value) || 0})} />
+                <input type="number" step="0.5" className="form-control mb-2" placeholder="Delivery Fee (€)" value={newBranch.deliveryFee} onChange={e => setNewBranch({...newBranch, deliveryFee: parseFloat(e.target.value) || 0})} />
+                <div className="form-check mb-2">
+                  <input type="checkbox" className="form-check-input" checked={newBranch.isMain} onChange={e => setNewBranch({...newBranch, isMain: e.target.checked})} />
+                  <label>Main Branch</label>
+                </div>
+                <div className="form-check mb-2">
+                  <input type="checkbox" className="form-check-input" checked={newBranch.isActive} onChange={e => setNewBranch({...newBranch, isActive: e.target.checked})} />
+                  <label>Active</label>
+                </div>
+                <div className="form-check mb-2">
+                  <input type="checkbox" className="form-check-input" checked={newBranch.createManager} onChange={e => setNewBranch({...newBranch, createManager: e.target.checked})} />
+                  <label>Create Branch Manager account</label>
+                </div>
+                {newBranch.createManager && (
+                  <>
+                    <input type="text" className="form-control mb-2" placeholder="Manager Name" value={newBranch.managerName} onChange={e => setNewBranch({...newBranch, managerName: e.target.value})} />
+                    <input type="email" className="form-control mb-2" placeholder="Manager Email" value={newBranch.managerEmail} onChange={e => setNewBranch({...newBranch, managerEmail: e.target.value})} />
+                  </>
+                )}
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Creating..." : "Create Branch"}</button>
+              </div>
+            </div>
           </div>
-          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Creating..." : "Create Branch"}</button></div></div></div>
         </div>
       )}
 
+      {/* Add Category Modal */}
       {showAddCategoryModal && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>{editingCategory ? "Edit Category" : "Add Category"}</h5><button className="btn-close" onClick={() => setShowAddCategoryModal(false)}></button></div>
-          <div className="modal-body">
-            <input type="text" className="form-control mb-2" placeholder="Category Name" value={categoryForm.emertimi} onChange={(e) => setCategoryForm({...categoryForm, emertimi: e.target.value})} />
-            <textarea className="form-control mb-2" placeholder="Description" rows="2" value={categoryForm.pershkrimi} onChange={(e) => setCategoryForm({...categoryForm, pershkrimi: e.target.value})} />
-            <input type="number" className="form-control mb-2" placeholder="Display Order" value={categoryForm.renditja} onChange={(e) => setCategoryForm({...categoryForm, renditja: parseInt(e.target.value) || 0})} />
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>{editingCategory ? "Edit Category" : "Add Category"}</h5>
+                <button className="btn-close" onClick={() => setShowAddCategoryModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <input type="text" className="form-control mb-2" placeholder="Category Name" value={categoryForm.emertimi} onChange={(e) => setCategoryForm({...categoryForm, emertimi: e.target.value})} />
+                <textarea className="form-control mb-2" placeholder="Description" rows="2" value={categoryForm.pershkrimi} onChange={(e) => setCategoryForm({...categoryForm, pershkrimi: e.target.value})} />
+                <input type="number" className="form-control mb-2" placeholder="Display Order" value={categoryForm.renditja} onChange={(e) => setCategoryForm({...categoryForm, renditja: parseInt(e.target.value) || 0})} />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowAddCategoryModal(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleSaveCategory}>Save Category</button>
+              </div>
+            </div>
           </div>
-          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddCategoryModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleSaveCategory}>Save Category</button></div></div></div>
         </div>
       )}
 
+      {/* Edit Branch Request Modal */}
       {showEditModal && selectedBranch && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>Request Branch Edit</h5><button className="btn-close" onClick={() => setShowEditModal(false)}></button></div>
-          <div className="modal-body">
-            <input type="text" className="form-control mb-2" placeholder="Address" value={requestData.newAddress} onChange={(e) => setRequestData({...requestData, newAddress: e.target.value})} />
-            <input type="text" className="form-control mb-2" placeholder="City" value={requestData.newCity} onChange={(e) => setRequestData({...requestData, newCity: e.target.value})} />
-            <input type="text" className="form-control mb-2" placeholder="Zone" value={requestData.newZone} onChange={(e) => setRequestData({...requestData, newZone: e.target.value})} />
-            <input type="text" className="form-control mb-2" placeholder="Delivery Fee" value={requestData.newDeliveryFee} onChange={(e) => setRequestData({...requestData, newDeliveryFee: e.target.value})} />
-            <textarea className="form-control mb-2" placeholder="Reason" rows="3" value={requestData.reason} onChange={(e) => setRequestData({...requestData, reason: e.target.value})} />
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>Request Branch Edit</h5>
+                <button className="btn-close" onClick={() => setShowEditModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <input type="text" className="form-control mb-2" placeholder="Address" value={requestData.newAddress} onChange={(e) => setRequestData({...requestData, newAddress: e.target.value})} />
+                <input type="text" className="form-control mb-2" placeholder="City" value={requestData.newCity} onChange={(e) => setRequestData({...requestData, newCity: e.target.value})} />
+                <input type="text" className="form-control mb-2" placeholder="Zone" value={requestData.newZone} onChange={(e) => setRequestData({...requestData, newZone: e.target.value})} />
+                <input type="text" className="form-control mb-2" placeholder="Delivery Fee" value={requestData.newDeliveryFee} onChange={(e) => setRequestData({...requestData, newDeliveryFee: e.target.value})} />
+                <textarea className="form-control mb-2" placeholder="Reason" rows="3" value={requestData.reason} onChange={(e) => setRequestData({...requestData, reason: e.target.value})} />
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={submitEditRequest}>Send Request</button>
+              </div>
+            </div>
           </div>
-          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button><button className="btn btn-primary" onClick={submitEditRequest}>Send Request</button></div></div></div>
         </div>
       )}
 
+      {/* Delete Branch Request Modal */}
       {showDeleteModal && selectedBranch && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>Request Branch Delete</h5><button className="btn-close" onClick={() => setShowDeleteModal(false)}></button></div>
-          <div className="modal-body"><p>Are you sure you want to request deletion for branch <strong>{selectedBranch.adresa || selectedBranch.address}</strong>?</p><p className="small text-muted">This will send a delete request to admin for review.</p></div>
-          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button><button className="btn btn-danger" onClick={submitDeleteRequest}>Send Delete Request</button></div></div></div>
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>Request Branch Delete</h5>
+                <button className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p>Are you sure you want to request deletion for branch <strong>{selectedBranch.adresa || selectedBranch.address}</strong>?</p>
+                <p className="small text-muted">This will send a delete request to admin for review.</p>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                <button className="btn btn-danger" onClick={submitDeleteRequest}>Send Delete Request</button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
+      {/* Order Details Modal */}
       {showModal && selectedOrder && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-lg"><div className="modal-content"><div className="modal-header"><h5>Order #{selectedOrder.id} Details</h5><button className="btn-close" onClick={() => setShowModal(false)}></button></div>
-          <div className="modal-body">
-            <p><strong>Customer:</strong> {selectedOrder.user?.userName}</p><p><strong>Date:</strong> {new Date(selectedOrder.dataPorosis).toLocaleString()}</p>
-            <p><strong>Status:</strong> {getStatusName(selectedOrder.statusi)}</p><p><strong>Delivery Address:</strong> {selectedOrder.adresaDorezimit}</p>
-            {selectedOrder.shenimet && <p><strong>Notes:</strong> {selectedOrder.shenimet}</p>}
-            <h6>Items:</h6>
-            <table className="table table-sm"><tbody>
-              {selectedOrder.orderItems?.map((item, idx) => (<tr key={idx}><td>{item.menuItem?.emertimi}</td><td>x{item.sasia}</td><td>€{(item.cmimi * item.sasia).toFixed(2)}</td></tr>))}
-            </tbody></table>
-            <h5>Total: {formatCurrency(selectedOrder.shumaTotale)}</h5>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5>Order #{selectedOrder.id} Details</h5>
+                <button className="btn-close" onClick={() => setShowModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <p><strong>Customer:</strong> {selectedOrder.user?.userName}</p>
+                <p><strong>Date:</strong> {new Date(selectedOrder.dataPorosis).toLocaleString()}</p>
+                <p><strong>Status:</strong> {getStatusName(selectedOrder.statusi)}</p>
+                <p><strong>Delivery Address:</strong> {selectedOrder.adresaDorezimit}</p>
+                {selectedOrder.shenimet && <p><strong>Notes:</strong> {selectedOrder.shenimet}</p>}
+                <h6>Items:</h6>
+                <table className="table table-sm">
+                  <tbody>
+                    {selectedOrder.orderItems?.map((item, idx) => (
+                      <tr key={idx}>
+                        <td>{item.menuItem?.emertimi}</td>
+                        <td>x{item.sasia}</td>
+                        <td>€{(item.cmimi * item.sasia).toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <h5>Total: {formatCurrency(selectedOrder.shumaTotale)}</h5>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
+              </div>
+            </div>
           </div>
-          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button></div></div></div>
         </div>
       )}
     </section>

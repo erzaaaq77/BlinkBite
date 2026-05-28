@@ -22,21 +22,16 @@ namespace FoodDeliveryyy.Data
         public DbSet<Deliveries> Deliveries { get; set; } = null!;
         public DbSet<Reviews> Reviews { get; set; } = null!;
         public DbSet<Addresses> Addresses { get; set; } = null!;
-
         public DbSet<MenuItemBranch> MenuItemBranch { get; set; } = null!;
-
         public DbSet<Promotions> Promotions { get; set; } = null!;
-
         public DbSet<UserFavorite> UserFavorites { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
-
         public DbSet<OrderStatusHistory> OrderStatusHistories { get; set; }
-
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<RestaurantApplication> RestaurantApplications { get; set; } = null!;
         public DbSet<CourierApplication> CourierApplications { get; set; } = null!;
-
         public DbSet<BranchModificationRequest> BranchModificationRequests { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -130,7 +125,6 @@ namespace FoodDeliveryyy.Data
             builder.Entity<IdentityUserRole<string>>()
                    .HasKey(ur => new { ur.UserId, ur.RoleId });
 
-            
             builder.Entity<IdentityUserClaim<string>>()
                    .HasOne<User>()
                    .WithMany(u => u.UserClaims)
@@ -162,20 +156,22 @@ namespace FoodDeliveryyy.Data
                    .OnDelete(DeleteBehavior.Cascade);
 
             builder.Entity<UserFavorite>()
-      .HasIndex(uf => new { uf.UserId, uf.MenuItemId })
-      .IsUnique()
-      .HasDatabaseName("IX_UserFavorites_User_MenuItem");
+                .HasIndex(uf => new { uf.UserId, uf.MenuItemId })
+                .IsUnique()
+                .HasDatabaseName("IX_UserFavorites_User_MenuItem");
 
             builder.Entity<UserFavorite>()
                 .HasIndex(uf => new { uf.UserId, uf.RestaurantId })
                 .IsUnique()
                 .HasDatabaseName("IX_UserFavorites_User_Restaurant");
+
+            // Konfigurimi i saktë për MenuItemBranch
             builder.Entity<MenuItemBranch>(entity =>
             {
                 entity.HasKey(e => e.Id);
 
                 entity.HasOne(e => e.MenuItem)
-                    .WithMany()  // Nqs MenuItems nuk ka koleksion te MenuItemBranch
+                    .WithMany(m => m.BranchDetails)  // Lidhja e saktë me BranchDetails
                     .HasForeignKey(e => e.MenuItemId)
                     .OnDelete(DeleteBehavior.Cascade);
 
@@ -185,6 +181,5 @@ namespace FoodDeliveryyy.Data
                     .OnDelete(DeleteBehavior.Cascade);
             });
         }
-
     }
 }

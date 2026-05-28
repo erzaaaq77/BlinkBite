@@ -10,7 +10,6 @@ namespace FoodDeliveryyy.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
 public class MenuItemsController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -28,13 +27,19 @@ public class MenuItemsController : ControllerBase
         {
             var items = await _context.MenuItems
                 .Include(m => m.Category)
-                .Include(m => m.BranchDetails)
+                .Include(m => m.BranchDetails)  // Shto këtë
                 .ToListAsync();
 
             var result = items.Select(item => {
-                var branchCustom = branchId.HasValue
-                    ? item.BranchDetails?.FirstOrDefault(b => b.RestaurantAddressId == branchId.Value)
-                    : null;
+                MenuItemBranch? branchCustom = null;
+                if (branchId.HasValue && item.BranchDetails != null)
+                {
+                    branchCustom = item.BranchDetails
+                        .FirstOrDefault(b => b.RestaurantAddressId == branchId.Value);
+
+                    // Debug log
+                    Console.WriteLine($"Item: {item.Emertimi}, BranchId: {branchId}, Found: {branchCustom != null}, CustomPrice: {branchCustom?.Cmimi}, GlobalPrice: {item.Cmimi}");
+                }
 
                 return new
                 {
@@ -85,6 +90,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult<MenuItems>> CreateMenuItem(MenuItems menuItem)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -101,17 +107,11 @@ public class MenuItemsController : ControllerBase
         if (role == AppRoles.Merchant && restaurant.UserId != userId)
             return Forbid();
 
-        if (role == AppRoles.BranchManager && !menuItem.RestaurantAddressId.HasValue)
-            return BadRequest("Branch managers must provide restaurantAddressId.");
-
         if (menuItem.RestaurantAddressId.HasValue)
         {
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
             if (address == null || address.RestaurantId != category.RestaurantId)
                 return BadRequest("Invalid restaurantAddressId.");
-
-            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
-                return Forbid();
         }
 
         menuItem.Category = null;
@@ -123,6 +123,7 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<IActionResult> UpdateMenuItem(int id, MenuItems menuItem)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -142,17 +143,11 @@ public class MenuItemsController : ControllerBase
         if (role == AppRoles.Merchant && restaurant.UserId != userId)
             return Forbid();
 
-        if (role == AppRoles.BranchManager && !menuItem.RestaurantAddressId.HasValue)
-            return BadRequest("Branch managers must provide restaurantAddressId.");
-
         if (menuItem.RestaurantAddressId.HasValue)
         {
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
             if (address == null || address.RestaurantId != category.RestaurantId)
                 return BadRequest("Invalid restaurantAddressId.");
-
-            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
-                return Forbid();
         }
 
         var existing = await _context.MenuItems.FindAsync(id);
@@ -172,10 +167,11 @@ public class MenuItemsController : ControllerBase
         existing.RestaurantAddressId = menuItem.RestaurantAddressId;
 
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(existing);
     }
 
     [HttpDelete("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<IActionResult> DeleteMenuItem(int id)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -196,19 +192,9 @@ public class MenuItemsController : ControllerBase
                 return Forbid();
         }
 
-        if (role == AppRoles.BranchManager)
-        {
-            if (!menuItem.RestaurantAddressId.HasValue)
-                return Forbid();
-
-            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
-            if (address == null || address.MerchantUserId != userId)
-                return Forbid();
-        }
-
         _context.MenuItems.Remove(menuItem);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new { message = "Menu item deleted successfully" });
     }
 }

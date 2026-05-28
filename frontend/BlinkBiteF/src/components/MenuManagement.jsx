@@ -152,12 +152,10 @@ const mergeRequestOptionsWithIngredients = (ingredientsValue, requestOptionsValu
 };
 
 const loadMenuCustomizations = () => {
-  // DB-only mode: use backend as single source of truth.
   return {};
 };
 
 const saveMenuCustomizations = (nextMap) => {
-  // No-op by design in DB-only mode.
   void nextMap;
 };
 
@@ -286,38 +284,34 @@ const mergeCustomizationIntoItem = (item, override) => {
   };
 };
 
-const getItemIngredients = (item) =>
-  resolveItemIngredients(item);
-
-const getItemRequestOptions = (item) =>
-  resolveItemRequestOptions(item);
+const getItemIngredients = (item) => resolveItemIngredients(item);
+const getItemRequestOptions = (item) => resolveItemRequestOptions(item);
 
 const getAssetUrlCandidates = (rawValue) => {
   const raw = String(rawValue || "").trim();
   if (!raw) return [];
 
-  const normalized = raw.replace(/\\/g, "/");
-  const withoutDotSlash = normalized.replace(/^\.\//, "");
-  const withoutLeadingSlash = withoutDotSlash.replace(/^\/+/, "");
-
   const candidates = [];
-  const pushCandidate = (value) => {
-    if (!value) return;
-    if (!candidates.includes(value)) candidates.push(value);
-  };
 
   if (/^https?:\/\//i.test(raw) || raw.startsWith("data:")) {
-    pushCandidate(raw);
+    candidates.push(raw);
     return candidates;
   }
 
-  pushCandidate(normalized);
-  pushCandidate(`/${withoutLeadingSlash}`);
-  pushCandidate(`${API_ORIGIN}/${withoutLeadingSlash}`);
-  pushCandidate(`${API_ORIGIN}/uploads/${withoutLeadingSlash}`);
-  pushCandidate(`${API_ORIGIN}/images/${withoutLeadingSlash}`);
+  let cleanPath = raw;
+  if (cleanPath.startsWith("/")) {
+    cleanPath = cleanPath.substring(1);
+  }
 
-  return candidates;
+  candidates.push(`${API_ORIGIN}/uploads/${cleanPath}`);
+  candidates.push(`${API_ORIGIN}/${cleanPath}`);
+  
+  const fileName = cleanPath.split('/').pop();
+  if (fileName !== cleanPath) {
+    candidates.push(`${API_ORIGIN}/uploads/menuitems/${fileName}`);
+  }
+
+  return [...new Set(candidates)];
 };
 
 const applyImageFallbackCandidate = (event, candidates, finalFallback = "") => {
@@ -393,8 +387,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
       setBranchesLoading(true);
       setBranchFetchDebug({ endpoint: '', status: '', error: '', response: '' });
 
-
-      // Use the same endpoint as MerchantDashboard for branch list
       const endpoint = `${API_BASE_URL}/Dashboard/Merchant`;
       try {
         const response = await axios.get(endpoint, {
@@ -402,7 +394,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
         });
         setBranchFetchDebug({ endpoint, status: response.status, error: '', response: JSON.stringify(response.data) });
 
-        // addresses are in response.data.addresses
         const rows = Array.isArray(response.data?.addresses)
           ? response.data.addresses
           : [];
@@ -438,59 +429,75 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
     fetchBranches();
   }, [restaurantId, token]);
 
-  useEffect(() => {
-    const fetchMenuItems = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const categoriesResponse = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurantId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-        setRestaurantCategories(categories);
+  const fetchMenuItems = async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const categoriesResponse = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurantId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+      setRestaurantCategories(categories);
 
-        const response = await axios.get(`${API_BASE_URL}/MenuItems`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const allItems = Array.isArray(response.data) ? response.data : [];
+      let url = `${API_BASE_URL}/MenuItems`;
+      if (isBranchManagerRole && restaurantAddressId) {
+        url += `?branchId=${restaurantAddressId}&t=${Date.now()}`;
+      } else {
+        url += `?t=${Date.now()}`;
+      }
+      
+      const response = await axios.get(url, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Cache-Control': 'no-cache',
+          'Pragma': 'no-cache'
+        }
+      });
+      const allItems = Array.isArray(response.data) ? response.data : [];
+      
+      let scopedItems = allItems;
+      
+      if (!isBranchManagerRole) {
         const scopedByAddress = filterItemsByRestaurantAddress(allItems, restaurantAddressId);
         const scopedByCategories = scopeItemsByCategory(allItems, categories);
-        const scopedItems = scopedByAddress.length > 0
+        scopedItems = scopedByAddress.length > 0
           ? scopedByAddress
           : (scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
-
-        setDebugStats({
-          allItemsCount: allItems.length,
-          byAddressCount: scopedByAddress.length,
-          byCategoryCount: scopedByCategories.length,
-          byRestaurantCount: filterItemsByRestaurant(allItems, restaurantId).length,
-          selectedCount: scopedItems.length,
-          categoriesCount: categories.length,
-        });
-
-        const localOverrides = loadMenuCustomizations();
-        setMenuItems(
-          scopedItems.map((item) => {
-            const itemId = String(item?.id ?? item?.Id ?? "");
-            return mergeCustomizationIntoItem(item, localOverrides[itemId]);
-          })
-        );
-
-        if (categories.length > 0) {
-          const firstCategoryId = categories[0]?.id ?? categories[0]?.Id;
-          setFormData((prev) => ({
-            ...prev,
-            categoryId: prev.categoryId || firstCategoryId || 1,
-          }));
-        }
-      } catch (err) {
-        console.error(err);
-        setError("Failed to load menu items");
-      } finally {
-        setLoading(false);
       }
-    };
 
+      setDebugStats({
+        allItemsCount: allItems.length,
+        byAddressCount: scopedItems.filter(i => i.restaurantAddressId).length,
+        byCategoryCount: scopedItems.length,
+        byRestaurantCount: scopedItems.length,
+        selectedCount: scopedItems.length,
+        categoriesCount: categories.length,
+      });
+
+      const localOverrides = loadMenuCustomizations();
+      setMenuItems(
+        scopedItems.map((item) => {
+          const itemId = String(item?.id ?? item?.Id ?? "");
+          return mergeCustomizationIntoItem(item, localOverrides[itemId]);
+        })
+      );
+
+      if (categories.length > 0) {
+        const firstCategoryId = categories[0]?.id ?? categories[0]?.Id;
+        setFormData((prev) => ({
+          ...prev,
+          categoryId: prev.categoryId || firstCategoryId || 1,
+        }));
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Failed to load menu items");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     if (!token) {
       setMenuItems([]);
       setError("You need to be logged in as merchant to manage menu.");
@@ -753,7 +760,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
       if (editingItem) {
         const editingItemId = editingItem.id ?? editingItem.Id;
         if (isBranchManagerRole && restaurantAddressId) {
-          // Branch manager: update only branch-specific fields
           await axios.put(
             `${API_BASE_URL}/MenuItemBranch/${editingItemId}/branch/${restaurantAddressId}`,
             {
@@ -766,8 +772,8 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
           );
           savedItemId = editingItemId;
           showToast("Branch menu item updated.", "success");
+          await fetchMenuItems();
         } else {
-          // Merchant kryesor: update produktin global
           await saveWithPayloadFallback((candidatePayload) =>
             axios.put(
               `${API_BASE_URL}/MenuItems/${editingItemId}`,
@@ -777,6 +783,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
           );
           savedItemId = editingItemId;
           showToast("Menu item updated.", "success");
+          await fetchMenuItems();
         }
       } else {
         const createResponse = await saveWithPayloadFallback((candidatePayload) =>
@@ -788,6 +795,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
         );
         savedItemId = createResponse?.data?.id ?? createResponse?.data?.Id ?? null;
         showToast("Menu item created.", "success");
+        await fetchMenuItems();
       }
 
       if (savedItemId) {
@@ -800,41 +808,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
       }
 
       setShowModal(false);
-      // Refresh
-      const categoriesResponse = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurantId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-      setRestaurantCategories(categories);
-
-      let menuUrl = `${API_BASE_URL}/MenuItems`;
-      if (isBranchManagerRole && restaurantAddressId) {
-        menuUrl += `?branchId=${restaurantAddressId}`;
-      }
-      const response = await axios.get(menuUrl, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const allItems = Array.isArray(response.data) ? response.data : [];
-        const scopedByAddress = filterItemsByRestaurantAddress(allItems, restaurantAddressId);
-      const scopedByCategories = scopeItemsByCategory(allItems, categories);
-        const scopedItems = scopedByAddress.length > 0
-          ? scopedByAddress
-          : (scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
-      setDebugStats({
-        allItemsCount: allItems.length,
-          byAddressCount: scopedByAddress.length,
-        byCategoryCount: scopedByCategories.length,
-        byRestaurantCount: filterItemsByRestaurant(allItems, restaurantId).length,
-        selectedCount: scopedItems.length,
-        categoriesCount: categories.length,
-      });
-      const localOverrides = loadMenuCustomizations();
-      setMenuItems(
-        scopedItems.map((item) => {
-          const itemId = String(item?.id ?? item?.Id ?? "");
-          return mergeCustomizationIntoItem(item, localOverrides[itemId]);
-        })
-      );
     } catch (error) {
       console.error(error);
       const validationErrors = error?.response?.data?.errors
@@ -866,6 +839,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
         saveMenuCustomizations(map);
 
         showToast("Menu item deleted.", "success");
+        await fetchMenuItems();
       } catch (error) {
         console.error(error);
         showToast("Failed to delete menu item.", "danger");
@@ -873,26 +847,19 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
     }
   };
 
-  const normalizedMenuItems = Array.isArray(menuItems)
-    ? menuItems
-    : Array.isArray(menuItems?.items)
-      ? menuItems.items
-      : [];
+  const normalizedMenuItems = Array.isArray(menuItems) ? menuItems : Array.isArray(menuItems?.items) ? menuItems.items : [];
 
   const debugApiHost = getApiHostLabel();
   const debugRestaurantId = toNumberId(restaurantId);
   const itemsWithIngredientsCount = normalizedMenuItems.filter((item) => getItemIngredients(item).length > 0).length;
   const itemsWithRequestOptionsCount = normalizedMenuItems.filter((item) => getItemRequestOptions(item).length > 0).length;
-  const debugSampleItems = normalizedMenuItems
-    .slice(0, 3)
-    .map((item) => {
-      const itemId = item?.id ?? item?.Id ?? "?";
-      const name = item?.emertimi ?? item?.Emertimi ?? "Item";
-      const ingredients = getItemIngredients(item);
-      const options = getItemRequestOptions(item);
-      return `#${itemId} ${name} [ing=${ingredients.length}, req=${options.length}]`;
-    })
-    .join(" | ");
+  const debugSampleItems = normalizedMenuItems.slice(0, 3).map((item) => {
+    const itemId = item?.id ?? item?.Id ?? "?";
+    const name = item?.emertimi ?? item?.Emertimi ?? "Item";
+    const ingredients = getItemIngredients(item);
+    const options = getItemRequestOptions(item);
+    return `#${itemId} ${name} [ing=${ingredients.length}, req=${options.length}]`;
+  }).join(" | ");
 
   const formatPrice = (value) => {
     const numeric = Number(value);
@@ -929,49 +896,27 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
             <div>
               <h6 className="mb-1">Menu Scope</h6>
               <p className="small text-muted mb-0">
-                {restaurantAddressId
-                  ? `Showing menu for branch ID ${restaurantAddressId}.`
-                  : "Showing full restaurant menu (all branches)."}
+                {restaurantAddressId ? `Showing menu for branch ID ${restaurantAddressId}.` : "Showing full restaurant menu (all branches)."}
               </p>
             </div>
-          {/* Debug overlay removed for production UI cleanliness */}
 
             {!isBranchManagerRole && (
               <div className="d-flex align-items-center gap-2">
-                <label htmlFor="menu-branch-scope" className="small text-muted mb-0">
-                  Branch view
-                </label>
-                <select
-                  id="menu-branch-scope"
-                  className="form-select form-select-sm"
-                  style={{ minWidth: "220px" }}
-                  value={restaurantAddressId ? String(restaurantAddressId) : ""}
-                  onChange={handleBranchScopeChange}
-                >
+                <label htmlFor="menu-branch-scope" className="small text-muted mb-0">Branch view</label>
+                <select id="menu-branch-scope" className="form-select form-select-sm" style={{ minWidth: "220px" }} value={restaurantAddressId ? String(restaurantAddressId) : ""} onChange={handleBranchScopeChange}>
                   <option value="">All branches</option>
                   {branchOptions.map((branch) => {
                     const place = [branch.city, branch.zone].filter(Boolean).join(", ");
                     const label = `${branch.address || `Branch ${branch.id}`}${place ? ` (${place})` : ""}${branch.isMain ? " - Main" : ""}`;
-                    return (
-                      <option key={branch.id} value={String(branch.id)}>
-                        {label}
-                      </option>
-                    );
+                    return <option key={branch.id} value={String(branch.id)}>{label}</option>;
                   })}
                 </select>
               </div>
             )}
           </div>
 
-          {branchesLoading && !isBranchManagerRole && (
-            <p className="small text-muted mt-2 mb-0">Loading branch list...</p>
-          )}
-
-          {!canManageMenuInScope && (
-            <div className="alert alert-warning mt-3 mb-0 py-2">
-              Branch Manager can manage menu only when a branch is selected in URL.
-            </div>
-          )}
+          {branchesLoading && !isBranchManagerRole && <p className="small text-muted mt-2 mb-0">Loading branch list...</p>}
+          {!canManageMenuInScope && <div className="alert alert-warning mt-3 mb-0 py-2">Branch Manager can manage menu only when a branch is selected in URL.</div>}
         </div>
       </div>
 
@@ -989,29 +934,16 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
           <div className="row g-2">
             <div className="col-12">
               <label className="form-label small text-uppercase fw-semibold mb-1">Global paid add-ons</label>
-              <textarea
-                name="globalAddOns"
-                className="form-control"
-                rows="2"
-                placeholder="e.g. Cheese:1.00; Mayo:0.50"
-                value={restaurantCustomizationForm.globalAddOns}
-                onChange={handleRestaurantCustomizationInput}
-              />
+              <textarea name="globalAddOns" className="form-control" rows="2" placeholder="e.g. Cheese:1.00; Mayo:0.50" value={restaurantCustomizationForm.globalAddOns} onChange={handleRestaurantCustomizationInput} />
             </div>
           </div>
           <div className="mt-3 d-flex justify-content-end">
-            <button type="button" className="btn btn-outline-primary" onClick={handleSaveRestaurantCustomization}>
-              Save restaurant options
-            </button>
+            <button type="button" className="btn btn-outline-primary" onClick={handleSaveRestaurantCustomization}>Save restaurant options</button>
           </div>
         </div>
       </div>
 
-      {restaurantCategories.length === 0 && (
-        <div className="alert alert-warning">
-          This restaurant has no categories yet. Create a menu category first, then add items.
-        </div>
-      )}
+      {restaurantCategories.length === 0 && <div className="alert alert-warning">This restaurant has no categories yet. Create a menu category first, then add items.</div>}
 
       {normalizedMenuItems.length === 0 ? (
         <div className="alert alert-info">No menu items yet.</div>
@@ -1022,52 +954,32 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
               <tr><th>Photo</th><th>Name</th><th>Price</th><th>Status</th><th>Actions</th></tr>
             </thead>
             <tbody>
-              {normalizedMenuItems.map((item) => (
-                <tr key={item.id ?? item.Id}>
-                  <td>
-                    {(() => {
-                      const rawImagePath = item?.foto ?? item?.Foto ?? "";
-                      const imageCandidates = getAssetUrlCandidates(rawImagePath);
-                      const firstCandidate = imageCandidates[0] || "";
-                      return (
-                        <div style={{ width: "56px", height: "56px", position: "relative" }}>
-                          {firstCandidate ? (
-                            <>
-                              <img
-                                src={firstCandidate}
-                                alt={item?.emertimi ?? item?.Emertimi ?? "Menu item"}
-                                data-candidate-index="0"
-                                onError={(event) => applyImageFallbackCandidate(event, imageCandidates, "")}
-                                style={{
-                                  width: "56px",
-                                  height: "56px",
-                                  objectFit: "cover",
-                                  borderRadius: "10px",
-                                  border: "1px solid #dfe3e8",
-                                }}
-                              />
-                              <span
-                                style={{
-                                  display: "none",
-                                  width: "56px",
-                                  height: "56px",
-                                  borderRadius: "10px",
-                                  border: "1px dashed #c8d0d8",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "0.68rem",
-                                  color: "#7b8794",
-                                  textAlign: "center",
-                                  lineHeight: "1.1",
-                                }}
-                              >
-                                No image
-                              </span>
-                            </>
-                          ) : (
+              {normalizedMenuItems.map((item) => {
+                const imageCandidates = getAssetUrlCandidates(item.foto ?? item.Foto ?? "");
+                const firstCandidate = imageCandidates[0] || "";
+                
+                return (
+                  <tr key={item.id ?? item.Id}>
+                    <td>
+                      <div style={{ width: "56px", height: "56px", position: "relative" }}>
+                        {firstCandidate ? (
+                          <>
+                            <img
+                              src={firstCandidate}
+                              alt={item.emertimi ?? item.Emertimi ?? "Menu item"}
+                              data-candidate-index="0"
+                              onError={(event) => applyImageFallbackCandidate(event, imageCandidates, "")}
+                              style={{
+                                width: "56px",
+                                height: "56px",
+                                objectFit: "cover",
+                                borderRadius: "10px",
+                                border: "1px solid #dfe3e8",
+                              }}
+                            />
                             <span
                               style={{
-                                display: "inline-flex",
+                                display: "none",
                                 width: "56px",
                                 height: "56px",
                                 borderRadius: "10px",
@@ -1082,24 +994,42 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
                             >
                               No image
                             </span>
-                          )}
-                        </div>
-                      );
-                    })()}
-                  </td>
-                  <td><strong>{item.emertimi ?? item.Emertimi}</strong></td>
-                  <td>€{formatPrice(item.cmimi ?? item.Cmimi)}</td>
-                  <td>
-                    <span className={`badge ${(item.disponueshme ?? item.Disponueshme) ? "bg-success" : "bg-danger"}`}>
-                      {(item.disponueshme ?? item.Disponueshme) ? "Available" : "Unavailable"}
-                    </span>
-                  </td>
-                  <td>
-                    <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(item)} disabled={!canManageMenuInScope}>Edit</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id ?? item.Id)} disabled={!canManageMenuInScope}>Delete</button>
-                  </td>
-                </tr>
-              ))}
+                          </>
+                        ) : (
+                          <span
+                            style={{
+                              display: "inline-flex",
+                              width: "56px",
+                              height: "56px",
+                              borderRadius: "10px",
+                              border: "1px dashed #c8d0d8",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              fontSize: "0.68rem",
+                              color: "#7b8794",
+                              textAlign: "center",
+                              lineHeight: "1.1",
+                            }}
+                          >
+                            No image
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td><strong>{item.emertimi ?? item.Emertimi}</strong></td>
+                    <td>€{formatPrice(item.cmimi ?? item.Cmimi)}</td>
+                    <td>
+                      <span className={`badge ${(item.disponueshme ?? item.Disponueshme) ? "bg-success" : "bg-danger"}`}>
+                        {(item.disponueshme ?? item.Disponueshme) ? "Available" : "Unavailable"}
+                      </span>
+                    </td>
+                    <td>
+                      <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(item)} disabled={!canManageMenuInScope}>Edit</button>
+                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id ?? item.Id)} disabled={!canManageMenuInScope}>Delete</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
@@ -1118,20 +1048,8 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
                 <textarea name="pershkrimi" className="form-control mb-2" placeholder="Description" value={formData.pershkrimi} onChange={handleInputChange} />
                 <input name="cmimi" type="number" className="form-control mb-2" placeholder="Price" value={formData.cmimi} onChange={handleInputChange} />
                 <input name="foto" className="form-control mb-2" placeholder="Image URL" value={formData.foto} onChange={handleInputChange} />
-                <textarea
-                  name="perberesit"
-                  className="form-control mb-2"
-                  placeholder="Ingredients (comma separated), e.g. Bun, Beef, Onion, Cheese"
-                  value={formData.perberesit}
-                  onChange={handleInputChange}
-                />
-                <textarea
-                  name="requestOptions"
-                  className="form-control mb-2"
-                  placeholder="Customer request options (comma separated), e.g. No onion, No mayo"
-                  value={formData.requestOptions}
-                  onChange={handleInputChange}
-                />
+                <textarea name="perberesit" className="form-control mb-2" placeholder="Ingredients (comma separated), e.g. Bun, Beef, Onion, Cheese" value={formData.perberesit} onChange={handleInputChange} />
+                <textarea name="requestOptions" className="form-control mb-2" placeholder="Customer request options (comma separated), e.g. No onion, No mayo" value={formData.requestOptions} onChange={handleInputChange} />
                 {String(formData.foto || "").trim() && (
                   <div className="mb-2">
                     <img
@@ -1144,17 +1062,11 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
                   </div>
                 )}
                 <select name="categoryId" className="form-select mb-2" value={formData.categoryId} onChange={handleInputChange}>
-                  {restaurantCategories.length === 0 ? (
-                    <option value="">No categories available</option>
-                  ) : (
-                    restaurantCategories.map((category) => {
-                      const id = category?.id ?? category?.Id;
-                      const name = category?.emertimi ?? category?.Emertimi ?? `Category ${id}`;
-                      return (
-                        <option key={id} value={id}>{name}</option>
-                      );
-                    })
-                  )}
+                  {restaurantCategories.length === 0 ? <option value="">No categories available</option> : restaurantCategories.map((category) => {
+                    const id = category?.id ?? category?.Id;
+                    const name = category?.emertimi ?? category?.Emertimi ?? `Category ${id}`;
+                    return <option key={id} value={id}>{name}</option>;
+                  })}
                 </select>
                 <div className="form-check">
                   <input type="checkbox" name="disponueshme" className="form-check-input" checked={formData.disponueshme} onChange={handleInputChange} />
