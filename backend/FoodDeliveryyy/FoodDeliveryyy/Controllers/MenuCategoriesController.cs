@@ -2,9 +2,10 @@
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Text.Json;
 
 
 [Route("api/[controller]")]
@@ -164,5 +165,26 @@ public class MenuCategoriesController : ControllerBase
         _context.MenuCategories.Remove(category);
         await _context.SaveChangesAsync();
         return NoContent();
+    }
+
+
+    [HttpPatch("{id}")]
+    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
+    public async Task<IActionResult> PatchMenuCategory(int id, [FromBody] JsonElement patch)
+    {
+        var category = await _context.MenuCategories.FindAsync(id);
+        if (category == null) return NotFound();
+
+        if (patch.TryGetProperty("emertimi", out var emertimi))
+            category.Emertimi = emertimi.GetString();
+
+        if (patch.TryGetProperty("pershkrimi", out var pershkrimi))
+            category.Pershkrimi = pershkrimi.GetString();
+
+        if (patch.TryGetProperty("renditja", out var renditja))
+            category.Renditja = renditja.GetInt32();
+
+        await _context.SaveChangesAsync();
+        return Ok(category);
     }
 }

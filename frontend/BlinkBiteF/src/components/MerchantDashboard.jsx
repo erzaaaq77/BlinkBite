@@ -143,47 +143,42 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       console.error("Failed to fetch categories", error);
     }
   };
+const handleSaveCategory = async () => {
+  if (!categoryForm.emertimi.trim()) {
+    toast.error("Category name is required");
+    return;
+  }
 
-  const handleSaveCategory = async () => {
-    if (!categoryForm.emertimi.trim()) {
-      alert("Category name is required");
-      return;
+  try {
+    if (editingCategory) {
+      await axios.patch(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`, {
+        emertimi: categoryForm.emertimi,
+        pershkrimi: categoryForm.pershkrimi || "",
+        renditja: categoryForm.renditja || 0
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Category updated successfully");
+    } else {
+      await axios.post(`${API_BASE_URL}/MenuCategories`, {
+        emertimi: categoryForm.emertimi,
+        pershkrimi: categoryForm.pershkrimi || "",
+        renditja: categoryForm.renditja || 0,
+        restaurantId: restaurant.id
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Category created successfully");
     }
-
-    try {
-      if (editingCategory) {
-        await axios.put(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`, {
-          ...editingCategory,
-          emertimi: categoryForm.emertimi,
-          pershkrimi: categoryForm.pershkrimi,
-          renditja: categoryForm.renditja,
-          restaurantId: restaurant.id
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        toast.success("Category updated successfully");
-      } else {
-        await axios.post(`${API_BASE_URL}/MenuCategories`, {
-          emertimi: categoryForm.emertimi,
-          pershkrimi: categoryForm.pershkrimi,
-          renditja: categoryForm.renditja,
-          restaurantId: restaurant.id
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        toast.success("Category created successfully");
-      }
-      
-      setShowAddCategoryModal(false);
-      setEditingCategory(null);
-      setCategoryForm({ emertimi: "", pershkrimi: "", renditja: 0 });
-      fetchCategories();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Failed to save category");
-    }
-  };
-
+    
+    setShowAddCategoryModal(false);
+    setEditingCategory(null);
+    setCategoryForm({ emertimi: "", pershkrimi: "", renditja: 0 });
+    fetchCategories();
+  } catch (error) {
+    toast.error(error.response?.data?.message || "Failed to save category");
+  }
+};
   const handleDeleteCategory = async (category) => {
     if (!confirm(`Are you sure you want to delete category "${category.emertimi}"? Items in this category will also be deleted.`)) {
       return;
@@ -449,6 +444,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     return [];
   };
 
+  
   const handleStatusUpdate = async (order, nextStatus) => {
     const orderId = Number(order?.id);
     if (!Number.isFinite(orderId) || !nextStatus) return;

@@ -55,7 +55,10 @@ const CategoryManagement = ({ token, onBack }) => {
 
   const handleSave = async () => {
     if (!formData.name.trim()) {
-      toast.error("Category name is required");
+      toast.error("Category name is required", {
+        position: "top-right",
+        duration: 3000,
+      });
       return;
     }
 
@@ -66,35 +69,41 @@ const CategoryManagement = ({ token, onBack }) => {
           { ...formData, id: editingCategory.id },
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        toast.success("Category updated");
+        toast.success("Category updated successfully!", {
+          position: "top-right",
+          duration: 3000,
+        });
       } else {
         await axios.post(
           `${API_BASE_URL}/Category`,
           formData,
           { headers: { Authorization: `Bearer ${token}` } }
         );
-        toast.success("Category created");
+        toast.success("Category created successfully!", {
+          position: "top-right",
+          duration: 3000,
+        });
       }
       setShowModal(false);
       fetchCategories();
     } catch (err) {
-      toast.error(err.response?.data || "Failed to save category");
+      toast.error(err.response?.data || "Failed to save category", {
+        position: "top-right",
+        duration: 4000,
+      });
     }
   };
 
   const handleDelete = async (id, name) => {
     const result = await Swal.fire({
       title: `Delete category "${name}"?`,
-      text: "This action cannot be undone.",
+      text: "This action cannot be undone!",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, delete",
       confirmButtonColor: "#d33",
       cancelButtonText: "Cancel",
       reverseButtons: true,
-      focusCancel: true,
-      showClass: { popup: "swal2-show swal2-animate" },
-      hideClass: { popup: "swal2-hide swal2-animate" }
     });
 
     if (!result.isConfirmed) return;
@@ -103,25 +112,30 @@ const CategoryManagement = ({ token, onBack }) => {
       Swal.fire({
         title: "Deleting...",
         allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
+        didOpen: () => {
+          Swal.showLoading();
+        }
       });
 
       await axios.delete(`${API_BASE_URL}/Category/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
       Swal.fire({
         icon: "success",
-        title: "Deleted",
+        title: "Deleted!",
         text: `Category "${name}" has been deleted.`,
-        timer: 1400,
-        showConfirmButton: false
+        timer: 1500,
+        showConfirmButton: false,
       });
+      
       fetchCategories();
     } catch (err) {
       Swal.fire({
         icon: "error",
         title: "Delete failed",
-        text: err.response?.data || "Failed to delete category"
+        text: err.response?.data || "Failed to delete category",
+        confirmButtonColor: "#d33",
       });
     }
   };
@@ -133,16 +147,30 @@ const CategoryManagement = ({ token, onBack }) => {
     <div className="container py-4">
       <Toaster
         position="top-right"
+        reverseOrder={false}
         toastOptions={{
           duration: 3000,
           success: {
-            style: { background: "#28a745", color: "#ffffff" }
+            style: {
+              background: "#28a745",
+              color: "#ffffff",
+              fontSize: "14px",
+            },
+            iconTheme: {
+              primary: "#ffffff",
+              secondary: "#28a745",
+            },
           },
           error: {
-            style: { background: "#dc3545", color: "#ffffff" }
-          }
+            style: {
+              background: "#dc3545",
+              color: "#ffffff",
+              fontSize: "14px",
+            },
+          },
         }}
       />
+
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h2>🏷️ Category Management</h2>
         <div>
@@ -196,7 +224,6 @@ const CategoryManagement = ({ token, onBack }) => {
         </div>
       )}
 
-      {/* Modal */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -231,7 +258,7 @@ const CategoryManagement = ({ token, onBack }) => {
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave}>Save</button>
+                <button className="btn btn-primary" onClick={handleSave}>Save Changes</button>
               </div>
             </div>
           </div>
