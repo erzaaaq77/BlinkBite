@@ -3205,7 +3205,7 @@ function App() {
       return;
     }
 
-    const normalizedRole = ["Customer", "Merchant", "Courier", "Admin"].includes(signupRole) ? signupRole : "Customer";
+    const normalizedRole = "Customer";
 
     try {
       const res = await fetch(`${API_BASE}/auth/register`, {
@@ -4427,19 +4427,7 @@ function App() {
                 value={signupPassword}
                 onChange={(e) => setSignupPassword(e.target.value)}
               />
-              <select
-                className="form-select mb-2"
-                value={signupRole}
-                onChange={(e) => setSignupRole(e.target.value)}
-              >
-                <option value="Customer">Customer</option>
-                <option value="Merchant">Merchant</option>
-                <option value="Courier">Courier</option>    
-
-    
-                <option value="Admin">Admin</option>
-              </select>
-              <p className="small text-muted mb-0">Choose role during signup to test role-based APIs directly from browser.</p>
+          
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" data-bs-dismiss="modal">Close</button>
