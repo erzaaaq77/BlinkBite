@@ -1,11 +1,11 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Enums;
+using FoodDeliveryyy.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
-using FoodDeliveryyy.Models.Identity;
-using FoodDeliveryyy.Models.Enums;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -87,148 +87,231 @@ public class DashboardController : ControllerBase
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<IActionResult> GetMerchantDashboard()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
-
-        Restaurant? restaurant;
-        List<dynamic> addresses;
-
-        if (role == AppRoles.BranchManager)
+        try
         {
-            var branchAddresses = await _context.RestaurantAddresses
-                .Where(a => a.MerchantUserId == userId)
-                .OrderByDescending(a => a.IsMain)
-                .ThenByDescending(a => a.IsActive)
-                .ThenBy(a => a.Qyteti)
-                .ThenBy(a => a.Adresa)
-                .Select(a => new
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
+            Restaurant? restaurant;
+            List<dynamic> addresses;
+            List<int> addressIds;
+
+            if (role == AppRoles.BranchManager)
+            {
+                var branchAddresses = await _context.RestaurantAddresses
+                    .Where(a => a.MerchantUserId == userId)
+                    .ToListAsync();
+
+                if (!branchAddresses.Any())
+                    return NotFound("No branch found for this branch manager");
+
+                var restaurantId = branchAddresses[0].RestaurantId;
+                restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId);
+                if (restaurant == null)
+                    return NotFound("No restaurant found for this branch manager");
+
+                addresses = branchAddresses.Select(a => new
                 {
-                    id = a.Id,
-                    restaurantId = a.RestaurantId,
-                    merchantUserId = a.MerchantUserId,
-                    adresa = a.Adresa,
-                    qyteti = a.Qyteti,
-                    zona = a.Zona,
-                    isMain = a.IsMain,
-                    isActive = a.IsActive,
-                    latitude = a.Latitude,
-                    longitude = a.Longitude
-                })
-                .ToListAsync();
-
-            if (!branchAddresses.Any())
-                return NotFound("No branch found for this branch manager");
-
-            var restaurantId = branchAddresses[0].restaurantId;
-            restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId);
-            if (restaurant == null)
-                return NotFound("No restaurant found for this branch manager");
-
-            addresses = branchAddresses.Cast<dynamic>().ToList();
-        }
-        else
-        {
-            restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
-
-            if (restaurant == null)
-                return NotFound("No restaurant found for this merchant");
-
-            var ownerAddresses = await _context.RestaurantAddresses
-                .Where(a => a.RestaurantId == restaurant.Id)
-                .OrderByDescending(a => a.IsMain)
-                .ThenByDescending(a => a.IsActive)
-                .ThenBy(a => a.Qyteti)
-                .ThenBy(a => a.Adresa)
-                .Select(a => new
-                {
-                    id = a.Id,
-                    restaurantId = a.RestaurantId,
-                    merchantUserId = a.MerchantUserId,
-                    adresa = a.Adresa,
-                    qyteti = a.Qyteti,
-                    zona = a.Zona,
-                    isMain = a.IsMain,
-                    isActive = a.IsActive,
-                    latitude = a.Latitude,
-                    longitude = a.Longitude
-                })
-                .ToListAsync();
-
-            addresses = ownerAddresses.Cast<dynamic>().ToList();
-        }
-
-        var today = DateTime.Today;
-        var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
-        var startOfMonth = new DateTime(today.Year, today.Month, 1);
-        var addressIds = addresses.Select(a => (int)a.id).ToList();
-
-        var scopedOrders = _context.Orders.AsQueryable();
-        if (role == AppRoles.BranchManager)
-        {
-            scopedOrders = scopedOrders.Where(o => o.RestaurantAddressId.HasValue && addressIds.Contains(o.RestaurantAddressId.Value));
-        }
-        else
-        {
-            scopedOrders = scopedOrders.Where(o => o.RestaurantId == restaurant.Id);
-        }
-
-        var primaryAddressId = addresses.FirstOrDefault(a => (bool)(a?.isMain ?? false))?.id
-            ?? addresses.FirstOrDefault()?.id;
-
-        var dashboard = new
-        {
-            Restaurant = new
-            {
-                restaurant.Id,
-                restaurant.Emertimi,
-                restaurant.Statusi,
-                restaurant.Rating,
-                restaurant.Logo
-            },
-            PrimaryAddressId = primaryAddressId,
-            Addresses = addresses,
-            Scope = role == AppRoles.BranchManager ? "branch" : "owner",
-            Orders = new
-            {
-                Total = await scopedOrders.CountAsync(),
-                Today = await scopedOrders.CountAsync(o => o.DataPorosis.Date == today),
-                ThisWeek = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfWeek),
-                ThisMonth = await scopedOrders.CountAsync(o => o.DataPorosis.Date >= startOfMonth),
-                Pending = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Pending),
-                Accepted = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Accepted),
-                Preparing = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Preparing),
-                Ready = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Ready),
-                Delivered = await scopedOrders.CountAsync(o => o.Statusi == OrderStatus.Delivered)
-            },
-            Revenue = new
-            {
-                Today = await scopedOrders.Where(o => o.DataPorosis.Date == today).SumAsync(o => o.ShumaTotale),
-                ThisWeek = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfWeek).SumAsync(o => o.ShumaTotale),
-                ThisMonth = await scopedOrders.Where(o => o.DataPorosis.Date >= startOfMonth).SumAsync(o => o.ShumaTotale),
-                Total = await scopedOrders.SumAsync(o => o.ShumaTotale)
-            },
-            RecentOrders = await scopedOrders
-                .OrderByDescending(o => o.DataPorosis)
-                .Take(10)
-                .Select(o => new
-                {
-                    o.Id,
-                    o.ShumaTotale,
-                    o.Statusi,
-                    o.DataPorosis,
-                    CustomerName = o.User.UserName
-                })
-                .ToListAsync(),
-            Reviews = new
-            {
-                Average = restaurant.Rating,
-                Total = await _context.Reviews.CountAsync(r => r.RestaurantId == restaurant.Id)
+                    a.Id,
+                    a.Adresa,
+                    a.Qyteti,
+                    a.Zona,
+                    a.IsMain,
+                    a.IsActive,
+                    a.Latitude,
+                    a.Longitude,
+                    a.TarifaDorezimit,
+                    a.MerchantUserId
+                }).Cast<dynamic>().ToList();
+                addressIds = branchAddresses.Select(a => a.Id).ToList();
             }
-        };
-        return Ok(dashboard);
+            else
+            {
+                restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.UserId == userId);
+                if (restaurant == null)
+                    return NotFound("No restaurant found for this merchant");
+
+                var ownerAddresses = await _context.RestaurantAddresses
+                    .Where(a => a.RestaurantId == restaurant.Id)
+                    .Select(a => new
+                    {
+                        a.Id,
+                        a.Adresa,
+                        a.Qyteti,
+                        a.Zona,
+                        a.IsMain,
+                        a.IsActive,
+                        a.Latitude,
+                        a.Longitude,
+                        a.TarifaDorezimit,
+                        a.MerchantUserId
+                    })
+                    .ToListAsync();
+
+                addresses = ownerAddresses.Cast<dynamic>().ToList();
+                addressIds = ownerAddresses.Select(a => a.Id).ToList();
+            }
+
+            var today = DateTime.Today;
+            var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
+            var startOfMonth = new DateTime(today.Year, today.Month, 1);
+            var previousMonthStart = startOfMonth.AddMonths(-1);
+            var previousMonthEnd = startOfMonth.AddDays(-1);
+
+            var scopedOrders = _context.Orders.AsQueryable();
+            if (role == AppRoles.BranchManager)
+            {
+                scopedOrders = scopedOrders.Where(o => o.RestaurantAddressId.HasValue && addressIds.Contains(o.RestaurantAddressId.Value));
+            }
+            else
+            {
+                scopedOrders = scopedOrders.Where(o => o.RestaurantId == restaurant!.Id);
+            }
+
+            var ordersWithItems = await scopedOrders
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.MenuItem)
+                .ToListAsync();
+
+            var topProductsPerBranch = new Dictionary<int, List<TopProductDto>>();
+            foreach (var branchId in addressIds)
+            {
+                var branchOrders = ordersWithItems
+                    .Where(o => o.RestaurantAddressId == branchId)
+                    .ToList();
+
+                var productSales = branchOrders
+                    .SelectMany(o => o.OrderItems)
+                    .GroupBy(oi => oi.MenuItemId)
+                    .Select(g => new TopProductDto
+                    {
+                        MenuItemId = g.Key,
+                        Name = g.First().MenuItem?.Emertimi ?? $"Item {g.Key}",
+                        TotalQuantity = g.Sum(oi => oi.Sasia),
+                        TotalRevenue = g.Sum(oi => oi.Cmimi * oi.Sasia)
+                    })
+                    .OrderByDescending(p => p.TotalQuantity)
+                    .Take(5)
+                    .ToList();
+
+                topProductsPerBranch[branchId] = productSales;
+            }
+
+            var last7Days = Enumerable.Range(0, 7)
+                .Select(i => today.AddDays(-i))
+                .OrderBy(d => d)
+                .ToList();
+
+            var revenueTrend = last7Days.Select(day => new
+            {
+                Date = day.ToString("yyyy-MM-dd"),
+                Revenue = scopedOrders
+                    .Where(o => o.DataPorosis.Date == day)
+                    .Sum(o => o.ShumaTotale)
+            }).ToList();
+
+            // Kjo është e saktë tani
+            var revenueByBranch = addressIds.Select(branchId => new
+            {
+                BranchId = branchId,
+                BranchName = addresses.FirstOrDefault(a => (int)a.Id == branchId)?.Adresa ?? "Unknown",
+                Revenue = scopedOrders
+                    .Where(o => o.RestaurantAddressId == branchId)
+                    .Sum(o => o.ShumaTotale)
+            }).OrderByDescending(r => r.Revenue).ToList();
+
+            var currentMonthRevenue = scopedOrders
+                .Where(o => o.DataPorosis.Date >= startOfMonth)
+                .Sum(o => o.ShumaTotale);
+
+            var previousMonthRevenue = scopedOrders
+                .Where(o => o.DataPorosis.Date >= previousMonthStart && o.DataPorosis.Date <= previousMonthEnd)
+                .Sum(o => o.ShumaTotale);
+
+            var growthPercentage = previousMonthRevenue > 0
+                ? ((currentMonthRevenue - previousMonthRevenue) / previousMonthRevenue) * 100
+                : 0;
+
+            var primaryAddressId = addresses.FirstOrDefault(a => (bool)(a?.IsMain ?? false))?.Id ?? addresses.FirstOrDefault()?.Id;
+            var dashboard = new
+            {
+                Restaurant = new
+                {
+                    restaurant!.Id,
+                    restaurant.Emertimi,
+                    restaurant.Statusi,
+                    restaurant.Rating,
+                    restaurant.Logo
+                },
+                PrimaryAddressId = primaryAddressId,
+                Addresses = addresses,
+                Scope = role == AppRoles.BranchManager ? "branch" : "owner",
+                Orders = new
+                {
+                    Total = scopedOrders.Count(),
+                    Today = scopedOrders.Count(o => o.DataPorosis.Date == today),
+                    ThisWeek = scopedOrders.Count(o => o.DataPorosis.Date >= startOfWeek),
+                    ThisMonth = scopedOrders.Count(o => o.DataPorosis.Date >= startOfMonth),
+                    Pending = scopedOrders.Count(o => o.Statusi == OrderStatus.Pending),
+                    Accepted = scopedOrders.Count(o => o.Statusi == OrderStatus.Accepted),
+                    Preparing = scopedOrders.Count(o => o.Statusi == OrderStatus.Preparing),
+                    Ready = scopedOrders.Count(o => o.Statusi == OrderStatus.Ready),
+                    Delivered = scopedOrders.Count(o => o.Statusi == OrderStatus.Delivered),
+                    Cancelled = scopedOrders.Count(o => o.Statusi == OrderStatus.Cancelled)
+                },
+                Revenue = new
+                {
+                    Today = scopedOrders.Where(o => o.DataPorosis.Date == today).Sum(o => o.ShumaTotale),
+                    ThisWeek = scopedOrders.Where(o => o.DataPorosis.Date >= startOfWeek).Sum(o => o.ShumaTotale),
+                    ThisMonth = scopedOrders.Where(o => o.DataPorosis.Date >= startOfMonth).Sum(o => o.ShumaTotale),
+                    Total = scopedOrders.Sum(o => o.ShumaTotale),
+                    GrowthPercentage = Math.Round(growthPercentage, 2)
+                },
+                RevenueByBranch = role == AppRoles.BranchManager ? null : revenueByBranch,
+                RevenueTrend = revenueTrend,
+                BranchTopProducts = role == AppRoles.BranchManager
+                    ? topProductsPerBranch.GetValueOrDefault(addressIds.FirstOrDefault(), new List<TopProductDto>())
+                    : null,
+                AllBranchesTopProducts = role == AppRoles.BranchManager
+                    ? null
+                    : topProductsPerBranch,
+                BranchComparison = role == AppRoles.BranchManager ? null : new
+                {
+                    BestBranch = revenueByBranch.FirstOrDefault(),
+                    WorstBranch = revenueByBranch.LastOrDefault(),
+                    TotalBranches = addressIds.Count,
+                    ActiveBranches = addresses.Count(a => (bool)a.IsActive)
+                },
+                RecentOrders = await scopedOrders
+                    .OrderByDescending(o => o.DataPorosis)
+                    .Take(10)
+                    .Select(o => new
+                    {
+                        o.Id,
+                        o.ShumaTotale,
+                        o.Statusi,
+                        o.DataPorosis,
+                        CustomerName = o.User.UserName,
+                        BranchName = o.RestaurantAddress != null ? o.RestaurantAddress.Adresa : "Unknown"
+                    })
+                    .ToListAsync(),
+                Reviews = new
+                {
+                    Average = restaurant.Rating,
+                    Total = await _context.Reviews.CountAsync(r => r.RestaurantId == restaurant.Id)
+                }
+            };
+
+            return Ok(dashboard);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"ERROR: {ex.Message}");
+            Console.WriteLine($"STACK: {ex.StackTrace}");
+            return StatusCode(500, new { error = ex.Message });
+        }
     }
 
-    // POST: api/Dashboard/Merchant/upload-logo?restaurantId=123
     [HttpPost("Merchant/upload-logo")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager)]
     public async Task<IActionResult> UploadLogo([FromQuery] int restaurantId, IFormFile logo)
@@ -242,36 +325,30 @@ public class DashboardController : ControllerBase
 
             if (role == AppRoles.BranchManager)
             {
-                // Branch manager: verifiko që i përket një branch-i të këtij restoranti
                 var branchAddress = await _context.RestaurantAddresses
                     .FirstOrDefaultAsync(a => a.Id == restaurantId && a.MerchantUserId == userId);
-
                 if (branchAddress == null)
-                    return NotFound(new { message = "Restoranti nuk u gjet për këtë branch manager" });
-
+                    return NotFound(new { message = "Restaurant not found for this branch manager" });
                 restaurant = await _context.Restaurants
                     .FirstOrDefaultAsync(r => r.Id == branchAddress.RestaurantId);
             }
             else
             {
-                // Merchant i zakonshëm
                 restaurant = await _context.Restaurants
                     .FirstOrDefaultAsync(r => r.Id == restaurantId && r.UserId == userId);
             }
 
             if (restaurant == null)
-                return NotFound(new { message = "Restoranti nuk u gjet" });
+                return NotFound(new { message = "Restaurant not found" });
 
             if (logo == null || logo.Length == 0)
-                return BadRequest(new { message = "Ju lutemi zgjidhni një foto" });
+                return BadRequest(new { message = "Please select an image" });
 
-            // Krijo direktorinë
             var webRootPath = _environment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
             var uploadsFolder = Path.Combine(webRootPath, "uploads", "logos");
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
-            // Ruaj foton
             var uniqueFileName = $"{Guid.NewGuid()}{Path.GetExtension(logo.FileName)}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
@@ -280,37 +357,23 @@ public class DashboardController : ControllerBase
                 await logo.CopyToAsync(stream);
             }
 
-            // Ruaj logon e vjetër për ta fshirë (nëse ka)
             var oldLogoPath = !string.IsNullOrEmpty(restaurant.Logo)
                 ? Path.Combine(webRootPath, restaurant.Logo.TrimStart('/'))
                 : null;
 
-            // Përditëso logon
             restaurant.Logo = $"/uploads/logos/{uniqueFileName}";
             await _context.SaveChangesAsync();
 
-            // Fshij logon e vjetër
             if (oldLogoPath != null && System.IO.File.Exists(oldLogoPath))
             {
-                try
-                {
-                    System.IO.File.Delete(oldLogoPath);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Could not delete old logo: {ex.Message}");
-                }
+                try { System.IO.File.Delete(oldLogoPath); } catch { }
             }
 
-            return Ok(new
-            {
-                message = "Logo u ngarkua me sukses!",
-                logoUrl = restaurant.Logo
-            });
+            return Ok(new { message = "Logo uploaded successfully!", logoUrl = restaurant.Logo });
         }
         catch (Exception ex)
         {
-            return StatusCode(500, new { message = $"Gabim gjatë ngarkimit: {ex.Message}" });
+            return StatusCode(500, new { message = $"Error uploading logo: {ex.Message}" });
         }
     }
 
@@ -321,7 +384,6 @@ public class DashboardController : ControllerBase
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
         var driver = await _context.DeliveryDrivers.FirstOrDefaultAsync(d => d.UserId == userId);
-
         if (driver == null)
         {
             driver = new DeliveryDrivers
@@ -410,6 +472,7 @@ public class DashboardController : ControllerBase
                     .SumAsync()
             }
         };
+
         return Ok(dashboard);
     }
 
@@ -446,4 +509,19 @@ public class DashboardController : ControllerBase
 
         return Ok(new { message = "Order accepted.", deliveryId = delivery.Id });
     }
+}
+
+public class TopProductDto
+{
+    public int MenuItemId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public int TotalQuantity { get; set; }
+    public decimal TotalRevenue { get; set; }
+}
+
+public class TopProductListItemDto
+{
+    public int BranchId { get; set; }
+    public string BranchName { get; set; } = string.Empty;
+    public List<TopProductDto> Products { get; set; } = new List<TopProductDto>();
 }

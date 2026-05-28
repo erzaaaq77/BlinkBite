@@ -27,34 +27,41 @@ public class MenuItemsController : ControllerBase
         try
         {
             var items = await _context.MenuItems
+                .Include(m => m.Category)
                 .Include(m => m.BranchDetails)
                 .ToListAsync();
 
-            // Project to a simple DTO to avoid serialization of EF tracking/proxy types
             var result = items.Select(item => {
-                var branch = branchId.HasValue ? item.BranchDetails?.FirstOrDefault(b => b.RestaurantAddressId == branchId.Value) : null;
-                return new {
+                var branchCustom = branchId.HasValue
+                    ? item.BranchDetails?.FirstOrDefault(b => b.RestaurantAddressId == branchId.Value)
+                    : null;
+
+                return new
+                {
                     item.Id,
                     item.Emertimi,
                     item.Pershkrimi,
-                    Cmimi = branch?.Cmimi ?? item.Cmimi,
+                    Cmimi = branchCustom?.Cmimi ?? item.Cmimi,
                     item.Foto,
-                    Disponueshme = branch?.Disponueshme ?? item.Disponueshme,
-                    Alergjene = item.Alergjene,
-                    Kalori = item.Kalori,
-                    Perberesit = branch?.Perberesit ?? item.Perberesit,
-                    RequestOptions = branch?.RequestOptions ?? item.RequestOptions,
+                    Disponueshme = branchCustom?.Disponueshme ?? item.Disponueshme,
+                    item.Alergjene,
+                    item.Kalori,
+                    Perberesit = branchCustom?.Perberesit ?? item.Perberesit,
+                    RequestOptions = branchCustom?.RequestOptions ?? item.RequestOptions,
                     item.CategoryId,
+                    CategoryName = item.Category?.Emertimi,
                     item.RestaurantAddressId,
-                    BranchCustom = branch == null ? null : new {
-                        branch.Id,
-                        branch.MenuItemId,
-                        branch.RestaurantAddressId,
-                        branch.Cmimi,
-                        branch.Disponueshme,
-                        branch.Perberesit,
-                        branch.RequestOptions,
-                        branch.PromotionId
+                    HasBranchCustomization = branchCustom != null,
+                    BranchCustom = branchCustom == null ? null : new
+                    {
+                        branchCustom.Id,
+                        branchCustom.MenuItemId,
+                        branchCustom.RestaurantAddressId,
+                        branchCustom.Cmimi,
+                        branchCustom.Disponueshme,
+                        branchCustom.Perberesit,
+                        branchCustom.RequestOptions,
+                        branchCustom.PromotionId
                     }
                 };
             });
@@ -63,7 +70,6 @@ public class MenuItemsController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Return a generic error payload; in development you may include ex.Message
             return StatusCode(500, new { message = "An error occurred while fetching menu items.", error = ex.Message });
         }
     }
@@ -74,14 +80,11 @@ public class MenuItemsController : ControllerBase
     {
         var menuItem = await _context.MenuItems.FindAsync(id);
         if (menuItem == null)
-        {
             return NotFound();
-        }
         return menuItem;
     }
 
     [HttpPost]
-    [Authorize (Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<ActionResult<MenuItems>> CreateMenuItem(MenuItems menuItem)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -89,41 +92,28 @@ public class MenuItemsController : ControllerBase
 
         var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
         if (category == null)
-        {
             return BadRequest("Invalid categoryId.");
-        }
 
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == category.RestaurantId);
         if (restaurant == null)
-        {
             return BadRequest("Restaurant not found for this category.");
-        }
 
         if (role == AppRoles.Merchant && restaurant.UserId != userId)
-        {
             return Forbid();
-        }
 
         if (role == AppRoles.BranchManager && !menuItem.RestaurantAddressId.HasValue)
-        {
             return BadRequest("Branch managers must provide restaurantAddressId.");
-        }
 
         if (menuItem.RestaurantAddressId.HasValue)
         {
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
             if (address == null || address.RestaurantId != category.RestaurantId)
-            {
                 return BadRequest("Invalid restaurantAddressId.");
-            }
 
             if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
-            {
                 return Forbid();
-            }
         }
 
-        // Accept client payloads with nested category object, but persist by FK only.
         menuItem.Category = null;
         menuItem.RestaurantAddress = null;
         _context.MenuItems.Add(menuItem);
@@ -133,61 +123,42 @@ public class MenuItemsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
-
     public async Task<IActionResult> UpdateMenuItem(int id, MenuItems menuItem)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         if (id != menuItem.Id)
-        {
             return BadRequest();
-        }
 
         var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
         if (category == null)
-        {
             return BadRequest("Invalid categoryId.");
-        }
 
         var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == category.RestaurantId);
         if (restaurant == null)
-        {
             return BadRequest("Restaurant not found for this category.");
-        }
 
         if (role == AppRoles.Merchant && restaurant.UserId != userId)
-        {
             return Forbid();
-        }
 
         if (role == AppRoles.BranchManager && !menuItem.RestaurantAddressId.HasValue)
-        {
             return BadRequest("Branch managers must provide restaurantAddressId.");
-        }
 
         if (menuItem.RestaurantAddressId.HasValue)
         {
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
             if (address == null || address.RestaurantId != category.RestaurantId)
-            {
                 return BadRequest("Invalid restaurantAddressId.");
-            }
 
             if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
-            {
                 return Forbid();
-            }
         }
 
         var existing = await _context.MenuItems.FindAsync(id);
         if (existing == null)
-        {
             return NotFound();
-        }
 
-        // Only update scalar fields on MenuItem; category relationship is by FK.
         existing.Emertimi = menuItem.Emertimi;
         existing.Pershkrimi = menuItem.Pershkrimi;
         existing.Cmimi = menuItem.Cmimi;
@@ -200,24 +171,11 @@ public class MenuItemsController : ControllerBase
         existing.CategoryId = menuItem.CategoryId;
         existing.RestaurantAddressId = menuItem.RestaurantAddressId;
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!MenuItemExists(id))
-            {
-                return NotFound();
-            }
-            throw;
-        }
+        await _context.SaveChangesAsync();
         return NoContent();
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
-
     public async Task<IActionResult> DeleteMenuItem(int id)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -225,37 +183,27 @@ public class MenuItemsController : ControllerBase
 
         var menuItem = await _context.MenuItems.FindAsync(id);
         if (menuItem == null)
-        {
             return NotFound();
-        }
 
         if (role == AppRoles.Merchant)
         {
             var category = await _context.MenuCategories.FirstOrDefaultAsync(c => c.Id == menuItem.CategoryId);
             if (category == null)
-            {
                 return BadRequest("Invalid categoryId.");
-            }
 
             var restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == category.RestaurantId);
             if (restaurant == null || restaurant.UserId != userId)
-            {
                 return Forbid();
-            }
         }
 
         if (role == AppRoles.BranchManager)
         {
             if (!menuItem.RestaurantAddressId.HasValue)
-            {
                 return Forbid();
-            }
 
             var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == menuItem.RestaurantAddressId.Value);
             if (address == null || address.MerchantUserId != userId)
-            {
                 return Forbid();
-            }
         }
 
         _context.MenuItems.Remove(menuItem);
@@ -263,11 +211,4 @@ public class MenuItemsController : ControllerBase
 
         return NoContent();
     }
-
-    private bool MenuItemExists(int id)
-    {
-        return _context.MenuItems.Any(e => e.Id == id);
-    }
 }
-
-

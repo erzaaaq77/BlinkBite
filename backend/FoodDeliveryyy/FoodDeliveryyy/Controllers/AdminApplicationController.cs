@@ -117,6 +117,21 @@ public class AdminApplicationController : ControllerBase
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
+        Console.WriteLine("");
+        Console.WriteLine("╔════════════════════════════════════════════════════════════════════════════════╗");
+        Console.WriteLine("║                         ✅ NEW MERCHANT ACCOUNT CREATED ✅                      ║");
+        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
+        Console.WriteLine($"║  📧 Email:      {application.Email,-55}║");
+        Console.WriteLine($"║  👤 Username:   {username,-55}║");
+        Console.WriteLine($"║  🔑 Password:   {password,-55}║");
+        Console.WriteLine($"║  🏪 Restaurant: {application.RestaurantName,-55}║");
+        Console.WriteLine($"║  📍 City:       {application.City,-55}║");
+        Console.WriteLine($"║  🏷️  Category:   {application.Category ?? "N/A",-55}║");
+        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
+        Console.WriteLine("║  🌐 Login URL:  http://localhost:5173                                          ║");
+        Console.WriteLine("╚════════════════════════════════════════════════════════════════════════════════╝");
+        Console.WriteLine("");
+
         return Ok(new
         {
             message = "Restaurant approved and account created",
@@ -174,6 +189,21 @@ public class AdminApplicationController : ControllerBase
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
+        Console.WriteLine("");
+        Console.WriteLine("╔════════════════════════════════════════════════════════════════════════════════╗");
+        Console.WriteLine("║                          ✅ NEW COURIER ACCOUNT CREATED ✅                      ║");
+        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
+        Console.WriteLine($"║  📧 Email:      {application.Email,-55}║");
+        Console.WriteLine($"║  👤 Username:   {username,-55}║");
+        Console.WriteLine($"║  🔑 Password:   {password,-55}║");
+        Console.WriteLine($"║  👤 Full Name:  {application.FullName,-55}║");
+        Console.WriteLine($"║  🚗 Vehicle:    {application.VehicleType,-55}║");
+        Console.WriteLine($"║  📍 Area:       {application.WorkingArea,-55}║");
+        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
+        Console.WriteLine("║  🌐 Login URL:  http://localhost:5173                                          ║");
+        Console.WriteLine("╚════════════════════════════════════════════════════════════════════════════════╝");
+        Console.WriteLine("");
+
         return Ok(new
         {
             message = "Courier approved and account created",
@@ -226,23 +256,34 @@ public class AdminApplicationController : ControllerBase
         if (restaurant == null)
             return NotFound(new { message = "Restaurant not found" });
 
-        // Delete addresses
-        var addresses = _context.RestaurantAddresses.Where(a => a.RestaurantId == restaurant.Id);
+        // Fshij të gjitha orders të lidhura
+        var orders = _context.Orders.Where(o => o.RestaurantId == restaurant.Id).ToList();
+        _context.Orders.RemoveRange(orders);
+
+        // Fshij të gjitha reviews të lidhura
+        var reviews = _context.Reviews.Where(r => r.RestaurantId == restaurant.Id).ToList();
+        _context.Reviews.RemoveRange(reviews);
+
+        // Fshij të gjitha deliveries të lidhura me këto orders
+        var orderIds = orders.Select(o => o.Id).ToList();
+        var deliveries = _context.Deliveries.Where(d => orderIds.Contains(d.OrderId)).ToList();
+        _context.Deliveries.RemoveRange(deliveries);
+
+        // Fshij adresat
+        var addresses = _context.RestaurantAddresses.Where(a => a.RestaurantId == restaurant.Id).ToList();
         _context.RestaurantAddresses.RemoveRange(addresses);
 
-        // Delete menu categories and items
-        var menuCategories = _context.MenuCategories.Where(c => c.RestaurantId == restaurant.Id);
+        // Fshij menu kategoritë dhe itemet
+        var menuCategories = _context.MenuCategories.Where(c => c.RestaurantId == restaurant.Id).ToList();
         foreach (var category in menuCategories)
         {
-            var menuItems = _context.MenuItems.Where(m => m.CategoryId == category.Id);
+            var menuItems = _context.MenuItems.Where(m => m.CategoryId == category.Id).ToList();
             _context.MenuItems.RemoveRange(menuItems);
         }
         _context.MenuCategories.RemoveRange(menuCategories);
 
-        // Delete the restaurant
+        // Fshij restorantin dhe aplikacionin
         _context.Restaurants.Remove(restaurant);
-
-        // 👇 DELETE THE APPLICATION TOO 👇
         _context.RestaurantApplications.Remove(application);
 
         await _context.SaveChangesAsync();

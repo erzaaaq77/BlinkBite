@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
@@ -11,11 +11,47 @@ const MerchantApplicationPage = () => {
     phone: "",
     address: "",
     city: "Prishtinë",
-    category: "Fast Food",
+    category: "",
   });
+  const [categories, setCategories] = useState([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/Category`);
+        setCategories(response.data);
+        if (response.data.length > 0) {
+          setFormData(prev => ({ ...prev, category: response.data[0].name }));
+        }
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        // Fallback categories if API fails
+        setCategories([
+          { id: 1, name: "Fast Food" },
+          { id: 2, name: "Italian" },
+          { id: 3, name: "Pizza" },
+          { id: 4, name: "Sushi" },
+          { id: 5, name: "Traditional" },
+          { id: 6, name: "Healthy" },
+          { id: 7, name: "Dessert" },
+          { id: 8, name: "Seafood" },
+          { id: 9, name: "Burgers" },
+          { id: 10, name: "Vegan" },
+        ]);
+        if (categories.length > 0) {
+          setFormData(prev => ({ ...prev, category: categories[0]?.name || "Fast Food" }));
+        }
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -30,7 +66,7 @@ const MerchantApplicationPage = () => {
       const response = await axios.post(`${API_BASE_URL}/applications/restaurant`, formData);
       if (response.status === 200 || response.status === 201) {
         setMessageType("success");
-        setMessage("Aplikimi u dërgua me sukses! Admini do t'ju kontaktojë së shpejti.");
+        setMessage("✅ Aplikimi u dërgua me sukses! Admini do t'ju kontaktojë së shpejti.");
         setFormData({
           restaurantName: "",
           restaurantDescription: "",
@@ -38,12 +74,12 @@ const MerchantApplicationPage = () => {
           phone: "",
           address: "",
           city: "Prishtinë",
-          category: "Fast Food",
+          category: categories[0]?.name || "Fast Food",
         });
       }
     } catch (error) {
       setMessageType("error");
-      setMessage(error.response?.data?.message || "Ndodhi një gabim. Ju lutemi provoni përsëri.");
+      setMessage(error.response?.data?.message || "❌ Ndodhi një gabim. Ju lutemi provoni përsëri.");
     } finally {
       setSubmitting(false);
     }
@@ -150,23 +186,24 @@ const MerchantApplicationPage = () => {
                     className="form-select"
                     value={formData.category}
                     onChange={handleChange}
+                    disabled={loadingCategories}
                   >
-                    <option>Fast Food</option>
-                    <option>Italian</option>
-                    <option>Pizza</option>
-                    <option>Sushi</option>
-                    <option>Traditional</option>
-                    <option>Healthy</option>
-                    <option>Dessert</option>
-                    <option>Seafood</option>
-                    <option>Burgers</option>
+                    {loadingCategories ? (
+                      <option>Duke ngarkuar kategoritë...</option>
+                    ) : (
+                      categories.map((cat) => (
+                        <option key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </option>
+                      ))
+                    )}
                   </select>
                 </div>
                 
                 <button
                   type="submit"
                   className="btn btn-primary w-100 py-2"
-                  disabled={submitting}
+                  disabled={submitting || loadingCategories}
                 >
                   {submitting ? "Duke dërguar..." : "Dërgo Aplikimin"}
                 </button>

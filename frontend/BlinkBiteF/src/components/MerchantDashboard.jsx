@@ -34,6 +34,14 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
   const [showRequestModal, setShowRequestModal] = useState(false);
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [editingCategory, setEditingCategory] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [categoryForm, setCategoryForm] = useState({
+    emertimi: "",
+    pershkrimi: "",
+    renditja: 0
+  });
   const [requestData, setRequestData] = useState({
     branchId: null,
     newAddress: "",
@@ -60,13 +68,24 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const [visibleOrdersCount, setVisibleOrdersCount] = useState(MERCHANT_ORDERS_BATCH_SIZE);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoMessage, setLogoMessage] = useState("");
+  const [showAddBranchModal, setShowAddBranchModal] = useState(false);
+  const [addingBranch, setAddingBranch] = useState(false);
+  const [newBranch, setNewBranch] = useState({
+    address: "",
+    city: "Prishtinë",
+    zone: "",
+    deliveryFee: 0,
+    createManager: false,
+    managerName: "",
+    managerEmail: ""
+  });
+  
   const restaurant = dashboard?.restaurant || {};
 
   const normalizeStatusLabel = (statusValue) => {
     if (typeof statusValue === "number") {
       return ORDER_STATUS_LABELS[statusValue] || `Status ${statusValue}`;
     }
-
     const normalized = String(statusValue || "Pending").trim().toLowerCase();
     if (normalized === "accepted") return "Accepted";
     if (normalized === "preparing") return "Preparing";
@@ -109,6 +128,111 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     [token]
   );
 
+  const fetchCategories = async () => {
+    if (!restaurant?.id) return;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurant.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCategories(response.data);
+    } catch (error) {
+      console.error("Failed to fetch categories", error);
+    }
+  };
+
+  const handleSaveCategory = async () => {
+    if (!categoryForm.emertimi.trim()) {
+      alert("Category name is required");
+      return;
+    }
+
+    try {
+      if (editingCategory) {
+        await axios.put(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`, {
+          ...editingCategory,
+          emertimi: categoryForm.emertimi,
+          pershkrimi: categoryForm.pershkrimi,
+          renditja: categoryForm.renditja,
+          restaurantId: restaurant.id
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Category updated successfully");
+      } else {
+        await axios.post(`${API_BASE_URL}/MenuCategories`, {
+          emertimi: categoryForm.emertimi,
+          pershkrimi: categoryForm.pershkrimi,
+          renditja: categoryForm.renditja,
+          restaurantId: restaurant.id
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Category created successfully");
+      }
+      
+      setShowAddCategoryModal(false);
+      setEditingCategory(null);
+      setCategoryForm({ emertimi: "", pershkrimi: "", renditja: 0 });
+      fetchCategories();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to save category");
+    }
+  };
+
+  const handleDeleteCategory = async (category) => {
+    if (!confirm(`Are you sure you want to delete category "${category.emertimi}"? Items in this category will also be deleted.`)) {
+      return;
+    }
+    
+    try {
+      await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Category deleted successfully");
+      fetchCategories();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to delete category");
+    }
+  };
+
+  const handleAddBranch = async () => {
+    if (!newBranch.address.trim()) {
+      alert("Please enter branch address");
+      return;
+    }
+    
+    setAddingBranch(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/Branch/create`, {
+        address: newBranch.address,
+        city: newBranch.city,
+        zone: newBranch.zone,
+        deliveryFee: newBranch.deliveryFee,
+        createBranchManager: newBranch.createManager,
+        managerName: newBranch.managerName,
+        managerEmail: newBranch.managerEmail
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success(response.data.message);
+      setShowAddBranchModal(false);
+      setNewBranch({
+        address: "", city: "Prishtinë", zone: "", deliveryFee: 0,
+        createManager: false, managerName: "", managerEmail: ""
+      });
+      fetchDashboard();
+      fetchBranches();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to add branch");
+    } finally {
+      setAddingBranch(false);
+    }
+  };
+
   const submitEditRequest = async () => {
     try {
       await axios.post(`${API_BASE_URL}/BranchRequest/request-edit`, {
@@ -131,28 +255,10 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         newDeliveryFee: "",
         reason: ""
       });
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        icon: "success",
-        title: "Submitted",
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-        background: "#d4edda",
-        color: "#155724",
-      });
+      toast.success("Edit request submitted for admin approval");
     } catch (err) {
       console.error(err);
-      Swal.fire({
-        toast: true,
-        position: "top-end",
-        icon: "error",
-        title: "Failed to send request",
-        showConfirmButton: false,
-        timer: 2500,
-        timerProgressBar: true,
-      });
+      toast.error("Failed to send request");
     }
   };
 
@@ -200,21 +306,18 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     }
   };
 
-
-const fetchBranches = async () => {
-  const restaurantId = dashboard?.restaurant?.id;
-  if (!restaurantId) return;
-  console.log("Fetching branches for restaurant ID:", restaurantId);
-  try {
-    const response = await axios.get(`${API_BASE_URL}/RestaurantAddresses/by-restaurant/${restaurantId}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log("Branches fetched:", response.data);
-    setRestaurantBranches(response.data);
-  } catch (err) {
-    console.error("Failed to fetch branches", err);
-  }
-};
+  const fetchBranches = async () => {
+    const restaurantId = dashboard?.restaurant?.id;
+    if (!restaurantId) return;
+    try {
+      const response = await axios.get(`${API_BASE_URL}/RestaurantAddresses/by-restaurant/${restaurantId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setRestaurantBranches(response.data);
+    } catch (err) {
+      console.error("Failed to fetch branches", err);
+    }
+  };
 
   const openEditBranchModal = (branch) => {
     setSelectedBranch(branch);
@@ -261,21 +364,21 @@ const fetchBranches = async () => {
   }, [fetchDashboard]);
 
   useEffect(() => {
+    if (restaurant?.id) {
+      fetchCategories();
+      fetchBranches();
+    }
+  }, [restaurant?.id, token]);
+
+  useEffect(() => {
     if (!token) return undefined;
     const intervalId = window.setInterval(() => {
       fetchDashboard({ silent: true });
     }, 25000);
-
     return () => {
       window.clearInterval(intervalId);
     };
   }, [fetchDashboard, token]);
-
-  useEffect(() => {
-    if (restaurant?.id) {
-      fetchBranches();
-    }
-  }, [restaurant?.id, token]);
 
   useEffect(() => {
     setVisibleOrdersCount(MERCHANT_ORDERS_BATCH_SIZE);
@@ -481,221 +584,13 @@ const fetchBranches = async () => {
   const recentOrders = dashboard?.recentOrders || [];
   const reviews = dashboard?.reviews || {};
   const restaurantName = restaurant.emertimi || restaurant.name || "Restaurant";
-  const addressMap = new Map(
-    addresses
-      .map((address) => {
-        const id = Number(address?.id);
-        return Number.isFinite(id) ? [id, address] : null;
-      })
-      .filter(Boolean)
-  );
 
   const formatCurrency = (value) => `€${Number(value || 0).toFixed(2)}`;
-
-  const parseNumericValue = (raw) => {
-    if (typeof raw === "number") {
-      return Number.isFinite(raw) ? raw : 0;
-    }
-
-    if (typeof raw === "string") {
-      const cleaned = raw.replace(/[^\d,.-]/g, "").replace(/,/g, ".").trim();
-      const parsed = Number(cleaned);
-      return Number.isFinite(parsed) ? parsed : 0;
-    }
-
-    return 0;
-  };
-
-  const parseCreatedAtMs = (order) => {
-    const candidates = [order?.dataPorosis, order?.createdAt, order?.orderDate, order?.date];
-
-    for (const value of candidates) {
-      if (!value) continue;
-
-      const timestamp = new Date(value).getTime();
-      if (Number.isFinite(timestamp) && timestamp > 0) {
-        return timestamp;
-      }
-    }
-
-    return parseNumericValue(order?.id);
-  };
-
-  const normalizedRecentOrders = recentOrders.map((order) => {
-    const statusName = getStatusName(order.statusi);
-    const createdAtMs = parseCreatedAtMs(order);
-    const totalAmount = parseNumericValue(order.shumaTotale ?? order.total ?? order.totalAmount);
-    const branchAddressId = Number(
-      order?.restaurantAddressId ??
-      order?.RestaurantAddressId ??
-      order?.branchId ??
-      order?.BranchId ??
-      order?.addressId ??
-      order?.AddressId
-    );
-    const matchedAddress = Number.isFinite(branchAddressId) ? addressMap.get(branchAddressId) : null;
-    const branchLabel =
-      matchedAddress?.adresa ||
-      matchedAddress?.address ||
-      order?.branchAddress ||
-      order?.restaurantAddress ||
-      "";
-    const orderItems = Array.isArray(order.items) ? order.items : [];
-    const itemSearchText = orderItems
-      .map((item) => item?.name || item?.menuItemName || item?.menuItem?.emertimi || "")
-      .join(" ")
-      .toLowerCase();
-    const addressLabel = String(order.address || order.adresaDorezimit || "").toLowerCase();
-    const noteLabel = String(order.note || order.shenimet || "").toLowerCase();
-    const customerLabel = String(
-      order.customerName || order.customer || order.user?.userName || order.userName || "Customer"
-    );
-
-    return {
-      ...order,
-      statusName,
-      statusKey: String(statusName || "unknown").toLowerCase(),
-      customerLabel,
-      branchAddressId: Number.isFinite(branchAddressId) ? branchAddressId : null,
-      branchLabel: String(branchLabel || "").trim(),
-      createdAtMs: Number.isFinite(createdAtMs) ? createdAtMs : 0,
-      totalAmount: Number.isFinite(totalAmount) ? totalAmount : 0,
-      searchableText: [
-        String(order.id || ""),
-        customerLabel,
-        String(statusName || ""),
-        String(branchLabel || ""),
-        itemSearchText,
-        addressLabel,
-        noteLabel,
-      ]
-        .join(" ")
-        .toLowerCase(),
-    };
-  });
-
-  const flowSnapshot = normalizedRecentOrders.reduce(
-    (acc, order) => {
-      if (order.statusKey === "pending") acc.pending += 1;
-      if (["accepted", "preparing", "ready"].includes(order.statusKey)) acc.inProgress += 1;
-      if (order.statusKey === "delivered") acc.delivered += 1;
-      if (order.statusKey === "cancelled") acc.cancelled += 1;
-      return acc;
-    },
-    { pending: 0, inProgress: 0, delivered: 0, cancelled: 0 }
-  );
-
-  const normalizedSearch = orderSearch.trim().toLowerCase();
-
-  const matchesStatusFilter = (order, statusFilter) => {
-    if (statusFilter === "all") return true;
-    if (statusFilter === "in-progress") {
-      return ["accepted", "preparing", "ready"].includes(order.statusKey);
-    }
-    return order.statusKey === statusFilter;
-  };
-
-  const matchesLocationFilter = (order, locationFilter) => {
-    if (locationFilter === "all") return true;
-    if (locationFilter === "main") {
-      return Number(order.branchAddressId) === Number(primaryAddressId);
-    }
-    if (!locationFilter.startsWith("branch:")) return true;
-
-    const branchId = Number(locationFilter.replace("branch:", ""));
-    if (!Number.isFinite(branchId)) return true;
-
-    return Number(order.branchAddressId) === branchId;
-  };
-
-  const filteredOrders = normalizedRecentOrders.filter((order) => {
-    const passesStatus = matchesStatusFilter(order, orderStatusFilter);
-    if (!passesStatus) return false;
-
-    const passesLocation = matchesLocationFilter(order, orderLocationFilter);
-    if (!passesLocation) return false;
-
-    if (showActionableOnly && getOrderActions(order.statusName).length === 0) {
-      return false;
-    }
-
-    if (!normalizedSearch) return true;
-    return order.searchableText.includes(normalizedSearch);
-  });
-
-  const sortedFilteredOrders = [...filteredOrders].sort((a, b) => {
-    if (orderSort === "oldest") {
-      const byDate = a.createdAtMs - b.createdAtMs;
-      return byDate !== 0 ? byDate : a.totalAmount - b.totalAmount;
-    }
-    if (orderSort === "highest") {
-      const byTotal = b.totalAmount - a.totalAmount;
-      return byTotal !== 0 ? byTotal : b.createdAtMs - a.createdAtMs;
-    }
-    if (orderSort === "lowest") {
-      const byTotal = a.totalAmount - b.totalAmount;
-      return byTotal !== 0 ? byTotal : b.createdAtMs - a.createdAtMs;
-    }
-    if (orderSort === "customer") return a.customerLabel.localeCompare(b.customerLabel);
-    const byNewest = b.createdAtMs - a.createdAtMs;
-    return byNewest !== 0 ? byNewest : b.totalAmount - a.totalAmount;
-  });
-
-  const visibleFilteredOrders = sortedFilteredOrders.slice(0, visibleOrdersCount);
-  const hasMoreFilteredOrders = sortedFilteredOrders.length > visibleFilteredOrders.length;
-
-  const statusFilterOptions = [
-    { value: "all", label: "All statuses" },
-    { value: "pending", label: "Pending" },
-    { value: "in-progress", label: "In Progress" },
-    { value: "accepted", label: "Accepted" },
-    { value: "preparing", label: "Preparing" },
-    { value: "ready", label: "Ready" },
-    { value: "delivered", label: "Delivered" },
-    { value: "cancelled", label: "Cancelled" },
-  ];
-
-  const sortOptions = [
-    { value: "newest", label: "Newest first" },
-    { value: "oldest", label: "Oldest first" },
-    { value: "highest", label: "Highest total" },
-    { value: "lowest", label: "Lowest total" },
-    { value: "customer", label: "Customer A-Z" },
-  ];
-
-  const hasActiveFilters =
-    orderStatusFilter !== "all" ||
-    orderLocationFilter !== "all" ||
-    orderSearch.trim().length > 0 ||
-    orderSort !== "newest" ||
-    showActionableOnly;
-
-  const clearOrderFilters = () => {
-    setOrderStatusFilter("all");
-    setOrderLocationFilter("all");
-    setOrderSearch("");
-    setOrderSort("newest");
-    setShowActionableOnly(false);
-  };
-
-  const locationFilterOptions = [
-    { value: "all", label: "All locations" },
-    ...(primaryAddressId ? [{ value: "main", label: "Main branch" }] : []),
-    ...addresses.map((address) => {
-      const id = Number(address?.id);
-      const title = address?.adresa || address?.address || `Branch ${id}`;
-      const cityZone = [address?.qyteti, address?.zona].filter(Boolean).join(", ");
-      const suffix = cityZone ? ` (${cityZone})` : "";
-      return {
-        value: `branch:${id}`,
-        label: `${title}${suffix}`,
-      };
-    }),
-  ];
 
   return (
     <section className="merchant-dashboard-page">
       <div className="container py-4 py-lg-5">
+        {/* Top Bar */}
         <div className="merchant-dash-topbar mb-4">
           <button
             className="btn btn-outline-primary"
@@ -725,6 +620,7 @@ const fetchBranches = async () => {
           </div>
         </div>
 
+        {/* Hero Section */}
         <div className="merchant-dash-hero mb-4 mb-lg-5">
           <div>
             <p className="merchant-eyebrow mb-2">Merchant Control Center</p>
@@ -735,6 +631,7 @@ const fetchBranches = async () => {
           </div>
         </div>
 
+        {/* Logo Upload */}
         <div className="merchant-card mb-4">
           <div className="d-flex align-items-center gap-4 flex-wrap">
             <div className="text-center">
@@ -742,98 +639,136 @@ const fetchBranches = async () => {
                 <img 
                   src={`http://localhost:5063${restaurant.logo}`}
                   alt="Restaurant Logo" 
-                  style={{ 
-                    width: "100px", 
-                    height: "100px", 
-                    objectFit: "cover",
-                    borderRadius: "12px",
-                    border: "1px solid #ddd"
-                  }} 
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = "none";
-                    e.target.nextSibling.style.display = "flex";
-                  }}
+                  style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "12px", border: "1px solid #ddd" }} 
                 />
-              ) : null}
-              <div 
-                style={{ 
-                  width: "100px", 
-                  height: "100px", 
-                  backgroundColor: "#f0f0f0",
-                  borderRadius: "12px",
-                  display: restaurant.logo ? "none" : "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  border: "1px dashed #ccc"
-                }}
-              >
-                <span className="text-muted" style={{ fontSize: "12px" }}>No Logo</span>
-              </div>
+              ) : (
+                <div style={{ width: "100px", height: "100px", backgroundColor: "#f0f0f0", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", border: "1px dashed #ccc" }}>
+                  <span className="text-muted" style={{ fontSize: "12px" }}>No Logo</span>
+                </div>
+              )}
             </div>
-            
             <div>
               <label className={`btn btn-outline-primary btn-sm ${uploadingLogo ? 'disabled' : ''}`}>
                 {uploadingLogo ? "Uploading..." : "Change Logo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => {
-                    if (e.target.files[0]) {
-                      handleLogoUpload(e.target.files[0]);
-                    }
-                  }}
-                  disabled={uploadingLogo}
-                />
+                <input type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => { if (e.target.files[0]) handleLogoUpload(e.target.files[0]); }} disabled={uploadingLogo} />
               </label>
-              {logoMessage && (
-                <div className={`mt-2 small ${logoMessage.includes("✅") ? "text-success" : "text-danger"}`}>
-                  {logoMessage}
-                </div>
-              )}
-              <p className="small text-muted mt-2 mb-0">
-                Allowed formats: JPG, PNG, GIF (max 2MB)
-              </p>
+              {logoMessage && <div className={`mt-2 small ${logoMessage.includes("✅") ? "text-success" : "text-danger"}`}>{logoMessage}</div>}
+              <p className="small text-muted mt-2 mb-0">Allowed formats: JPG, PNG, GIF (max 2MB)</p>
             </div>
           </div>
         </div>
 
-        {addresses.length > 0 && (
+        {/* Growth Indicator */}
+        <div className="merchant-card mb-4">
+          <div className="d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="mb-0">Monthly Growth</h5>
+              <small className="text-muted">Compared to previous month</small>
+            </div>
+            <div className={`text-center ${dashboard?.revenue?.growthPercentage >= 0 ? 'text-success' : 'text-danger'}`}>
+              <h2 className="mb-0">
+                {dashboard?.revenue?.growthPercentage >= 0 ? '↑' : '↓'} 
+                {Math.abs(dashboard?.revenue?.growthPercentage || 0).toFixed(1)}%
+              </h2>
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue Trend Chart */}
+        {dashboard?.revenueTrend && dashboard.revenueTrend.length > 0 && (
           <div className="merchant-card mb-4">
-            <h5 className="merchant-section-title mb-3">Locations</h5>
-            <div className="row g-3">
-              {addresses.map((address) => (
-                <div className="col-md-6 col-xl-4" key={address.id}>
-                  <div className="merchant-info-cell h-100">
-                    <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
-                      <div>
-                        <span className="merchant-label">{address.adresa}</span>
-                        <p className="merchant-value mb-0 small text-muted">
-                          {[address.qyteti, address.zona].filter(Boolean).join(", ") || "Location"}
-                        </p>
-                      </div>
-                      <div className="d-flex flex-column align-items-end gap-1">
-                        {address.isMain && <span className="badge text-bg-warning">Main</span>}
-                        {!address.isActive && <span className="badge text-bg-secondary">Inactive</span>}
-                      </div>
+            <h5 className="merchant-section-title mb-3">📈 Revenue Trend (Last 7 Days)</h5>
+            <div className="revenue-trend">
+              {dashboard.revenueTrend.map((day, idx) => {
+                const maxRevenue = Math.max(...dashboard.revenueTrend.map(d => d.revenue), 1);
+                return (
+                  <div key={idx} className="trend-bar-container">
+                    <div className="trend-bar" style={{ height: `${Math.min(100, (day.revenue / maxRevenue) * 100)}%` }}>
+                      <span className="trend-value">€{day.revenue.toFixed(0)}</span>
                     </div>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline-primary"
-                      onClick={() => {
-                        window.location.hash = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}`;
-                      }}
-                    >
-                      Manage menu for this location
-                    </button>
+                    <span className="trend-label">{new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}</span>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
 
+        {/* Top Products Section */}
+        <div className="merchant-card mb-4">
+          <h5 className="merchant-section-title mb-3">🏆 Top Selling Products</h5>
+          {isBranchManagerRole ? (
+            <div className="row">
+              {dashboard?.branchTopProducts?.map((product, idx) => (
+                <div className="col-md-4 mb-3" key={product.menuItemId}>
+                  <div className="card h-100 text-center p-3">
+                    <div className="display-4 mb-2">🏆</div>
+                    <h6 className="mb-1">{product.name}</h6>
+                    <p className="text-muted small mb-0">Sold: {product.totalQuantity} items</p>
+                    <p className="text-success fw-bold">€{product.totalRevenue.toFixed(2)}</p>
+                  </div>
+                </div>
+              ))}
+              {(!dashboard?.branchTopProducts || dashboard.branchTopProducts.length === 0) && (
+                <p className="text-muted">No sales data available yet.</p>
+              )}
+            </div>
+          ) : (
+            <div className="accordion" id="topProductsAccordion">
+              {dashboard?.allBranchesTopProducts && Object.entries(dashboard.allBranchesTopProducts).map(([branchId, products], idx) => {
+                const branchName = addresses.find(a => a.id == branchId)?.adresa || `Branch ${branchId}`;
+                return (
+                  <div className="accordion-item" key={branchId}>
+                    <h2 className="accordion-header">
+                      <button className={`accordion-button ${idx !== 0 ? 'collapsed' : ''}`} type="button" data-bs-toggle="collapse" data-bs-target={`#collapse-${branchId}`}>
+                        {branchName}
+                      </button>
+                    </h2>
+                    <div id={`collapse-${branchId}`} className={`accordion-collapse collapse ${idx === 0 ? 'show' : ''}`}>
+                      <div className="accordion-body">
+                        <div className="row">
+                          {products?.map((product) => (
+                            <div className="col-md-4 mb-2" key={product.menuItemId}>
+                              <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                                <span>{product.name}</span>
+                                <div className="text-end">
+                                  <small className="text-muted d-block">{product.totalQuantity} sold</small>
+                                  <strong className="text-success">€{product.totalRevenue.toFixed(2)}</strong>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Branch Comparison (Only for Main Merchant) */}
+        {!isBranchManagerRole && dashboard?.branchComparison && (
+          <div className="row mb-4">
+            <div className="col-md-6">
+              <div className="merchant-card text-center bg-success text-white">
+                <h6>🏆 Best Performing Branch</h6>
+                <h4>{dashboard.branchComparison.bestBranch?.branchName}</h4>
+                <p className="mb-0">€{dashboard.branchComparison.bestBranch?.revenue?.toFixed(2)} revenue</p>
+              </div>
+            </div>
+            <div className="col-md-6">
+              <div className="merchant-card text-center bg-warning">
+                <h6>📉 Needs Improvement</h6>
+                <h4>{dashboard.branchComparison.worstBranch?.branchName}</h4>
+                <p className="mb-0">€{dashboard.branchComparison.worstBranch?.revenue?.toFixed(2)} revenue</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Restaurant Snapshot */}
         <div className="row g-4 mb-4">
           <div className="col-lg-6">
             <div className="merchant-card merchant-card-soft h-100">
@@ -863,585 +798,204 @@ const fetchBranches = async () => {
             <div className="merchant-card h-100">
               <h5 className="merchant-section-title mb-3">Revenue Summary</h5>
               <div className="merchant-revenue-list">
-                <div className="merchant-revenue-row">
-                  <span>Today</span>
-                  <strong>{formatCurrency(revenue.today)}</strong>
-                </div>
-                <div className="merchant-revenue-row">
-                  <span>This Week</span>
-                  <strong>{formatCurrency(revenue.thisWeek)}</strong>
-                </div>
-                <div className="merchant-revenue-row">
-                  <span>This Month</span>
-                  <strong>{formatCurrency(revenue.thisMonth)}</strong>
-                </div>
-                <div className="merchant-revenue-row merchant-revenue-total">
-                  <span>Total</span>
-                  <strong>{formatCurrency(revenue.total)}</strong>
-                </div>
+                <div className="merchant-revenue-row"><span>Today</span><strong>{formatCurrency(revenue.today)}</strong></div>
+                <div className="merchant-revenue-row"><span>This Week</span><strong>{formatCurrency(revenue.thisWeek)}</strong></div>
+                <div className="merchant-revenue-row"><span>This Month</span><strong>{formatCurrency(revenue.thisMonth)}</strong></div>
+                <div className="merchant-revenue-row merchant-revenue-total"><span>Total</span><strong>{formatCurrency(revenue.total)}</strong></div>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Categories Management - Only for Main Merchant */}
+        {!isBranchManagerRole && (
+          <div className="merchant-card mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="merchant-section-title mb-0">📂 Menu Categories</h5>
+              <button className="btn btn-sm btn-primary" onClick={() => { setEditingCategory(null); setCategoryForm({ emertimi: "", pershkrimi: "", renditja: categories.length + 1 }); setShowAddCategoryModal(true); }}>
+                + Add Category
+              </button>
+            </div>
+            {categories.length === 0 ? (
+              <p className="text-muted">No categories yet. Create your first category to start adding menu items.</p>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-hover">
+                  <thead><tr><th>Order</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {categories.sort((a,b) => a.renditja - b.renditja).map((cat) => (
+                      <tr key={cat.id}>
+                        <td style={{ width: "80px" }}>{cat.renditja}</td>
+                        <td><strong>{cat.emertimi}</strong></td>
+                        <td>{cat.pershkrimi || "-"}</td>
+                        <td style={{ width: "120px" }}>
+                          <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setEditingCategory(cat); setCategoryForm({ emertimi: cat.emertimi, pershkrimi: cat.pershkrimi || "", renditja: cat.renditja }); setShowAddCategoryModal(true); }}>Edit</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteCategory(cat)}>Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <div className="mt-3">
+              <button className="btn btn-outline-primary" onClick={() => { window.location.hash = `/merchant/menu/${restaurant.id}`; }}>🍽️ Manage Menu Items</button>
+            </div>
+          </div>
+        )}
+
+        {/* Branches Section */}
+        {addresses.length > 0 && (
+          <div className="merchant-card mb-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h5 className="merchant-section-title mb-0">🏪 Locations</h5>
+              {!isBranchManagerRole && (
+                <button className="btn btn-sm btn-primary" onClick={() => setShowAddBranchModal(true)}>+ Add Branch</button>
+              )}
+            </div>
+            <div className="row g-3">
+              {addresses.map((address) => (
+                <div className="col-md-6 col-xl-4" key={address.id}>
+                  <div className="merchant-info-cell h-100">
+                    <div className="d-flex justify-content-between align-items-start gap-2 mb-2">
+                      <div>
+                        <span className="merchant-label">{address.adresa}</span>
+                        <p className="merchant-value mb-0 small text-muted">{[address.qyteti, address.zona].filter(Boolean).join(", ") || "Location"}</p>
+                      </div>
+                      <div className="d-flex flex-column align-items-end gap-1">
+                        {address.isMain && <span className="badge text-bg-warning">Main</span>}
+                        {!address.isActive && <span className="badge text-bg-secondary">Inactive</span>}
+                      </div>
+                    </div>
+                    <div className="d-flex gap-2">
+                      <button className="btn btn-sm btn-outline-primary flex-grow-1" onClick={() => { window.location.hash = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}`; }}>Manage menu</button>
+                      {!isBranchManagerRole && (
+                        <>
+                          <button className="btn btn-sm btn-outline-secondary" onClick={() => openEditBranchModal(address)} title="Request Edit">✏️</button>
+                          <button className="btn btn-sm btn-outline-danger" onClick={() => openDeleteBranchModal(address)} title="Request Delete">🗑️</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Order Performance */}
         <div className="merchant-card mb-4">
           <h5 className="merchant-section-title mb-3">Order Performance</h5>
           <div className="row g-3">
-            <div className="col-6 col-md-3">
-              <div className="merchant-stat-item merchant-stat-total">
-                <p className="merchant-stat-value">{stats.total || 0}</p>
-                <small>Total Orders</small>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="merchant-stat-item merchant-stat-pending">
-                <p className="merchant-stat-value">{stats.pending || 0}</p>
-                <small>Pending</small>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="merchant-stat-item merchant-stat-accepted">
-                <p className="merchant-stat-value">{stats.accepted || 0}</p>
-                <small>Accepted</small>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="merchant-stat-item merchant-stat-preparing">
-                <p className="merchant-stat-value">{stats.preparing || 0}</p>
-                <small>Preparing</small>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="merchant-stat-item merchant-stat-ready">
-                <p className="merchant-stat-value">{stats.ready || 0}</p>
-                <small>Ready</small>
-              </div>
-            </div>
-            <div className="col-6 col-md-3">
-              <div className="merchant-stat-item merchant-stat-delivered">
-                <p className="merchant-stat-value">{stats.delivered || 0}</p>
-                <small>Delivered</small>
-              </div>
-            </div>
+            <div className="col-6 col-md-3"><div className="merchant-stat-item merchant-stat-total"><p className="merchant-stat-value">{stats.total || 0}</p><small>Total Orders</small></div></div>
+            <div className="col-6 col-md-3"><div className="merchant-stat-item merchant-stat-pending"><p className="merchant-stat-value">{stats.pending || 0}</p><small>Pending</small></div></div>
+            <div className="col-6 col-md-3"><div className="merchant-stat-item merchant-stat-accepted"><p className="merchant-stat-value">{stats.accepted || 0}</p><small>Accepted</small></div></div>
+            <div className="col-6 col-md-3"><div className="merchant-stat-item merchant-stat-preparing"><p className="merchant-stat-value">{stats.preparing || 0}</p><small>Preparing</small></div></div>
+            <div className="col-6 col-md-3"><div className="merchant-stat-item merchant-stat-ready"><p className="merchant-stat-value">{stats.ready || 0}</p><small>Ready</small></div></div>
+            <div className="col-6 col-md-3"><div className="merchant-stat-item merchant-stat-delivered"><p className="merchant-stat-value">{stats.delivered || 0}</p><small>Delivered</small></div></div>
           </div>
         </div>
 
+        {/* Recent Orders */}
         <div className="merchant-card merchant-orders-card p-4">
           <h5 className="merchant-section-title mb-3">Recent Orders</h5>
-
-          {statusActionMessage && (
-            <div className={`alert py-2 mb-3 ${statusActionError ? "alert-danger" : "alert-success"}`} role="alert">
-              {statusActionMessage}
-            </div>
-          )}
-
-          <div className="merchant-orders-toolbar mb-3">
-            <div className="merchant-orders-filters">
-              <div className="merchant-filter-group">
-                <label className="form-label mb-1" htmlFor="merchant-order-status">Status</label>
-                <select
-                  id="merchant-order-status"
-                  className="form-select form-select-sm"
-                  value={orderStatusFilter}
-                  onChange={(e) => setOrderStatusFilter(e.target.value)}
-                >
-                  {statusFilterOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="merchant-filter-group">
-                <label className="form-label mb-1" htmlFor="merchant-order-location">Location</label>
-                <select
-                  id="merchant-order-location"
-                  className="form-select form-select-sm"
-                  value={orderLocationFilter}
-                  onChange={(e) => setOrderLocationFilter(e.target.value)}
-                >
-                  {locationFilterOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="merchant-filter-group merchant-filter-search">
-                <label className="form-label mb-1" htmlFor="merchant-order-search">Search</label>
-                <input
-                  id="merchant-order-search"
-                  className="form-control form-control-sm"
-                  type="text"
-                  placeholder="Order ID or customer"
-                  value={orderSearch}
-                  onChange={(e) => setOrderSearch(e.target.value)}
-                />
-              </div>
-
-              <div className="merchant-filter-group">
-                <label className="form-label mb-1" htmlFor="merchant-order-sort">Sort</label>
-                <select
-                  id="merchant-order-sort"
-                  className="form-select form-select-sm"
-                  value={orderSort}
-                  onChange={(e) => setOrderSort(e.target.value)}
-                >
-                  {sortOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="merchant-filter-group merchant-filter-inline">
-                <label className="form-label mb-1" htmlFor="merchant-actionable-only">Workflow</label>
-                <div className="form-check mt-1 mb-0">
-                  <input
-                    id="merchant-actionable-only"
-                    className="form-check-input"
-                    type="checkbox"
-                    checked={showActionableOnly}
-                    onChange={(e) => setShowActionableOnly(e.target.checked)}
-                  />
-                  <label className="form-check-label" htmlFor="merchant-actionable-only">
-                    Actionable only
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="merchant-orders-meta text-muted small d-flex flex-wrap align-items-center gap-2 justify-content-end">
-              <span>
-                Showing {visibleFilteredOrders.length} of {sortedFilteredOrders.length} filtered ({normalizedRecentOrders.length} total)
-              </span>
-              {hasActiveFilters && (
-                <button type="button" className="btn btn-sm btn-outline-dark" onClick={clearOrderFilters}>
-                  Reset filters
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div className="row g-2 mb-3">
-            <div className="col-6 col-lg-3">
-              <button
-                type="button"
-                className={`merchant-flow-chip merchant-flow-pending ${orderStatusFilter === "pending" ? "active" : ""}`}
-                onClick={() => setOrderStatusFilter((current) => (current === "pending" ? "all" : "pending"))}
-              >
-                <span>Pending</span>
-                <strong>{flowSnapshot.pending}</strong>
-              </button>
-            </div>
-            <div className="col-6 col-lg-3">
-              <button
-                type="button"
-                className={`merchant-flow-chip merchant-flow-progress ${orderStatusFilter === "in-progress" ? "active" : ""}`}
-                onClick={() => setOrderStatusFilter((current) => (current === "in-progress" ? "all" : "in-progress"))}
-              >
-                <span>In Progress</span>
-                <strong>{flowSnapshot.inProgress}</strong>
-              </button>
-            </div>
-            <div className="col-6 col-lg-3">
-              <button
-                type="button"
-                className={`merchant-flow-chip merchant-flow-delivered ${orderStatusFilter === "delivered" ? "active" : ""}`}
-                onClick={() => setOrderStatusFilter((current) => (current === "delivered" ? "all" : "delivered"))}
-              >
-                <span>Delivered</span>
-                <strong>{flowSnapshot.delivered}</strong>
-              </button>
-            </div>
-            <div className="col-6 col-lg-3">
-              <button
-                type="button"
-                className={`merchant-flow-chip merchant-flow-cancelled ${orderStatusFilter === "cancelled" ? "active" : ""}`}
-                onClick={() => setOrderStatusFilter((current) => (current === "cancelled" ? "all" : "cancelled"))}
-              >
-                <span>Cancelled</span>
-                <strong>{flowSnapshot.cancelled}</strong>
-              </button>
-            </div>
-          </div>
-
-          {normalizedRecentOrders.length === 0 ? (
-            <div className="merchant-inline-state">
-              <h6 className="mb-1">No orders yet</h6>
-              <p className="text-muted mb-0">New orders will appear here as soon as customers place them.</p>
-            </div>
-          ) : sortedFilteredOrders.length === 0 ? (
-            <div className="merchant-inline-state">
-              <h6 className="mb-1">No matching results</h6>
-              <p className="text-muted mb-0">Try a different status filter or clear the search text.</p>
-            </div>
-          ) : (
-            <div className="accordion merchant-orders-accordion" id="ordersAccordion">
-              {visibleFilteredOrders.map((order) => {
-                const actions = getOrderActions(order.statusName);
-                const actionInProgress = statusActionOrderId === Number(order.id);
-
-                return (
-                  <div className="accordion-item mb-2" key={order.id}>
-                    <h2 className="accordion-header">
-                      <button
-                        className="accordion-button collapsed"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target={`#collapse-${order.id}`}
-                      >
-                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 w-100 me-3 merchant-order-summary">
-                          <span><strong>Order #{order.id}</strong></span>
-                          <span className="merchant-customer-name">{order.customerName || "Customer"}</span>
-                          <span className="badge text-bg-dark me-2">{formatCurrency(order.shumaTotale)}</span>
-                          <span className={`badge ${getStatusBadgeClass(order.statusName)}`}>
-                            {order.statusName}
-                          </span>
-                        </div>
-                      </button>
-                    </h2>
-                    <div
-                      id={`collapse-${order.id}`}
-                      className="accordion-collapse collapse"
-                      data-bs-parent="#ordersAccordion"
-                    >
-                      <div className="accordion-body">
-                        <h6>Order Items:</h6>
-                        {order.items && order.items.length > 0 ? (
-                          <div className="table-responsive">
-                            <table className="table table-sm align-middle">
-                              <thead>
-                                <tr>
-                                  <th>Item</th>
-                                  <th>Quantity</th>
-                                  <th>Price</th>
-                                  <th>Total</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {order.items.map((item, idx) => (
-                                  <tr key={idx}>
-                                    <td>{item.name || `Item ${item.menuItemId}`}</td>
-                                    <td>{item.quantity || 1}</td>
-                                    <td>€{(item.price || 0).toFixed(2)}</td>
-                                    <td>€{((item.price || 0) * (item.quantity || 1)).toFixed(2)}</td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                              <tfoot>
-                                <tr>
-                                  <td colSpan="3" className="text-end"><strong>Total:</strong></td>
-                                  <td><strong>{formatCurrency(order.shumaTotale)}</strong></td>
-                                </tr>
-                              </tfoot>
-                            </table>
-                          </div>
-                        ) : (
-                          <p className="text-muted">No items details available</p>
-                        )}
-
-                        {order.address && (
-                          <div className="mt-2">
-                            <small className="text-muted">
-                              <strong>Delivery Address:</strong> {order.address}
-                            </small>
-                          </div>
-                        )}
-
-                        {order.note && (
-                          <div className="mt-1">
-                            <small className="text-muted">
-                              <strong>Note:</strong> {order.note}
-                            </small>
-                          </div>
-                        )}
-
-                        <div className="merchant-order-actions mt-3">
-                          {actions.length === 0 ? (
-                            <small className="text-muted">No status actions available for this order.</small>
-                          ) : (
-                            actions.map((action) => (
-                              <button
-                                key={`${order.id}-${action.nextStatus}`}
-                                type="button"
-                                className={action.buttonClass}
-                                disabled={actionInProgress}
-                                onClick={() => handleStatusUpdate(order, action.nextStatus)}
-                              >
-                                {actionInProgress ? "Updating..." : action.label}
-                              </button>
-                            ))
-                          )}
-
-                          <button
-                            className="btn btn-sm btn-outline-dark"
-                            disabled={orderDetailsLoadingId === Number(order.id)}
-                            onClick={() => viewOrderDetails(order.id)}
-                          >
-                            {orderDetailsLoadingId === Number(order.id) ? "Loading..." : "View Full Order Details"}
-                          </button>
-                        </div>
+          {statusActionMessage && (<div className={`alert py-2 mb-3 ${statusActionError ? "alert-danger" : "alert-success"}`}>{statusActionMessage}</div>)}
+          {recentOrders.length === 0 ? (<p className="text-muted">No orders yet.</p>) : (
+            <div className="accordion" id="ordersAccordion">
+              {recentOrders.slice(0, 5).map((order) => (
+                <div className="accordion-item mb-2" key={order.id}>
+                  <h2 className="accordion-header">
+                    <button className="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target={`#collapse-${order.id}`}>
+                      <div className="d-flex justify-content-between align-items-center w-100 me-3">
+                        <span><strong>Order #{order.id}</strong></span>
+                        <span className="badge bg-secondary">{getStatusName(order.statusi)}</span>
+                        <span><strong>{formatCurrency(order.shumaTotale)}</strong></span>
+                      </div>
+                    </button>
+                  </h2>
+                  <div id={`collapse-${order.id}`} className="accordion-collapse collapse">
+                    <div className="accordion-body">
+                      <p><strong>Customer:</strong> {order.customerName}</p>
+                      <p><strong>Date:</strong> {new Date(order.dataPorosis).toLocaleString()}</p>
+                      <p><strong>Branch:</strong> {order.branchName}</p>
+                      <div className="merchant-order-actions mt-3">
+                        <button className="btn btn-sm btn-outline-dark" onClick={() => viewOrderDetails(order.id)}>View Details</button>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {sortedFilteredOrders.length > 0 && (
-            <div className="merchant-orders-pagination mt-3">
-              {hasMoreFilteredOrders && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={() => setVisibleOrdersCount((current) => current + MERCHANT_ORDERS_BATCH_SIZE)}
-                >
-                  Show more ({sortedFilteredOrders.length - visibleFilteredOrders.length} left)
-                </button>
-              )}
-
-              {visibleOrdersCount > MERCHANT_ORDERS_BATCH_SIZE && (
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-dark"
-                  onClick={() => setVisibleOrdersCount(MERCHANT_ORDERS_BATCH_SIZE)}
-                >
-                  Show less
-                </button>
-              )}
-            </div>
-          )}
-
-      <div className="mt-4 pt-3 border-top">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h5 className="merchant-section-title mb-0">🏪 Restaurant Branches</h5>
-        </div>
-
-        {restaurantBranches.length === 0 ? (
-          <p className="text-muted small mb-0">No branches added yet.</p>
-        ) : (
-          <div className="row g-3">
-            {restaurantBranches.map((branch) => (
-              <div className="col-md-6 col-lg-4" key={branch.id}>
-                <div className="border rounded-3 p-3 h-100 bg-white">
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div className="fw-semibold">{branch.adresa || branch.address}</div>
-                    <div className="d-flex gap-1">
-                      <button
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => openEditBranchModal(branch)}
-                        title="Request Edit"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => openDeleteBranchModal(branch)}
-                        title="Request Delete"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                  <div className="small text-muted">
-                    <div>{branch.qyteti || branch.city}, {branch.zona || branch.zone}</div>
-                    <div>Delivery: €{(branch.tarifaDorezimit || branch.deliveryFee || 0).toFixed(2)}</div>
-                    <div className="mt-1">
-                      <span className={`badge ${branch.isActive ? "bg-success" : "bg-secondary"}`}>
-                        {branch.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
-                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
-  </div>
+
+      {/* Modals */}
+      {showAddBranchModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>Add New Branch</h5><button className="btn-close" onClick={() => setShowAddBranchModal(false)}></button></div>
+          <div className="modal-body">
+            <input type="text" className="form-control mb-2" placeholder="Address" value={newBranch.address} onChange={(e) => setNewBranch({...newBranch, address: e.target.value})} />
+            <select className="form-select mb-2" value={newBranch.city} onChange={(e) => setNewBranch({...newBranch, city: e.target.value})}><option>Prishtinë</option><option>Prizren</option><option>Pejë</option><option>Gjakovë</option><option>Ferizaj</option><option>Gjilan</option><option>Mitrovicë</option></select>
+            <input type="text" className="form-control mb-2" placeholder="Zone" value={newBranch.zone} onChange={(e) => setNewBranch({...newBranch, zone: e.target.value})} />
+            <input type="number" className="form-control mb-2" placeholder="Delivery Fee" value={newBranch.deliveryFee} onChange={(e) => setNewBranch({...newBranch, deliveryFee: parseFloat(e.target.value)})} />
+            <div className="form-check mb-2"><input type="checkbox" className="form-check-input" checked={newBranch.createManager} onChange={(e) => setNewBranch({...newBranch, createManager: e.target.checked})} /><label>Create Branch Manager account</label></div>
+            {newBranch.createManager && (<><input type="text" className="form-control mb-2" placeholder="Manager Name" value={newBranch.managerName} onChange={(e) => setNewBranch({...newBranch, managerName: e.target.value})} /><input type="email" className="form-control mb-2" placeholder="Manager Email" value={newBranch.managerEmail} onChange={(e) => setNewBranch({...newBranch, managerEmail: e.target.value})} /></>)}
+          </div>
+          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Creating..." : "Create Branch"}</button></div></div></div>
+        </div>
+      )}
+
+      {showAddCategoryModal && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>{editingCategory ? "Edit Category" : "Add Category"}</h5><button className="btn-close" onClick={() => setShowAddCategoryModal(false)}></button></div>
+          <div className="modal-body">
+            <input type="text" className="form-control mb-2" placeholder="Category Name" value={categoryForm.emertimi} onChange={(e) => setCategoryForm({...categoryForm, emertimi: e.target.value})} />
+            <textarea className="form-control mb-2" placeholder="Description" rows="2" value={categoryForm.pershkrimi} onChange={(e) => setCategoryForm({...categoryForm, pershkrimi: e.target.value})} />
+            <input type="number" className="form-control mb-2" placeholder="Display Order" value={categoryForm.renditja} onChange={(e) => setCategoryForm({...categoryForm, renditja: parseInt(e.target.value) || 0})} />
+          </div>
+          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddCategoryModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleSaveCategory}>Save Category</button></div></div></div>
+        </div>
+      )}
 
       {showEditModal && selectedBranch && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content merchant-modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Request Branch Edit</h5>
-                <button type="button" className="btn-close" onClick={() => setShowEditModal(false)}></button>
-              </div>
-              <div className="modal-body">
-                <p className="small text-muted mb-3">Submit a request for admin approval to update this branch.</p>
-                <div className="mb-3">
-                  <label className="form-label">Address</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={requestData.newAddress}
-                    onChange={(e) => setRequestData((prev) => ({ ...prev, newAddress: e.target.value }))}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">City</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={requestData.newCity}
-                    onChange={(e) => setRequestData((prev) => ({ ...prev, newCity: e.target.value }))}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Zone</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={requestData.newZone}
-                    onChange={(e) => setRequestData((prev) => ({ ...prev, newZone: e.target.value }))}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Delivery Fee</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={requestData.newDeliveryFee}
-                    onChange={(e) => setRequestData((prev) => ({ ...prev, newDeliveryFee: e.target.value }))}
-                  />
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Reason</label>
-                  <textarea
-                    className="form-control"
-                    rows="3"
-                    value={requestData.reason}
-                    onChange={(e) => setRequestData((prev) => ({ ...prev, reason: e.target.value }))}
-                  />
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)}>
-                  Cancel
-                </button>
-                <button type="button" className="btn btn-primary" onClick={submitEditRequest}>
-                  Send Request
-                </button>
-              </div>
-            </div>
+          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>Request Branch Edit</h5><button className="btn-close" onClick={() => setShowEditModal(false)}></button></div>
+          <div className="modal-body">
+            <input type="text" className="form-control mb-2" placeholder="Address" value={requestData.newAddress} onChange={(e) => setRequestData({...requestData, newAddress: e.target.value})} />
+            <input type="text" className="form-control mb-2" placeholder="City" value={requestData.newCity} onChange={(e) => setRequestData({...requestData, newCity: e.target.value})} />
+            <input type="text" className="form-control mb-2" placeholder="Zone" value={requestData.newZone} onChange={(e) => setRequestData({...requestData, newZone: e.target.value})} />
+            <input type="text" className="form-control mb-2" placeholder="Delivery Fee" value={requestData.newDeliveryFee} onChange={(e) => setRequestData({...requestData, newDeliveryFee: e.target.value})} />
+            <textarea className="form-control mb-2" placeholder="Reason" rows="3" value={requestData.reason} onChange={(e) => setRequestData({...requestData, reason: e.target.value})} />
           </div>
+          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button><button className="btn btn-primary" onClick={submitEditRequest}>Send Request</button></div></div></div>
         </div>
       )}
 
       {showDeleteModal && selectedBranch && (
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content merchant-modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Request Branch Delete</h5>
-                <button type="button" className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
-              </div>
-              <div className="modal-body">
-                <p className="mb-3">Are you sure you want to request deletion for the branch at <strong>{selectedBranch.adresa || selectedBranch.address}</strong>?</p>
-                <p className="small text-muted">This will send a delete request to an administrator for review.</p>
-              </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>
-                  Cancel
-                </button>
-                <button type="button" className="btn btn-danger" onClick={submitDeleteRequest}>
-                  Send Delete Request
-                </button>
-              </div>
-            </div>
-          </div>
+          <div className="modal-dialog modal-dialog-centered"><div className="modal-content"><div className="modal-header"><h5>Request Branch Delete</h5><button className="btn-close" onClick={() => setShowDeleteModal(false)}></button></div>
+          <div className="modal-body"><p>Are you sure you want to request deletion for branch <strong>{selectedBranch.adresa || selectedBranch.address}</strong>?</p><p className="small text-muted">This will send a delete request to admin for review.</p></div>
+          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button><button className="btn btn-danger" onClick={submitDeleteRequest}>Send Delete Request</button></div></div></div>
         </div>
       )}
 
-        {showModal && selectedOrder && (
-          <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-            <div className="modal-dialog modal-lg">
-              <div className="modal-content merchant-modal-content">
-                <div className="modal-header">
-                  <h5 className="modal-title">Order #{selectedOrder.id} Details</h5>
-                  <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
-                </div>
-                <div className="modal-body">
-                  <div className="row mb-3">
-                    <div className="col-md-6">
-                      <strong>Customer:</strong> {selectedOrder.user?.userName || "N/A"}
-                    </div>
-                    <div className="col-md-6">
-                      <strong>Date:</strong> {new Date(selectedOrder.dataPorosis).toLocaleString()}
-                    </div>
-                  </div>
-
-                  <div className="row mb-3">
-                    <div className="col-md-6">
-                      <strong>Status:</strong> {getStatusName(selectedOrder.statusi)}
-                    </div>
-                    <div className="col-md-6">
-                      <strong>Payment:</strong> {selectedOrder.metodaPageses === 1 ? "Cash" : "Other"}
-                    </div>
-                  </div>
-
-                  <div className="mb-3">
-                    <strong>Delivery Address:</strong> {selectedOrder.adresaDorezimit}
-                  </div>
-
-                  {selectedOrder.shenimet && (
-                    <div className="mb-3">
-                      <strong>Notes:</strong> {selectedOrder.shenimet}
-                    </div>
-                  )}
-
-                  <h6>Order Items:</h6>
-                  <div className="table-responsive">
-                    <table className="table table-sm table-bordered align-middle">
-                      <thead className="table-light">
-                        <tr>
-                          <th>Item</th>
-                          <th>Quantity</th>
-                          <th>Price</th>
-                          <th>Total</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedOrder.orderItems && selectedOrder.orderItems.length > 0 ? (
-                          selectedOrder.orderItems.map((item, idx) => (
-                            <tr key={idx}>
-                              <td>{item.menuItem?.emertimi || item.name || `Item ${item.menuItemId}`}</td>
-                              <td>{item.sasia || item.quantity}</td>
-                              <td>€{(item.cmimi || item.price || 0).toFixed(2)}</td>
-                              <td>€{((item.sasia || item.quantity || 1) * (item.cmimi || item.price || 0)).toFixed(2)}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="4" className="text-center">No items found</td>
-                          </tr>
-                        )}
-                      </tbody>
-                      <tfoot className="table-active">
-                        <tr>
-                          <td colSpan="3" className="text-end"><strong>Total:</strong></td>
-                          <td><strong>{formatCurrency(selectedOrder.shumaTotale)}</strong></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
+      {showModal && selectedOrder && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+          <div className="modal-dialog modal-lg"><div className="modal-content"><div className="modal-header"><h5>Order #{selectedOrder.id} Details</h5><button className="btn-close" onClick={() => setShowModal(false)}></button></div>
+          <div className="modal-body">
+            <p><strong>Customer:</strong> {selectedOrder.user?.userName}</p><p><strong>Date:</strong> {new Date(selectedOrder.dataPorosis).toLocaleString()}</p>
+            <p><strong>Status:</strong> {getStatusName(selectedOrder.statusi)}</p><p><strong>Delivery Address:</strong> {selectedOrder.adresaDorezimit}</p>
+            {selectedOrder.shenimet && <p><strong>Notes:</strong> {selectedOrder.shenimet}</p>}
+            <h6>Items:</h6>
+            <table className="table table-sm"><tbody>
+              {selectedOrder.orderItems?.map((item, idx) => (<tr key={idx}><td>{item.menuItem?.emertimi}</td><td>x{item.sasia}</td><td>€{(item.cmimi * item.sasia).toFixed(2)}</td></tr>))}
+            </tbody></table>
+            <h5>Total: {formatCurrency(selectedOrder.shumaTotale)}</h5>
           </div>
-        )}
+          <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button></div></div></div>
+        </div>
+      )}
     </section>
   );
 };

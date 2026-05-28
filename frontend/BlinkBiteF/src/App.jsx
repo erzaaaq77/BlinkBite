@@ -3259,6 +3259,7 @@ function App() {
         }),
       });
       const data = await res.json().catch(() => null);
+      console.log("Login response data:", JSON.stringify(data, null, 2)); // Shfaq objektin si tekst të lexueshëm
       if (!res.ok) {
         setLoginMessage(extractErrorMessage(data, "Login failed. Check your credentials."));
         return;
