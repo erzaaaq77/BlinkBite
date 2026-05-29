@@ -38,6 +38,10 @@ public class MenuItemBranchController : ControllerBase
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
+        // Debug log
+        Console.WriteLine($"UPDATE REQUEST: itemId={itemId}, branchId={branchId}, role={role}, userId={userId}");
+        Console.WriteLine($"Data: price={branchData.Cmimi}, available={branchData.Disponueshme}, ingredients={branchData.Perberesit}, options={branchData.RequestOptions}");
+
         if (role == AppRoles.BranchManager)
         {
             var branch = await _context.RestaurantAddresses
@@ -75,7 +79,13 @@ public class MenuItemBranchController : ControllerBase
             mib.PromotionId = branchData.PromotionId;
 
         await _context.SaveChangesAsync();
-        return Ok(mib);
+
+        // Kthe të dhënat e plota për refresh
+        return Ok(new
+        {
+            message = "Branch menu item updated successfully",
+            data = mib
+        });
     }
 
     [HttpDelete("{itemId}/branch/{branchId}")]

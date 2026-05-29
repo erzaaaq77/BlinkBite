@@ -50,5 +50,5 @@ public class MenuItems
     public virtual RestaurantAddress? RestaurantAddress { get; set; }
 
     // Lidhje me branch customizations
-    public virtual ICollection<MenuItemBranch>? BranchDetails { get; set; }
+    public virtual ICollection<MenuItemBranch> BranchDetails { get; set; } = new List<MenuItemBranch>();
 }

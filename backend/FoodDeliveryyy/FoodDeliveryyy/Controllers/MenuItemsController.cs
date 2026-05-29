@@ -21,14 +21,35 @@ public class MenuItemsController : ControllerBase
 
     [HttpGet]
     [AllowAnonymous]
-    public async Task<ActionResult<IEnumerable<object>>> GetMenuItems([FromQuery] int? branchId = null)
+    public async Task<ActionResult<IEnumerable<object>>> GetMenuItems([FromQuery] int? branchId = null, [FromQuery] int? restaurantId = null)
     {
         try
         {
-            var items = await _context.MenuItems
+            IQueryable<MenuItems> query = _context.MenuItems
                 .Include(m => m.Category)
-                .Include(m => m.BranchDetails)  // Shto këtë
-                .ToListAsync();
+                .Include(m => m.BranchDetails);
+
+            // 🔥 FILTRO SIPAS BRANCH-IT (për Branch Manager)
+            if (branchId.HasValue)
+            {
+                var branch = await _context.RestaurantAddresses
+                    .FirstOrDefaultAsync(b => b.Id == branchId.Value);
+
+                if (branch != null)
+                {
+                    query = query.Where(m => m.Category != null && m.Category.RestaurantId == branch.RestaurantId);
+                    Console.WriteLine($"Filtering by branch {branchId} -> Restaurant {branch.RestaurantId}");
+                }
+            }
+            // 🔥 FILTRO SIPAS RESTORANTIT (për Merchant)
+            else if (restaurantId.HasValue)
+            {
+                query = query.Where(m => m.Category != null && m.Category.RestaurantId == restaurantId.Value);
+                Console.WriteLine($"Filtering by restaurant {restaurantId}");
+            }
+
+            var items = await query.ToListAsync();
+            Console.WriteLine($"Found {items.Count} items");
 
             var result = items.Select(item => {
                 MenuItemBranch? branchCustom = null;
@@ -36,9 +57,6 @@ public class MenuItemsController : ControllerBase
                 {
                     branchCustom = item.BranchDetails
                         .FirstOrDefault(b => b.RestaurantAddressId == branchId.Value);
-
-                    // Debug log
-                    Console.WriteLine($"Item: {item.Emertimi}, BranchId: {branchId}, Found: {branchCustom != null}, CustomPrice: {branchCustom?.Cmimi}, GlobalPrice: {item.Cmimi}");
                 }
 
                 return new
@@ -56,18 +74,7 @@ public class MenuItemsController : ControllerBase
                     item.CategoryId,
                     CategoryName = item.Category?.Emertimi,
                     item.RestaurantAddressId,
-                    HasBranchCustomization = branchCustom != null,
-                    BranchCustom = branchCustom == null ? null : new
-                    {
-                        branchCustom.Id,
-                        branchCustom.MenuItemId,
-                        branchCustom.RestaurantAddressId,
-                        branchCustom.Cmimi,
-                        branchCustom.Disponueshme,
-                        branchCustom.Perberesit,
-                        branchCustom.RequestOptions,
-                        branchCustom.PromotionId
-                    }
+                    HasBranchCustomization = branchCustom != null
                 };
             });
 

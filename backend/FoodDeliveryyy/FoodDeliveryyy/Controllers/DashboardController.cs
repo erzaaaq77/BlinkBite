@@ -105,8 +105,13 @@ public class DashboardController : ControllerBase
                 if (!branchAddresses.Any())
                     return NotFound("No branch found for this branch manager");
 
+                // Sigurohu që po merr restorantin nga branch-i i parë
                 var restaurantId = branchAddresses[0].RestaurantId;
                 restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId);
+
+                // Shto këtë log për debugging
+                Console.WriteLine($"Branch Manager {userId} - Restaurant: {restaurant?.Emertimi} (ID: {restaurant?.Id})");
+
                 if (restaurant == null)
                     return NotFound("No restaurant found for this branch manager");
 

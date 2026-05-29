@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
+// Helper: get query param from URL
+function getQueryParam(name) {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search || window.location.hash.split('?')[1] || '');
+  return params.get(name);
+}
+
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 const MENU_CUSTOMIZATION_KEY = "blinkbite_menu_customizations_v1";
@@ -17,41 +24,6 @@ const getApiHostLabel = () => {
 const toNumberId = (value) => {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-const filterItemsByRestaurant = (items, rid) => {
-  const targetRestaurantId = toNumberId(rid);
-  if (!Array.isArray(items) || !targetRestaurantId) return [];
-
-  return items.filter((item) => {
-    const itemRestaurantId = toNumberId(item?.restaurantId ?? item?.RestaurantId);
-    return itemRestaurantId === targetRestaurantId;
-  });
-};
-
-const filterItemsByRestaurantAddress = (items, restaurantAddressId) => {
-  const targetAddressId = toNumberId(restaurantAddressId);
-  if (!Array.isArray(items) || !targetAddressId) return [];
-
-  return items.filter((item) => {
-    const itemAddressId = toNumberId(item?.restaurantAddressId ?? item?.RestaurantAddressId);
-    return itemAddressId === targetAddressId;
-  });
-};
-
-const scopeItemsByCategory = (items, categories) => {
-  if (!Array.isArray(items) || !Array.isArray(categories)) return [];
-
-  const allowedCategoryIds = new Set(
-    categories
-      .map((category) => toNumberId(category?.id ?? category?.Id))
-      .filter((id) => Number.isFinite(id))
-  );
-
-  return items.filter((item) => {
-    const categoryId = toNumberId(item?.categoryId ?? item?.CategoryId);
-    return categoryId ? allowedCategoryIds.has(categoryId) : false;
-  });
 };
 
 const normalizeTextList = (value) => {
@@ -71,9 +43,9 @@ const normalizeTextList = (value) => {
   return Array.from(
     new Set(
       source
-        .split(/[\n,;|]/)
-        .map((entry) => entry.trim())
-        .filter(Boolean)
+          .split(/[\n,;|]/)
+          .map((entry) => entry.trim())
+          .filter(Boolean)
     )
   );
 };
@@ -337,21 +309,29 @@ const applyImageFallbackCandidate = (event, candidates, finalFallback = "") => {
   }
 };
 
-const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, currentUserRole = "", onBack }) => {
+const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaurantAddressId = null, currentUserRole = "", onBack }) => {
   const normalizedRole = String(currentUserRole || "").trim().toLowerCase();
   const isBranchManagerRole = normalizedRole === "branchmanager";
+  
+  const [restaurantAddressId, setRestaurantAddressId] = useState(() => {
+    const fromUrl = getQueryParam('branchId');
+    return fromUrl || propRestaurantAddressId || null;
+  });
+
+  // Sync branchId with URL on hashchange
+  useEffect(() => {
+    const syncBranchId = () => {
+      const fromUrl = getQueryParam('branchId');
+      if (fromUrl && fromUrl !== restaurantAddressId) setRestaurantAddressId(fromUrl);
+    };
+    window.addEventListener('hashchange', syncBranchId);
+    return () => window.removeEventListener('hashchange', syncBranchId);
+  }, [restaurantAddressId]);
+  
   const [menuItems, setMenuItems] = useState([]);
   const [restaurantCategories, setRestaurantCategories] = useState([]);
   const [branchOptions, setBranchOptions] = useState([]);
   const [branchesLoading, setBranchesLoading] = useState(false);
-  const [branchFetchDebug, setBranchFetchDebug] = useState({ endpoint: '', status: '', error: '', response: '' });
-  const [debugStats, setDebugStats] = useState({
-    allItemsCount: 0,
-    byCategoryCount: 0,
-    byRestaurantCount: 0,
-    selectedCount: 0,
-    categoriesCount: 0,
-  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [toast, setToast] = useState({ visible: false, type: "success", message: "" });
@@ -380,19 +360,15 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
     const fetchBranches = async () => {
       if (!token || !restaurantId) {
         setBranchOptions([]);
-        setBranchFetchDebug({ endpoint: '', status: '', error: 'Missing token or restaurantId', response: '' });
         return;
       }
 
       setBranchesLoading(true);
-      setBranchFetchDebug({ endpoint: '', status: '', error: '', response: '' });
-
       const endpoint = `${API_BASE_URL}/Dashboard/Merchant`;
       try {
         const response = await axios.get(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setBranchFetchDebug({ endpoint, status: response.status, error: '', response: JSON.stringify(response.data) });
 
         const rows = Array.isArray(response.data?.addresses)
           ? response.data.addresses
@@ -414,12 +390,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
 
         setBranchOptions(normalized);
       } catch (err) {
-        setBranchFetchDebug({
-          endpoint,
-          status: err?.response?.status || '',
-          error: err?.message || String(err),
-          response: err?.response ? JSON.stringify(err.response.data) : '',
-        });
+        console.error(err);
         setBranchOptions([]);
       }
 
@@ -430,72 +401,64 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
   }, [restaurantId, token]);
 
   const fetchMenuItems = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const categoriesResponse = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurantId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
-      setRestaurantCategories(categories);
+  setLoading(true);
+  setError("");
+  try {
+    // Merr kategoritë
+    const categoriesResponse = await axios.get(`${API_BASE_URL}/MenuCategories/by-restaurant/${restaurantId}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const categories = Array.isArray(categoriesResponse.data) ? categoriesResponse.data : [];
+    setRestaurantCategories(categories);
 
-      let url = `${API_BASE_URL}/MenuItems`;
-      if (isBranchManagerRole && restaurantAddressId) {
-        url += `?branchId=${restaurantAddressId}&t=${Date.now()}`;
-      } else {
-        url += `?t=${Date.now()}`;
-      }
-      
-      const response = await axios.get(url, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      const allItems = Array.isArray(response.data) ? response.data : [];
-      
-      let scopedItems = allItems;
-      
-      if (!isBranchManagerRole) {
-        const scopedByAddress = filterItemsByRestaurantAddress(allItems, restaurantAddressId);
-        const scopedByCategories = scopeItemsByCategory(allItems, categories);
-        scopedItems = scopedByAddress.length > 0
-          ? scopedByAddress
-          : (scopedByCategories.length > 0 ? scopedByCategories : filterItemsByRestaurant(allItems, restaurantId));
-      }
-
-      setDebugStats({
-        allItemsCount: allItems.length,
-        byAddressCount: scopedItems.filter(i => i.restaurantAddressId).length,
-        byCategoryCount: scopedItems.length,
-        byRestaurantCount: scopedItems.length,
-        selectedCount: scopedItems.length,
-        categoriesCount: categories.length,
-      });
-
-      const localOverrides = loadMenuCustomizations();
-      setMenuItems(
-        scopedItems.map((item) => {
-          const itemId = String(item?.id ?? item?.Id ?? "");
-          return mergeCustomizationIntoItem(item, localOverrides[itemId]);
-        })
-      );
-
-      if (categories.length > 0) {
-        const firstCategoryId = categories[0]?.id ?? categories[0]?.Id;
-        setFormData((prev) => ({
-          ...prev,
-          categoryId: prev.categoryId || firstCategoryId || 1,
-        }));
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load menu items");
-    } finally {
-      setLoading(false);
+    const timestamp = Date.now();
+    let url = `${API_BASE_URL}/MenuItems?_t=${timestamp}`;
+    
+    // 🔥 NDRYSHO KËTË PJESË - Dërgo parametrin e duhur
+    if (restaurantAddressId) {
+      // Branch Manager - filtro sipas branchId
+      url += `&branchId=${restaurantAddressId}`;
+      console.log("Branch Manager mode - branchId:", restaurantAddressId);
+    } else {
+      // Merchant - filtro sipas restaurantId
+      url += `&restaurantId=${restaurantId}`;
+      console.log("Merchant mode - restaurantId:", restaurantId);
     }
-  };
+
+    console.log("Fetching menu from URL:", url);
+    
+    const response = await axios.get(url, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
+    
+    const allItems = Array.isArray(response.data) ? response.data : [];
+    console.log(`Received ${allItems.length} items from backend`);
+
+    // Nuk nevojitet filtrimi në frontend sepse backend-i tashmë filtron
+    setMenuItems(
+      allItems.map((item) => {
+        return mergeCustomizationIntoItem(item, {});
+      })
+    );
+
+    if (categories.length > 0) {
+      const firstCategoryId = categories[0]?.id ?? categories[0]?.Id;
+      setFormData((prev) => ({
+        ...prev,
+        categoryId: prev.categoryId || firstCategoryId || 1,
+      }));
+    }
+  } catch (err) {
+    console.error(err);
+    setError("Failed to load menu items");
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     if (!token) {
@@ -772,7 +735,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
           );
           savedItemId = editingItemId;
           showToast("Branch menu item updated.", "success");
-          await fetchMenuItems();
         } else {
           await saveWithPayloadFallback((candidatePayload) =>
             axios.put(
@@ -783,7 +745,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
           );
           savedItemId = editingItemId;
           showToast("Menu item updated.", "success");
-          await fetchMenuItems();
         }
       } else {
         const createResponse = await saveWithPayloadFallback((candidatePayload) =>
@@ -795,18 +756,10 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
         );
         savedItemId = createResponse?.data?.id ?? createResponse?.data?.Id ?? null;
         showToast("Menu item created.", "success");
-        await fetchMenuItems();
       }
 
-      if (savedItemId) {
-        const map = loadMenuCustomizations();
-        map[String(savedItemId)] = {
-          ingredients: normalizeTextList(formData.perberesit),
-          requestOptions: mergeRequestOptionsWithIngredients(formData.perberesit, formData.requestOptions),
-        };
-        saveMenuCustomizations(map);
-      }
-
+      // 🔥 REFRESHO LISTËN PAS EDITIMIT
+      await fetchMenuItems();
       setShowModal(false);
     } catch (error) {
       console.error(error);
@@ -832,14 +785,8 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
         await axios.delete(`${API_BASE_URL}/MenuItems/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setMenuItems(menuItems.filter(item => Number(item.id ?? item.Id) !== Number(id)));
-
-        const map = loadMenuCustomizations();
-        delete map[String(id)];
-        saveMenuCustomizations(map);
-
-        showToast("Menu item deleted.", "success");
         await fetchMenuItems();
+        showToast("Menu item deleted.", "success");
       } catch (error) {
         console.error(error);
         showToast("Failed to delete menu item.", "danger");
@@ -847,19 +794,11 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
     }
   };
 
-  const normalizedMenuItems = Array.isArray(menuItems) ? menuItems : Array.isArray(menuItems?.items) ? menuItems.items : [];
-
+  const normalizedMenuItems = Array.isArray(menuItems) ? menuItems : [];
   const debugApiHost = getApiHostLabel();
   const debugRestaurantId = toNumberId(restaurantId);
   const itemsWithIngredientsCount = normalizedMenuItems.filter((item) => getItemIngredients(item).length > 0).length;
   const itemsWithRequestOptionsCount = normalizedMenuItems.filter((item) => getItemRequestOptions(item).length > 0).length;
-  const debugSampleItems = normalizedMenuItems.slice(0, 3).map((item) => {
-    const itemId = item?.id ?? item?.Id ?? "?";
-    const name = item?.emertimi ?? item?.Emertimi ?? "Item";
-    const ingredients = getItemIngredients(item);
-    const options = getItemRequestOptions(item);
-    return `#${itemId} ${name} [ing=${ingredients.length}, req=${options.length}]`;
-  }).join(" | ");
 
   const formatPrice = (value) => {
     const numeric = Number(value);
@@ -921,11 +860,9 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId = null, curre
       </div>
 
       <div className="alert alert-secondary py-2 px-3 small" role="status">
-        <strong>Debug:</strong> API Host: {debugApiHost} | API Base: {API_BASE_URL} | Restaurant ID: {debugRestaurantId ?? "missing"}
+        <strong>Debug:</strong> API Host: {debugApiHost} | Restaurant ID: {debugRestaurantId ?? "missing"} | Branch ID: {restaurantAddressId || "none"}
         <br />
-        Counts: allItems={debugStats.allItemsCount} | byCategory={debugStats.byCategoryCount} | byRestaurant={debugStats.byRestaurantCount} | selected={debugStats.selectedCount} | categories={debugStats.categoriesCount}
-        <br />
-        Data: withIngredients={itemsWithIngredientsCount} | withRequestOptions={itemsWithRequestOptionsCount} | sample={debugSampleItems || "no items"}
+        Items loaded: {normalizedMenuItems.length} | Categories: {restaurantCategories.length}
       </div>
 
       <div className="card mb-3">

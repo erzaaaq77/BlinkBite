@@ -86,6 +86,17 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   
   const restaurant = dashboard?.restaurant || {};
 
+  // Debug log për të parë restorantin e Branch Manager
+  useEffect(() => {
+    if (dashboard && isBranchManagerRole) {
+      console.log("=== BRANCH MANAGER DASHBOARD ===");
+      console.log("Restaurant ID:", restaurant.id);
+      console.log("Restaurant Name:", restaurant.emertimi);
+      console.log("Branches:", dashboard.addresses);
+      console.log("================================");
+    }
+  }, [dashboard, isBranchManagerRole, restaurant.id, restaurant.emertimi]);
+
   const normalizeStatusLabel = (statusValue) => {
     if (typeof statusValue === "number") {
       return ORDER_STATUS_LABELS[statusValue] || `Status ${statusValue}`;
@@ -119,6 +130,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         const response = await axios.get(`${API_BASE_URL}/Dashboard/Merchant`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        console.log("Dashboard API Response:", response.data);
         setDashboard(response.data || null);
         setError("");
       } catch (err) {
@@ -143,87 +155,63 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       console.error("Failed to fetch categories", error);
     }
   };
-const handleSaveCategory = async () => {
-  if (!categoryForm.emertimi.trim()) {
-    toast.error("Category name is required");
-    return;
-  }
 
-  try {
-    if (editingCategory) {
-      await axios.patch(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`, {
-        emertimi: categoryForm.emertimi,
-        pershkrimi: categoryForm.pershkrimi || "",
-        renditja: categoryForm.renditja || 0
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("Category updated successfully");
-    } else {
-      await axios.post(`${API_BASE_URL}/MenuCategories`, {
-        emertimi: categoryForm.emertimi,
-        pershkrimi: categoryForm.pershkrimi || "",
-        renditja: categoryForm.renditja || 0,
-        restaurantId: restaurant.id
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("Category created successfully");
+  const handleSaveCategory = async () => {
+    if (!categoryForm.emertimi.trim()) {
+      alert("Category name is required");
+      return;
+    }
+
+    try {
+      if (editingCategory) {
+        await axios.put(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`, {
+          ...editingCategory,
+          emertimi: categoryForm.emertimi,
+          pershkrimi: categoryForm.pershkrimi,
+          renditja: categoryForm.renditja,
+          restaurantId: restaurant.id
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Category updated successfully");
+      } else {
+        await axios.post(`${API_BASE_URL}/MenuCategories`, {
+          emertimi: categoryForm.emertimi,
+          pershkrimi: categoryForm.pershkrimi,
+          renditja: categoryForm.renditja,
+          restaurantId: restaurant.id
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        toast.success("Category created successfully");
+      }
+      
+      setShowAddCategoryModal(false);
+      setEditingCategory(null);
+      setCategoryForm({ emertimi: "", pershkrimi: "", renditja: 0 });
+      fetchCategories();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to save category");
+    }
+  };
+
+  const handleDeleteCategory = async (category) => {
+    if (!confirm(`Are you sure you want to delete category "${category.emertimi}"? Items in this category will also be deleted.`)) {
+      return;
     }
     
-    setShowAddCategoryModal(false);
-    setEditingCategory(null);
-    setCategoryForm({ emertimi: "", pershkrimi: "", renditja: 0 });
-    fetchCategories();
-  } catch (error) {
-    toast.error(error.response?.data?.message || "Failed to save category");
-  }
-};
-const handleDeleteCategory = async (category) => {
-  const result = await Swal.fire({
-    title: `Delete category "${category.emertimi}"?`,
-    text: "Items in this category will also be deleted. This action cannot be undone!",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, delete",
-    confirmButtonColor: "#d33",
-    cancelButtonText: "Cancel",
-    reverseButtons: true,
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    Swal.fire({
-      title: "Deleting...",
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
-
-    await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    Swal.fire({
-      icon: "success",
-      title: "Deleted!",
-      text: `Category "${category.emertimi}" has been deleted.`,
-      timer: 1500,
-      showConfirmButton: false,
-    });
-    
-    fetchCategories();
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Delete failed",
-      text: error.response?.data?.message || "Failed to delete category",
-      confirmButtonColor: "#d33",
-    });
-  }
-};
+    try {
+      await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Category deleted successfully");
+      fetchCategories();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to delete category");
+    }
+  };
 
   const handleAddBranch = async () => {
     if (!newBranch.address.trim()) {
@@ -274,39 +262,34 @@ const handleDeleteCategory = async (category) => {
     }
   };
 
- const submitEditRequest = async () => {
-  // Kjo formë është e saktë për edit, por verifiko
-  try {
-    const response = await axios.post(`${API_BASE_URL}/BranchRequest/request-edit`, {
-      branchId: requestData.branchId,
-      newAddress: requestData.newAddress,
-      newCity: requestData.newCity,
-      newZone: requestData.newZone,
-      newDeliveryFee: parseFloat(requestData.newDeliveryFee),
-      reason: requestData.reason,
-      newIsActive: true  // shto edhe këtë nëse është e nevojshme
-    }, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    
-    console.log("Edit request response:", response.data);
-    toast.success("Edit request submitted for admin approval");
-    setShowEditModal(false);
-    setSelectedBranch(null);
-    setRequestData({
-      branchId: null,
-      newAddress: "",
-      newCity: "",
-      newZone: "",
-      newDeliveryFee: "",
-      reason: ""
-    });
-  } catch (err) {
-    console.error(err);
-    console.error("Error details:", err.response?.data);
-    toast.error(err.response?.data || "Failed to send request");
-  }
-};
+  const submitEditRequest = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/BranchRequest/request-edit`, {
+        branchId: requestData.branchId,
+        newAddress: requestData.newAddress,
+        newCity: requestData.newCity,
+        newZone: requestData.newZone,
+        newDeliveryFee: parseFloat(requestData.newDeliveryFee),
+        reason: requestData.reason,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setShowEditModal(false);
+      setSelectedBranch(null);
+      setRequestData({
+        branchId: null,
+        newAddress: "",
+        newCity: "",
+        newZone: "",
+        newDeliveryFee: "",
+        reason: ""
+      });
+      toast.success("Edit request submitted for admin approval");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send request");
+    }
+  };
 
   const handleLogoUpload = async (file) => {
     if (!file) return;
@@ -384,36 +367,27 @@ const handleDeleteCategory = async (category) => {
   };
 
   const submitDeleteRequest = async () => {
-  if (!selectedBranch) {
-    toast.error("No branch selected for deletion request.");
-    return;
-  }
+    if (!selectedBranch) {
+      toast.error("No branch selected for deletion request.");
+      return;
+    }
 
-  const branchId = selectedBranch.id ?? selectedBranch.Id;
-  
-  // Kërko arsye nga përdoruesi
-  const reason = prompt("Why do you want to delete this branch? (Optional)");
-  
-  try {
-    const response = await axios.post(
-      `${API_BASE_URL}/BranchRequest/request-delete/${branchId}`,
-      reason || "",  // dërgo reason si string në body
-      { 
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    toast.success("Delete request sent to admin for approval.");
-    setShowDeleteModal(false);
-    setSelectedBranch(null);
-  } catch (err) {
-    console.error(err);
-    toast.error(err.response?.data || "Failed to send delete request.");
-  }
-};
+    try {
+      await axios.post(`${API_BASE_URL}/BranchRequest/request-delete`, {
+        branchId: selectedBranch.id ?? selectedBranch.Id,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      toast.success("Delete request sent to admin for approval.");
+      setShowDeleteModal(false);
+      setSelectedBranch(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send delete request.");
+    }
+  };
+
   useEffect(() => {
     fetchDashboard();
   }, [fetchDashboard]);
@@ -473,7 +447,6 @@ const handleDeleteCategory = async (category) => {
     return [];
   };
 
-  
   const handleStatusUpdate = async (order, nextStatus) => {
     const orderId = Number(order?.id);
     if (!Number.isFinite(orderId) || !nextStatus) return;
@@ -830,22 +803,10 @@ const handleDeleteCategory = async (category) => {
             <div className="merchant-card merchant-card-soft h-100">
               <h5 className="merchant-section-title mb-3">Restaurant Snapshot</h5>
               <div className="merchant-info-grid">
-                <div className="merchant-info-cell">
-                  <span className="merchant-label">Name</span>
-                  <p className="merchant-value mb-0">{restaurantName}</p>
-                </div>
-                <div className="merchant-info-cell">
-                  <span className="merchant-label">Rating</span>
-                  <p className="merchant-value mb-0">{Number(restaurant.rating || 0).toFixed(1)} / 5</p>
-                </div>
-                <div className="merchant-info-cell">
-                  <span className="merchant-label">Reviews</span>
-                  <p className="merchant-value mb-0">{reviews.total || 0}</p>
-                </div>
-                <div className="merchant-info-cell">
-                  <span className="merchant-label">Average</span>
-                  <p className="merchant-value mb-0">{Number(reviews.average || restaurant.rating || 0).toFixed(1)} stars</p>
-                </div>
+                <div className="merchant-info-cell"><span className="merchant-label">Name</span><p className="merchant-value mb-0">{restaurantName}</p></div>
+                <div className="merchant-info-cell"><span className="merchant-label">Rating</span><p className="merchant-value mb-0">{Number(restaurant.rating || 0).toFixed(1)} / 5</p></div>
+                <div className="merchant-info-cell"><span className="merchant-label">Reviews</span><p className="merchant-value mb-0">{reviews.total || 0}</p></div>
+                <div className="merchant-info-cell"><span className="merchant-label">Average</span><p className="merchant-value mb-0">{Number(reviews.average || restaurant.rating || 0).toFixed(1)} stars</p></div>
               </div>
             </div>
           </div>
@@ -924,7 +885,18 @@ const handleDeleteCategory = async (category) => {
                       </div>
                     </div>
                     <div className="d-flex gap-2">
-                      <button className="btn btn-sm btn-outline-primary flex-grow-1" onClick={() => { window.location.hash = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}`; }}>Manage menu</button>
+                      <button 
+                        className="btn btn-sm btn-outline-primary flex-grow-1" 
+  onClick={() => { 
+    // Shto timestamp për të shmangur cache në URL
+    const timestamp = Date.now();
+    const url = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}&_t=${timestamp}`;
+    console.log("Navigating to:", url);
+    window.location.hash = url;
+  }}
+>
+  Manage menu for this location
+</button>
                       {!isBranchManagerRole && (
                         <>
                           <button className="btn btn-sm btn-outline-secondary" onClick={() => openEditBranchModal(address)} title="Request Edit">✏️</button>
@@ -991,10 +963,7 @@ const handleDeleteCategory = async (category) => {
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header">
-                <h5>Add New Branch</h5>
-                <button className="btn-close" onClick={() => setShowAddBranchModal(false)}></button>
-              </div>
+              <div className="modal-header"><h5>Add New Branch</h5><button className="btn-close" onClick={() => setShowAddBranchModal(false)}></button></div>
               <div className="modal-body">
                 <input type="text" className="form-control mb-2" placeholder="Address *" value={newBranch.address} onChange={e => setNewBranch({...newBranch, address: e.target.value})} />
                 <select className="form-select mb-2" value={newBranch.city} onChange={e => setNewBranch({...newBranch, city: e.target.value})}>
@@ -1005,18 +974,9 @@ const handleDeleteCategory = async (category) => {
                 <input type="number" step="any" className="form-control mb-2" placeholder="Latitude" value={newBranch.latitude} onChange={e => setNewBranch({...newBranch, latitude: parseFloat(e.target.value) || 0})} />
                 <input type="number" step="any" className="form-control mb-2" placeholder="Longitude" value={newBranch.longitude} onChange={e => setNewBranch({...newBranch, longitude: parseFloat(e.target.value) || 0})} />
                 <input type="number" step="0.5" className="form-control mb-2" placeholder="Delivery Fee (€)" value={newBranch.deliveryFee} onChange={e => setNewBranch({...newBranch, deliveryFee: parseFloat(e.target.value) || 0})} />
-                <div className="form-check mb-2">
-                  <input type="checkbox" className="form-check-input" checked={newBranch.isMain} onChange={e => setNewBranch({...newBranch, isMain: e.target.checked})} />
-                  <label>Main Branch</label>
-                </div>
-                <div className="form-check mb-2">
-                  <input type="checkbox" className="form-check-input" checked={newBranch.isActive} onChange={e => setNewBranch({...newBranch, isActive: e.target.checked})} />
-                  <label>Active</label>
-                </div>
-                <div className="form-check mb-2">
-                  <input type="checkbox" className="form-check-input" checked={newBranch.createManager} onChange={e => setNewBranch({...newBranch, createManager: e.target.checked})} />
-                  <label>Create Branch Manager account</label>
-                </div>
+                <div className="form-check mb-2"><input type="checkbox" className="form-check-input" checked={newBranch.isMain} onChange={e => setNewBranch({...newBranch, isMain: e.target.checked})} /><label>Main Branch</label></div>
+                <div className="form-check mb-2"><input type="checkbox" className="form-check-input" checked={newBranch.isActive} onChange={e => setNewBranch({...newBranch, isActive: e.target.checked})} /><label>Active</label></div>
+                <div className="form-check mb-2"><input type="checkbox" className="form-check-input" checked={newBranch.createManager} onChange={e => setNewBranch({...newBranch, createManager: e.target.checked})} /><label>Create Branch Manager account</label></div>
                 {newBranch.createManager && (
                   <>
                     <input type="text" className="form-control mb-2" placeholder="Manager Name" value={newBranch.managerName} onChange={e => setNewBranch({...newBranch, managerName: e.target.value})} />
@@ -1024,10 +984,7 @@ const handleDeleteCategory = async (category) => {
                   </>
                 )}
               </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Creating..." : "Create Branch"}</button>
-              </div>
+              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Creating..." : "Create Branch"}</button></div>
             </div>
           </div>
         </div>
@@ -1038,19 +995,13 @@ const handleDeleteCategory = async (category) => {
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header">
-                <h5>{editingCategory ? "Edit Category" : "Add Category"}</h5>
-                <button className="btn-close" onClick={() => setShowAddCategoryModal(false)}></button>
-              </div>
+              <div className="modal-header"><h5>{editingCategory ? "Edit Category" : "Add Category"}</h5><button className="btn-close" onClick={() => setShowAddCategoryModal(false)}></button></div>
               <div className="modal-body">
                 <input type="text" className="form-control mb-2" placeholder="Category Name" value={categoryForm.emertimi} onChange={(e) => setCategoryForm({...categoryForm, emertimi: e.target.value})} />
                 <textarea className="form-control mb-2" placeholder="Description" rows="2" value={categoryForm.pershkrimi} onChange={(e) => setCategoryForm({...categoryForm, pershkrimi: e.target.value})} />
                 <input type="number" className="form-control mb-2" placeholder="Display Order" value={categoryForm.renditja} onChange={(e) => setCategoryForm({...categoryForm, renditja: parseInt(e.target.value) || 0})} />
               </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowAddCategoryModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSaveCategory}>Save Category</button>
-              </div>
+              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddCategoryModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleSaveCategory}>Save Category</button></div>
             </div>
           </div>
         </div>
@@ -1061,10 +1012,7 @@ const handleDeleteCategory = async (category) => {
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header">
-                <h5>Request Branch Edit</h5>
-                <button className="btn-close" onClick={() => setShowEditModal(false)}></button>
-              </div>
+              <div className="modal-header"><h5>Request Branch Edit</h5><button className="btn-close" onClick={() => setShowEditModal(false)}></button></div>
               <div className="modal-body">
                 <input type="text" className="form-control mb-2" placeholder="Address" value={requestData.newAddress} onChange={(e) => setRequestData({...requestData, newAddress: e.target.value})} />
                 <input type="text" className="form-control mb-2" placeholder="City" value={requestData.newCity} onChange={(e) => setRequestData({...requestData, newCity: e.target.value})} />
@@ -1072,10 +1020,7 @@ const handleDeleteCategory = async (category) => {
                 <input type="text" className="form-control mb-2" placeholder="Delivery Fee" value={requestData.newDeliveryFee} onChange={(e) => setRequestData({...requestData, newDeliveryFee: e.target.value})} />
                 <textarea className="form-control mb-2" placeholder="Reason" rows="3" value={requestData.reason} onChange={(e) => setRequestData({...requestData, reason: e.target.value})} />
               </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={submitEditRequest}>Send Request</button>
-              </div>
+              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowEditModal(false)}>Cancel</button><button className="btn btn-primary" onClick={submitEditRequest}>Send Request</button></div>
             </div>
           </div>
         </div>
@@ -1086,18 +1031,12 @@ const handleDeleteCategory = async (category) => {
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-dialog-centered">
             <div className="modal-content">
-              <div className="modal-header">
-                <h5>Request Branch Delete</h5>
-                <button className="btn-close" onClick={() => setShowDeleteModal(false)}></button>
-              </div>
+              <div className="modal-header"><h5>Request Branch Delete</h5><button className="btn-close" onClick={() => setShowDeleteModal(false)}></button></div>
               <div className="modal-body">
                 <p>Are you sure you want to request deletion for branch <strong>{selectedBranch.adresa || selectedBranch.address}</strong>?</p>
                 <p className="small text-muted">This will send a delete request to admin for review.</p>
               </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-                <button className="btn btn-danger" onClick={submitDeleteRequest}>Send Delete Request</button>
-              </div>
+              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowDeleteModal(false)}>Cancel</button><button className="btn btn-danger" onClick={submitDeleteRequest}>Send Delete Request</button></div>
             </div>
           </div>
         </div>
@@ -1108,10 +1047,7 @@ const handleDeleteCategory = async (category) => {
         <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
           <div className="modal-dialog modal-lg">
             <div className="modal-content">
-              <div className="modal-header">
-                <h5>Order #{selectedOrder.id} Details</h5>
-                <button className="btn-close" onClick={() => setShowModal(false)}></button>
-              </div>
+              <div className="modal-header"><h5>Order #{selectedOrder.id} Details</h5><button className="btn-close" onClick={() => setShowModal(false)}></button></div>
               <div className="modal-body">
                 <p><strong>Customer:</strong> {selectedOrder.user?.userName}</p>
                 <p><strong>Date:</strong> {new Date(selectedOrder.dataPorosis).toLocaleString()}</p>
@@ -1119,22 +1055,12 @@ const handleDeleteCategory = async (category) => {
                 <p><strong>Delivery Address:</strong> {selectedOrder.adresaDorezimit}</p>
                 {selectedOrder.shenimet && <p><strong>Notes:</strong> {selectedOrder.shenimet}</p>}
                 <h6>Items:</h6>
-                <table className="table table-sm">
-                  <tbody>
-                    {selectedOrder.orderItems?.map((item, idx) => (
-                      <tr key={idx}>
-                        <td>{item.menuItem?.emertimi}</td>
-                        <td>x{item.sasia}</td>
-                        <td>€{(item.cmimi * item.sasia).toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                <table className="table table-sm"><tbody>
+                  {selectedOrder.orderItems?.map((item, idx) => (<tr key={idx}><td>{item.menuItem?.emertimi}</td><td>x{item.sasia}</td><td>€{(item.cmimi * item.sasia).toFixed(2)}</td></tr>))}
+                </tbody></table>
                 <h5>Total: {formatCurrency(selectedOrder.shumaTotale)}</h5>
               </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button>
-              </div>
+              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button></div>
             </div>
           </div>
         </div>

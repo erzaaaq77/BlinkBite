@@ -204,18 +204,19 @@ function App() {
     const hash = window.location.hash || "#/";
 
     if (hash.startsWith("#/merchant/menu/")) {
-      const afterPrefix = hash.replace("#/merchant/menu/", "");
-      const [rawRestaurantId, queryString = ""] = afterPrefix.split("?");
-      const params = new URLSearchParams(queryString);
-      const branchParam = params.get("branchId") || "";
-      return {
-        page: "merchantMenu",
-        restaurantId: rawRestaurantId,
-        branchId: decodeURIComponent(branchParam),
-      };
-    }
+  let cleanHash = hash.split('?_t=')[0];
+  const afterPrefix = cleanHash.replace("#/merchant/menu/", "");
+  const [rawRestaurantId, queryString = ""] = afterPrefix.split("?");
+  const params = new URLSearchParams(queryString);
+  const branchParam = params.get("branchId") || "";
+  return {
+    page: "merchantMenu",
+    restaurantId: rawRestaurantId,
+    branchId: decodeURIComponent(branchParam),
+  };
+}
 
-   if (hash.startsWith("#/admin/branch-requests")) {
+if (hash.startsWith("#/admin/branch-requests")) {
   return {
     page: "adminBranchRequests",
     category: "",
@@ -4041,8 +4042,13 @@ function App() {
   }, [isMerchantLikeRole, token, ensureAudioCtx, doBeeps]);
 
   /* eslint-disable react-hooks/exhaustive-deps */
+    /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
-    if (!isMerchantLikeRole || !token) {
+    // 🔥 Sound dhe polling VETËM për Branch Manager (jo për Merchant kryesor)
+    const shouldPollForOrders = isBranchManagerRole && token && 
+      (page === "merchantDashboard" || page === "myOrders");
+    
+    if (!shouldPollForOrders) {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
       knownOrderIdsRef.current = null;
@@ -4059,12 +4065,9 @@ function App() {
         const ridEndpoints = Number.isFinite(rid) && rid > 0
           ? [`${API_BASE}/orders/by-restaurant/${rid}`, `${API_BASE}/orders/restaurant/${rid}`]
           : [];
-        // Same fallback chain as fetchOperationalOrders so we always find data
+        
         const endpoints = [
           ...ridEndpoints,
-       //   `${API_BASE}/orders/merchant`,
-         // `${API_BASE}/orders/for-merchant`,
-         // `${API_BASE}/orders/my-restaurant`,
           `${API_BASE}/orders/my`,
           `${API_BASE}/orders`,
         ];
@@ -4085,7 +4088,6 @@ function App() {
         );
 
         if (knownOrderIdsRef.current === null) {
-          // First load — just record, no notification
           knownOrderIdsRef.current = pendingIds;
           return;
         }
@@ -4099,12 +4101,11 @@ function App() {
           setRoleToastVisible(true);
           clearTimeout(roleToastTimerRef.current);
           roleToastTimerRef.current = setTimeout(() => setRoleToastVisible(false), 5000);
-          // Always refresh the board — use pageRef to avoid stale closure
-          fetchOperationalOrders();
+          if (pageRef.current === "myOrders") {
+            fetchOperationalOrders();
+          }
         } else {
-          // keep known set in sync with any resolved orders
           knownOrderIdsRef.current = new Set([...knownOrderIdsRef.current, ...pendingIds]);
-          // Also silently refresh board every poll if on myOrders
           if (pageRef.current === "myOrders") {
             fetchOperationalOrders();
           }
@@ -4114,7 +4115,6 @@ function App() {
       }
     };
 
-    // Run once immediately, then every 5s
     poll();
     pollingIntervalRef.current = setInterval(poll, 5000);
 
@@ -4122,7 +4122,7 @@ function App() {
       clearInterval(pollingIntervalRef.current);
       pollingIntervalRef.current = null;
     };
-  }, [isMerchantLikeRole, token, currentUser, page]);
+  }, [isBranchManagerRole, token, currentUser, page]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   const visibleRoleOrders = roleOrders.slice(0, roleOrdersVisibleCount);
