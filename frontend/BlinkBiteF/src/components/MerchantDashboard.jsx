@@ -367,26 +367,30 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   };
 
   const submitDeleteRequest = async () => {
-    if (!selectedBranch) {
-      toast.error("No branch selected for deletion request.");
-      return;
-    }
+  if (!selectedBranch) {
+    toast.error("No branch selected for deletion request.");
+    return;
+  }
 
-    try {
-      await axios.post(`${API_BASE_URL}/BranchRequest/request-delete`, {
-        branchId: selectedBranch.id ?? selectedBranch.Id,
-      }, {
+  const branchId = selectedBranch.id ?? selectedBranch.Id;
+  
+  try {
+    // 🔥 Ndrysho URL-në - dërgo branchId në URL, jo në body
+    await axios.post(`${API_BASE_URL}/BranchRequest/request-delete/${branchId}`, 
+      null,  // body i zbrazët (ose mund të dërgosh reason)
+      {
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }
+    );
 
-      toast.success("Delete request sent to admin for approval.");
-      setShowDeleteModal(false);
-      setSelectedBranch(null);
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to send delete request.");
-    }
-  };
+    toast.success("Delete request sent to admin for approval.");
+    setShowDeleteModal(false);
+    setSelectedBranch(null);
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to send delete request.");
+  }
+};
 
   useEffect(() => {
     fetchDashboard();
