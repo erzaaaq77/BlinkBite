@@ -130,7 +130,8 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         const response = await axios.get(`${API_BASE_URL}/Dashboard/Merchant`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        console.log("Dashboard API Response:", response.data);
+
+
         setDashboard(response.data || null);
         setError("");
       } catch (err) {
@@ -164,15 +165,18 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
 
     try {
       if (editingCategory) {
-        await axios.put(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`, {
-          ...editingCategory,
-          emertimi: categoryForm.emertimi,
-          pershkrimi: categoryForm.pershkrimi,
-          renditja: categoryForm.renditja,
-          restaurantId: restaurant.id
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        await axios.put(`${API_BASE_URL}/MenuCategories/${editingCategory.id}`,
+          {
+            id: editingCategory.id,
+            emertimi: categoryForm.emertimi,
+            pershkrimi: categoryForm.pershkrimi,
+            renditja: categoryForm.renditja,
+            restaurantId: restaurant.id
+          },
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        );
         toast.success("Category updated successfully");
       } else {
         await axios.post(`${API_BASE_URL}/MenuCategories`, {
@@ -185,7 +189,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         });
         toast.success("Category created successfully");
       }
-      
       setShowAddCategoryModal(false);
       setEditingCategory(null);
       setCategoryForm({ emertimi: "", pershkrimi: "", renditja: 0 });
@@ -830,10 +833,12 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
 
         {/* Categories Management - Only for Main Merchant */}
         {!isBranchManagerRole && (
-          <div className="merchant-card mb-4">
+          <div className="merchant-card mb-4 merchant-categories-modern">
             <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5 className="merchant-section-title mb-0">📂 Menu Categories</h5>
-              <button className="btn btn-sm btn-primary" onClick={() => { setEditingCategory(null); setCategoryForm({ emertimi: "", pershkrimi: "", renditja: categories.length + 1 }); setShowAddCategoryModal(true); }}>
+              <h4 className="merchant-categories-header mb-0">
+                Menu Categories
+              </h4>
+              <button className="btn btn-modern-primary" onClick={() => { setEditingCategory(null); setCategoryForm({ emertimi: "", pershkrimi: "", renditja: categories.length + 1 }); setShowAddCategoryModal(true); }}>
                 + Add Category
               </button>
             </div>
@@ -841,17 +846,26 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
               <p className="text-muted">No categories yet. Create your first category to start adding menu items.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table table-hover">
-                  <thead><tr><th>Order</th><th>Name</th><th>Description</th><th>Actions</th></tr></thead>
+                <table className="table merchant-categories-table">
+                  <thead>
+                    <tr>
+                      <th>Order</th>
+                      <th>Name</th>
+                      <th>Description</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
                   <tbody>
                     {categories.sort((a,b) => a.renditja - b.renditja).map((cat) => (
                       <tr key={cat.id}>
                         <td style={{ width: "80px" }}>{cat.renditja}</td>
                         <td><strong>{cat.emertimi}</strong></td>
                         <td>{cat.pershkrimi || "-"}</td>
-                        <td style={{ width: "120px" }}>
-                          <button className="btn btn-sm btn-outline-primary me-1" onClick={() => { setEditingCategory(cat); setCategoryForm({ emertimi: cat.emertimi, pershkrimi: cat.pershkrimi || "", renditja: cat.renditja }); setShowAddCategoryModal(true); }}>Edit</button>
-                          <button className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteCategory(cat)}>Delete</button>
+                        <td style={{ width: "140px" }}>
+                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+                            <button className="btn btn-modern-outline" onClick={() => { setEditingCategory(cat); setCategoryForm({ emertimi: cat.emertimi, pershkrimi: cat.pershkrimi || "", renditja: cat.renditja }); setShowAddCategoryModal(true); }}>Edit</button>
+                            <button className="btn btn-modern-danger" onClick={() => handleDeleteCategory(cat)}>Delete</button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -860,7 +874,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
               </div>
             )}
             <div className="mt-3">
-              <button className="btn btn-outline-primary" onClick={() => { window.location.hash = `/merchant/menu/${restaurant.id}`; }}>🍽️ Manage Menu Items</button>
+              <button className="btn btn-modern-secondary" onClick={() => { window.location.hash = `/merchant/menu/${restaurant.id}`; }}>🍽️ Manage Menu Items</button>
             </div>
           </div>
         )}

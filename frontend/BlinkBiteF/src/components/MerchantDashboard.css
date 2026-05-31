@@ -1,8 +1,205 @@
-/* ═══════════════════════════════════════════
-   MERCHANT DASHBOARD  —  Premium Edition
-═══════════════════════════════════════════ */
+/* --- GLOBAL MODERN PALETTE FOR MERCHANT DASHBOARD (UNIFIED) --- */
+.merchant-dashboard-page {
+  background: linear-gradient(135deg, #fff8ee 0%, #fdf0d8 100%) !important;
+}
 
+.merchant-card,
+.merchant-card-soft,
+.merchant-orders-card,
+.merchant-categories-modern {
+  background: linear-gradient(135deg, #fff 0%, #fdf6e8 100%) !important;
+  border: 1.5px solid #f7e7c6 !important;
+  box-shadow: 0 2px 8px rgba(181,130,50,0.04) !important;
+}
+
+.modal-content {
+  background: linear-gradient(135deg, #fff 0%, #fdf6e8 100%) !important;
+  border-radius: 18px !important;
+  border: 1.5px solid #f7e7c6 !important;
+  box-shadow: 0 8px 32px rgba(181,130,50,0.10) !important;
+}
+
+/* Modernize all dashboard buttons */
+.merchant-dashboard-page .btn,
+.merchant-dashboard-page .btn-outline-primary,
+.merchant-dashboard-page .btn-outline-secondary,
+.merchant-dashboard-page .btn-outline-danger,
+.merchant-dashboard-page .btn-outline-dark {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 2px 8px rgba(181,130,50,0.04);
+  border-width: 1.5px !important;
+}
+.merchant-dashboard-page .btn-outline-primary {
+  color: #b5761e !important;
+  border-color: #ffd580 !important;
+  background: #fff !important;
+}
+.merchant-dashboard-page .btn-outline-primary:hover {
+  background: #fff8ee !important;
+  color: #7a4a00 !important;
+  border-color: #ffb347 !important;
+}
+.merchant-dashboard-page .btn-outline-secondary {
+  color: #b5761e !important;
+  border-color: #ffe0b2 !important;
+  background: #fff !important;
+}
+.merchant-dashboard-page .btn-outline-secondary:hover {
+  background: #fff8ee !important;
+  color: #7a4a00 !important;
+  border-color: #ffb347 !important;
+}
+.merchant-dashboard-page .btn-outline-danger {
+  color: #c0392b !important;
+  border-color: #ffcfcf !important;
+  background: #fff0f0 !important;
+}
+.merchant-dashboard-page .btn-outline-danger:hover {
+  background: #ffeaea !important;
+  color: #a93226 !important;
+  border-color: #ffb3b3 !important;
+}
+.merchant-dashboard-page .btn-outline-dark {
+  color: #7a4a00 !important;
+  border-color: #e3e7ed !important;
+  background: #fff !important;
+}
+.merchant-dashboard-page .btn-outline-dark:hover {
+  background: #fff8ee !important;
+  color: #b5761e !important;
+  border-color: #ffb347 !important;
+}
+
+/* Accordion header override */
+.merchant-dashboard-page .accordion-item,
+.merchant-dashboard-page .accordion-header,
+.merchant-dashboard-page .accordion-button {
+  background: #fff8ee !important;
+  border: none !important;
+}
+.merchant-dashboard-page .accordion-button:not(.collapsed) {
+  background: #fdf6e8 !important;
+  color: #b5761e !important;
+}
+
+/* Table header override */
+.merchant-dashboard-page table th {
+  background: #fdf6e8 !important;
+  color: #b5761e !important;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+/* Reuse modern table/button styles for menu management */
+/* ── Modern Menu Categories Section ─────────────── */
+.merchant-categories-modern {
+  background: linear-gradient(135deg, #fff8ee 0%, #fdf0d8 100%);
+  box-shadow: 0 6px 32px rgba(181,118,30,0.10), 0 1.5px 8px rgba(181,118,30,0.07);
+  border: 1.5px solid rgba(181,130,50,0.18);
+  padding: 36px 32px 32px 32px;
+}
+
+.merchant-categories-header {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: #b5761e;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: -0.01em;
+}
+
+.merchant-categories-icon {
+  font-size: 1.7rem;
+  margin-right: 4px;
+}
+
+.merchant-categories-table {
+  background: #fff;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(181,130,50,0.07);
+}
+.merchant-categories-table th, .merchant-categories-table td {
+  border: none;
+  padding: 14px 18px;
+  vertical-align: middle;
+}
+.merchant-categories-table thead th {
+  background: #fdf6e8;
+  color: #b5761e;
+  font-size: 0.93rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.merchant-categories-table tbody tr {
+  transition: background 0.16s;
+}
+.merchant-categories-table tbody tr:hover {
+  background: #fff3e0;
+}
+.btn-modern-primary {
+  background: linear-gradient(90deg, #ffb347 0%, #ffcc80 100%);
+  color: #7a4a00;
+  border: none;
+  font-weight: 700;
+  border-radius: 8px;
+  padding: 7px 18px;
+  box-shadow: 0 2px 8px rgba(181,118,30,0.08);
+  transition: background 0.18s, box-shadow 0.18s, color 0.18s;
+}
+.btn-modern-primary:hover {
+  background: linear-gradient(90deg, #ffd580 0%, #ffe0b2 100%);
+  color: #b5761e;
+  box-shadow: 0 4px 16px rgba(181,118,30,0.13);
+}
+.btn-modern-outline {
+  background: #fff;
+  color: #b5761e;
+  border: 1.5px solid #ffd580;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 14px;
+  transition: background 0.16s, color 0.16s, border 0.16s;
+}
+.btn-modern-outline:hover {
+  background: #fff8ee;
+  color: #7a4a00;
+  border-color: #ffb347;
+}
+.btn-modern-danger {
+  background: #fff0f0;
+  color: #c0392b;
+  border: 1.5px solid #ffcfcf;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 14px;
+  transition: background 0.16s, color 0.16s, border 0.16s;
+}
+.btn-modern-danger:hover {
+  background: #ffeaea;
+  color: #a93226;
+  border-color: #ffb3b3;
+}
+.btn-modern-secondary {
+  background: #fff;
+  color: #b5761e;
+  border: 1.5px solid #ffe0b2;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 7px 18px;
+  transition: background 0.16s, color 0.16s, border 0.16s;
+}
+.btn-modern-secondary:hover {
+  background: #fff8ee;
+  color: #7a4a00;
+  border-color: #ffb347;
+}
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* ═══════════════════════════════════════════
+  MERCHANT DASHBOARD  —  Premium Edition
+════════════════════════════════════════════ */
 
 .merchant-dashboard-page {
   --gold:        #b5761e;

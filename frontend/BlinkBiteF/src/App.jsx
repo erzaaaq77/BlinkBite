@@ -3,6 +3,8 @@ import * as signalR from "@microsoft/signalr";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./index.css";
+import "./components/MerchantDashboard.css";
+
 import logo from "./assets/LogoBB.webp";
 import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
@@ -2984,7 +2986,8 @@ if (hash.startsWith("#/admin/branch-requests")) {
             item?.image ?? item?.Image ??
             item?.foto ?? item?.Foto ??
             nestedMenuItem?.image ?? nestedMenuItem?.Image ??
-            nestedMenuItem?.foto ?? nestedMenuItem?.Foto ?? "";
+            nestedMenuItem?.foto ?? nestedMenuItem?.Foto ??
+            "";
           return {
             id: item?.id ?? item?.Id ?? menuItemId ?? index,
             menuItemId,
@@ -4863,7 +4866,11 @@ if (hash.startsWith("#/admin/branch-requests")) {
                               alt={item.name}
                               data-candidate-index="0"
                               onError={(event) => {
-                                applyImageFallbackCandidate(event, item?.imageCandidates, getFoodFallbackImage(item.name));
+                                applyImageFallbackCandidate(
+                                  event,
+                                  item?.imageCandidates,
+                                  getFoodFallbackImage(item.name)
+                                );
                               }}
                             />
                             <div className="order-item-chip-copy">

@@ -414,13 +414,10 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
     const timestamp = Date.now();
     let url = `${API_BASE_URL}/MenuItems?_t=${timestamp}`;
     
-    // 🔥 NDRYSHO KËTË PJESË - Dërgo parametrin e duhur
     if (restaurantAddressId) {
-      // Branch Manager - filtro sipas branchId
       url += `&branchId=${restaurantAddressId}`;
       console.log("Branch Manager mode - branchId:", restaurantAddressId);
     } else {
-      // Merchant - filtro sipas restaurantId
       url += `&restaurantId=${restaurantId}`;
       console.log("Merchant mode - restaurantId:", restaurantId);
     }
@@ -438,7 +435,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
     const allItems = Array.isArray(response.data) ? response.data : [];
     console.log(`Received ${allItems.length} items from backend`);
 
-    // Nuk nevojitet filtrimi në frontend sepse backend-i tashmë filtron
     setMenuItems(
       allItems.map((item) => {
         return mergeCustomizationIntoItem(item, {});
@@ -758,7 +754,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
         showToast("Menu item created.", "success");
       }
 
-      // 🔥 REFRESHO LISTËN PAS EDITIMIT
       await fetchMenuItems();
       setShowModal(false);
     } catch (error) {
@@ -809,7 +804,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
   if (error) return <div className="alert alert-danger">{error}</div>;
 
   return (
-    <div className="container py-4">
+    <div className="container py-4 merchant-categories-modern" style={{minHeight: '100vh'}}>
       {toast.visible && (
         <div className={`app-toast app-toast--${toast.type}`} role="alert" aria-live="polite">
           <div className="app-toast__body">{toast.message}</div>
@@ -818,19 +813,19 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
       )}
 
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>🍽️ Manage Menu</h2>
+        <h2 className="merchant-categories-header mb-0">🍽️ Manage Menu</h2>
         <div>
-          <button className="btn btn-outline-secondary me-2" onClick={onBack}>
+          <button className="btn btn-modern-secondary me-2" onClick={onBack}>
             ← Back
           </button>
-          <button className="btn btn-primary" onClick={() => openModal()} disabled={!canManageMenuInScope}>
+          <button className="btn btn-modern-primary" onClick={() => openModal()} disabled={!canManageMenuInScope}>
             + Add Item
           </button>
         </div>
       </div>
 
-      <div className="card mb-3">
-        <div className="card-body py-3">
+      <div className="merchant-card mb-4">
+        <div className="py-3">
           <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
             <div>
               <h6 className="mb-1">Menu Scope</h6>
@@ -859,23 +854,39 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
         </div>
       </div>
 
-      <div className="alert alert-secondary py-2 px-3 small" role="status">
-        <strong>Debug:</strong> API Host: {debugApiHost} | Restaurant ID: {debugRestaurantId ?? "missing"} | Branch ID: {restaurantAddressId || "none"}
-        <br />
-        Items loaded: {normalizedMenuItems.length} | Categories: {restaurantCategories.length}
-      </div>
-
-      <div className="card mb-3">
-        <div className="card-body">
-          <h6 className="mb-3">Restaurant-wide paid add-ons (same for all products)</h6>
-          <div className="row g-2">
-            <div className="col-12">
-              <label className="form-label small text-uppercase fw-semibold mb-1">Global paid add-ons</label>
-              <textarea name="globalAddOns" className="form-control" rows="2" placeholder="e.g. Cheese:1.00; Mayo:0.50" value={restaurantCustomizationForm.globalAddOns} onChange={handleRestaurantCustomizationInput} />
-            </div>
+      <div className="merchant-card mb-4" style={{background: 'linear-gradient(135deg, #fff 0%, #fdf6e8 100%)', border: '1.5px solid #f7e7c6', boxShadow: '0 2px 8px rgba(181,130,50,0.04)'}}>
+        <div>
+          <div className="mb-2" style={{fontWeight: 800, color: '#b5761e', fontSize: '1.18rem', letterSpacing: '-0.01em'}}>Global Paid Add-ons</div>
+          <div className="mb-3" style={{fontWeight: 600, color: '#b5761e', fontSize: '0.93rem', textTransform: 'uppercase', letterSpacing: '0.07em'}}>Set restaurant-wide paid add-ons</div>
+          <div style={{
+            background: '#fdf6e8',
+            borderRadius: '10px',
+            border: '1.5px solid #f7e7c6',
+            boxShadow: 'none',
+            padding: '14px 18px 8px 18px',
+            marginBottom: '18px'
+          }}>
+            <textarea 
+              name="globalAddOns"
+              className="form-control addon-textarea"
+              rows="3"
+              placeholder="e.g. Cheese:1.00; Mayo:0.50"
+              style={{
+                resize: 'vertical',
+                fontSize: '1.05rem',
+                background: '#fff',
+                border: '1.5px solid #f0e2c6',
+                boxShadow: '0 1px 4px rgba(181,130,50,0.04)',
+                color: '#222',
+                borderRadius: '10px',
+                padding: '10px 14px'
+              }}
+              value={restaurantCustomizationForm.globalAddOns}
+              onChange={handleRestaurantCustomizationInput}
+            />
           </div>
           <div className="mt-3 d-flex justify-content-end">
-            <button type="button" className="btn btn-outline-primary" onClick={handleSaveRestaurantCustomization}>Save restaurant options</button>
+            <button type="button" className="btn btn-modern-primary" onClick={handleSaveRestaurantCustomization}>Save restaurant options</button>
           </div>
         </div>
       </div>
@@ -886,7 +897,7 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
         <div className="alert alert-info">No menu items yet.</div>
       ) : (
         <div className="table-responsive">
-          <table className="table table-hover">
+          <table className="table merchant-categories-table">
             <thead>
               <tr><th>Photo</th><th>Name</th><th>Price</th><th>Status</th><th>Actions</th></tr>
             </thead>
@@ -894,10 +905,9 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
               {normalizedMenuItems.map((item) => {
                 const imageCandidates = getAssetUrlCandidates(item.foto ?? item.Foto ?? "");
                 const firstCandidate = imageCandidates[0] || "";
-                
                 return (
-                  <tr key={item.id ?? item.Id}>
-                    <td>
+                  <tr key={item.id ?? item.Id} style={{ borderBottom: '0.5px solid rgba(240, 165, 0, 0.25)' }}>
+                    <td style={{ padding: '12px 8px' }}>
                       <div style={{ width: "56px", height: "56px", position: "relative" }}>
                         {firstCandidate ? (
                           <>
@@ -953,16 +963,18 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
                         )}
                       </div>
                     </td>
-                    <td><strong>{item.emertimi ?? item.Emertimi}</strong></td>
-                    <td>€{formatPrice(item.cmimi ?? item.Cmimi)}</td>
-                    <td>
+                    <td style={{ padding: '12px 8px' }}><strong>{item.emertimi ?? item.Emertimi}</strong></td>
+                    <td style={{ padding: '12px 8px' }}>€{formatPrice(item.cmimi ?? item.Cmimi)}</td>
+                    <td style={{ padding: '12px 8px' }}>
                       <span className={`badge ${(item.disponueshme ?? item.Disponueshme) ? "bg-success" : "bg-danger"}`}>
                         {(item.disponueshme ?? item.Disponueshme) ? "Available" : "Unavailable"}
                       </span>
                     </td>
-                    <td>
-                      <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(item)} disabled={!canManageMenuInScope}>Edit</button>
-                      <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(item.id ?? item.Id)} disabled={!canManageMenuInScope}>Delete</button>
+                    <td style={{ width: "140px", padding: '12px 8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+                        <button className="btn btn-modern-outline" onClick={() => openModal(item)} disabled={!canManageMenuInScope}>Edit</button>
+                        <button className="btn btn-modern-danger" onClick={() => handleDelete(item.id ?? item.Id)} disabled={!canManageMenuInScope}>Delete</button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -972,47 +984,83 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
         </div>
       )}
 
+      {/* Modal - Rregulluar pa <style> tag dhe me klasa standarde Bootstrap */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1050 }}>
-          <div className="modal-dialog modal-dialog-centered">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5>{editingItem ? "Edit Item" : "Add Item"}</h5>
+          <div className="modal-dialog modal-dialog-centered" style={{maxWidth: '720px', width: '99vw'}}>
+            <div className="modal-content" style={{borderRadius: '18px', boxShadow: '0 8px 32px rgba(60,72,88,0.18)', border: 'none', maxHeight: 'calc(100vh - 32px)', overflowY: 'auto', overflowX: 'visible'}}>
+              <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: '0.5rem', alignItems: 'center' }}>
+                <h5 className="modal-title" style={{ fontWeight: 700, fontSize: '1.35rem', color: '#222' }}>{editingItem ? "Edit Item" : "Add Item"}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)}></button>
               </div>
-              <div className="modal-body">
-                <input name="emertimi" className="form-control mb-2" placeholder="Name" value={formData.emertimi} onChange={handleInputChange} />
-                <textarea name="pershkrimi" className="form-control mb-2" placeholder="Description" value={formData.pershkrimi} onChange={handleInputChange} />
-                <input name="cmimi" type="number" className="form-control mb-2" placeholder="Price" value={formData.cmimi} onChange={handleInputChange} />
-                <input name="foto" className="form-control mb-2" placeholder="Image URL" value={formData.foto} onChange={handleInputChange} />
-                <textarea name="perberesit" className="form-control mb-2" placeholder="Ingredients (comma separated), e.g. Bun, Beef, Onion, Cheese" value={formData.perberesit} onChange={handleInputChange} />
-                <textarea name="requestOptions" className="form-control mb-2" placeholder="Customer request options (comma separated), e.g. No onion, No mayo" value={formData.requestOptions} onChange={handleInputChange} />
-                {String(formData.foto || "").trim() && (
-                  <div className="mb-2">
-                    <img
-                      src={getAssetUrlCandidates(formData.foto)[0] || ""}
-                      alt="Preview"
-                      onError={(event) => applyImageFallbackCandidate(event, getAssetUrlCandidates(formData.foto), "")}
-                      data-candidate-index="0"
-                      style={{ width: "100%", maxHeight: "160px", objectFit: "cover", borderRadius: "10px", border: "1px solid #dfe3e8" }}
-                    />
+              <div className="modal-body" style={{padding: '1.3rem 2.2rem 1.1rem 2.2rem'}}>
+                <div style={{display: 'flex', gap: '2.2rem', flexWrap: 'wrap', alignItems: 'flex-start'}}>
+                  <div style={{flex: 1.2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '0.7rem'}}>
+                    <input name="emertimi" className="form-control" placeholder="Name" value={formData.emertimi} onChange={handleInputChange} style={{borderRadius: '10px', border: '1.5px solid #e3e7ed', padding: '0.38rem 0.7rem'}} />
+                    <textarea name="pershkrimi" className="form-control" placeholder="Description" value={formData.pershkrimi} onChange={handleInputChange} rows={2} style={{borderRadius: '10px', border: '1.5px solid #e3e7ed', padding: '0.38rem 0.7rem'}} />
+                    <div style={{display: 'flex', gap: '0.7rem'}}>
+                      <input name="cmimi" type="number" className="form-control" placeholder="Price" value={formData.cmimi} onChange={handleInputChange} style={{maxWidth: 120, borderRadius: '10px', border: '1.5px solid #e3e7ed', padding: '0.38rem 0.7rem'}} />
+                      <input name="foto" className="form-control" placeholder="Image URL" value={formData.foto} onChange={handleInputChange} style={{borderRadius: '10px', border: '1.5px solid #e3e7ed', padding: '0.38rem 0.7rem'}} />
+                    </div>
+                    <textarea name="perberesit" className="form-control" placeholder="Ingredients (comma separated), e.g. Bun, Beef, Onion, Cheese" value={formData.perberesit} onChange={handleInputChange} rows={2} style={{borderRadius: '10px', border: '1.5px solid #e3e7ed', padding: '0.38rem 0.7rem'}} />
+                    <textarea name="requestOptions" className="form-control" placeholder="Customer request options (comma separated), e.g. No onion, No mayo" value={formData.requestOptions} onChange={handleInputChange} rows={2} style={{borderRadius: '10px', border: '1.5px solid #e3e7ed', padding: '0.38rem 0.7rem'}} />
                   </div>
-                )}
-                <select name="categoryId" className="form-select mb-2" value={formData.categoryId} onChange={handleInputChange}>
-                  {restaurantCategories.length === 0 ? <option value="">No categories available</option> : restaurantCategories.map((category) => {
-                    const id = category?.id ?? category?.Id;
-                    const name = category?.emertimi ?? category?.Emertimi ?? `Category ${id}`;
-                    return <option key={id} value={id}>{name}</option>;
-                  })}
-                </select>
-                <div className="form-check">
-                  <input type="checkbox" name="disponueshme" className="form-check-input" checked={formData.disponueshme} onChange={handleInputChange} />
-                  <label className="form-check-label">Available</label>
+                  <div style={{flex: 1, minWidth: 220, maxWidth: 300, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: '1.1rem'}}>
+                    {String(formData.foto || "").trim() && (
+                      <img
+                        src={getAssetUrlCandidates(formData.foto)[0] || ""}
+                        alt="Preview"
+                        onError={(event) => applyImageFallbackCandidate(event, getAssetUrlCandidates(formData.foto), "")}
+                        data-candidate-index="0"
+                        style={{marginBottom: '0.2rem', maxHeight: '180px', width: '100%', borderRadius: '18px', boxShadow: '0 4px 24px 0 rgba(60,72,88,0.13)', objectFit: 'cover'}}
+                      />
+                    )}
+                    <div
+                      style={{
+                        width: '100%',
+                        marginBottom: '0.5rem',
+                        padding: '1rem',
+                        borderRadius: '12px',
+                        background: '#f8fafc',
+                        border: '1.5px solid #e3e7ed',
+                        boxShadow: '0 1px 8px rgba(60,72,88,0.06)'
+                      }}
+                    >
+                      <div style={{fontWeight: 600, fontSize: '1.02em', color: '#495057', marginBottom: '0.2em'}}>Options</div>
+                      <div style={{display: 'flex', alignItems: 'center', gap: '1.2em', width: '100%', justifyContent: 'center'}}>
+                        <select
+                          name="categoryId"
+                          className="form-select"
+                          value={formData.categoryId}
+                          onChange={handleInputChange}
+                          style={{
+                            width: '140px',
+                            minWidth: '120px',
+                            borderRadius: '8px',
+                            border: '1.5px solid #d0d7de',
+                            background: '#fff'
+                          }}
+                        >
+                          {restaurantCategories.length === 0
+                            ? <option value="">No categories available</option>
+                            : restaurantCategories.map((category) => {
+                                const id = category?.id ?? category?.Id;
+                                const name = category?.emertimi ?? category?.Emertimi ?? `Category ${id}`;
+                                return <option key={id} value={id}>{name}</option>;
+                              })}
+                        </select>
+                        <label style={{display: 'flex', alignItems: 'center', gap: '0.5em', fontWeight: 500, fontSize: '0.97em', color: '#333', userSelect: 'none', letterSpacing: '0.01em'}}>
+                          <span style={{marginRight: '0.2em'}}>Available</span>
+                          <input type="checkbox" name="disponueshme" checked={formData.disponueshme} onChange={handleInputChange} style={{width: '18px', height: '18px', cursor: 'pointer'}} />
+                        </label>
+                      </div>
+                    </div>
+                    <div style={{marginTop: 'auto', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', width: '100%'}}>
+                      <button className="btn btn-modern-outline" onClick={() => setShowModal(false)}>Cancel</button>
+                      <button className="btn btn-modern-primary" onClick={handleSave} disabled={restaurantCategories.length === 0 || !canManageMenuInScope}>Save</button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSave} disabled={restaurantCategories.length === 0 || !canManageMenuInScope}>Save</button>
               </div>
             </div>
           </div>
