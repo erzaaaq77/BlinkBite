@@ -117,21 +117,6 @@ public class AdminApplicationController : ControllerBase
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
-        Console.WriteLine("");
-        Console.WriteLine("╔════════════════════════════════════════════════════════════════════════════════╗");
-        Console.WriteLine("║                         ✅ NEW MERCHANT ACCOUNT CREATED ✅                      ║");
-        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
-        Console.WriteLine($"║  📧 Email:      {application.Email,-55}║");
-        Console.WriteLine($"║  👤 Username:   {username,-55}║");
-        Console.WriteLine($"║  🔑 Password:   {password,-55}║");
-        Console.WriteLine($"║  🏪 Restaurant: {application.RestaurantName,-55}║");
-        Console.WriteLine($"║  📍 City:       {application.City,-55}║");
-        Console.WriteLine($"║  🏷️  Category:   {application.Category ?? "N/A",-55}║");
-        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
-        Console.WriteLine("║  🌐 Login URL:  http://localhost:5173                                          ║");
-        Console.WriteLine("╚════════════════════════════════════════════════════════════════════════════════╝");
-        Console.WriteLine("");
-
         return Ok(new
         {
             message = "Restaurant approved and account created",
@@ -188,21 +173,6 @@ public class AdminApplicationController : ControllerBase
         application.ReviewedAt = DateTime.UtcNow;
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
-
-        Console.WriteLine("");
-        Console.WriteLine("╔════════════════════════════════════════════════════════════════════════════════╗");
-        Console.WriteLine("║                          ✅ NEW COURIER ACCOUNT CREATED ✅                      ║");
-        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
-        Console.WriteLine($"║  📧 Email:      {application.Email,-55}║");
-        Console.WriteLine($"║  👤 Username:   {username,-55}║");
-        Console.WriteLine($"║  🔑 Password:   {password,-55}║");
-        Console.WriteLine($"║  👤 Full Name:  {application.FullName,-55}║");
-        Console.WriteLine($"║  🚗 Vehicle:    {application.VehicleType,-55}║");
-        Console.WriteLine($"║  📍 Area:       {application.WorkingArea,-55}║");
-        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
-        Console.WriteLine("║  🌐 Login URL:  http://localhost:5173                                          ║");
-        Console.WriteLine("╚════════════════════════════════════════════════════════════════════════════════╝");
-        Console.WriteLine("");
 
         return Ok(new
         {

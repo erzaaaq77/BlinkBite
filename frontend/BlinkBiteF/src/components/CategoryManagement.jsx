@@ -4,7 +4,7 @@ import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 import toast, { Toaster } from "react-hot-toast";
 
-const API_BASE_URL = "http://localhost:5063/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 
 const CategoryManagement = ({ token, onBack }) => {
   const [categories, setCategories] = useState([]);

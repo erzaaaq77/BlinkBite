@@ -88,18 +88,15 @@ builder.Services.AddAuthentication(options =>
     {
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine($"❌ JWT Auth Failed: {context.Exception.Message}");
-            Console.WriteLine($"   Token: {context.Request.Headers["Authorization"]}");
+            Console.WriteLine($"JWT Auth Failed: {context.Exception.GetType().Name}");
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
-            Console.WriteLine($"✅ JWT Token Valid for: {context.Principal?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value}");
             return Task.CompletedTask;
         },
         OnChallenge = context =>
         {
-            Console.WriteLine($"⚠️ JWT Challenge: {context.ErrorDescription}");
             return Task.CompletedTask;
         }
     };

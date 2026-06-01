@@ -69,6 +69,8 @@ namespace FoodDeliveryyy.Controllers
                 await _context.SaveChangesAsync();
 
                 int? branchManagerId = null;
+                string? branchManagerUsername = null;
+                string? branchManagerPassword = null;
 
                 // Krijoni Branch Manager nëse kërkohet
                 if (dto.CreateBranchManager && !string.IsNullOrEmpty(dto.ManagerEmail))
@@ -95,20 +97,8 @@ namespace FoodDeliveryyy.Controllers
                         await _context.SaveChangesAsync();
 
                         branchManagerId = branch.Id;
-
-                        // Shfaq kredencialet në terminal
-                        Console.WriteLine("");
-                        Console.WriteLine("╔════════════════════════════════════════════════════════════════════════════════╗");
-                        Console.WriteLine("║                      ✅ NEW BRANCH MANAGER ACCOUNT CREATED ✅                  ║");
-                        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
-                        Console.WriteLine($"║  📧 Email:      {dto.ManagerEmail,-55}║");
-                        Console.WriteLine($"║  👤 Username:   {username,-55}║");
-                        Console.WriteLine($"║  🔑 Password:   {password,-55}║");
-                        Console.WriteLine($"║  🏪 Branch:     {dto.Address,-55}║");
-                        Console.WriteLine("╠════════════════════════════════════════════════════════════════════════════════╣");
-                        Console.WriteLine("║  🌐 Login URL:  http://localhost:5173                                          ║");
-                        Console.WriteLine("╚════════════════════════════════════════════════════════════════════════════════╝");
-                        Console.WriteLine("");
+                        branchManagerUsername = username;
+                        branchManagerPassword = password;
                     }
                     else
                     {
@@ -120,7 +110,9 @@ namespace FoodDeliveryyy.Controllers
                 {
                     message = "Branch created successfully",
                     branchId = branch.Id,
-                    branchManagerCreated = dto.CreateBranchManager && branchManagerId != null
+                    branchManagerCreated = dto.CreateBranchManager && branchManagerId != null,
+                    branchManagerUsername,
+                    branchManagerPassword
                 });
             }
             catch (Exception ex)

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 
-const API_BASE_URL = "http://localhost:5063/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 
 const AdminBranchRequests = ({ token, onBack }) => {
   const [requests, setRequests] = useState([]);

@@ -16,6 +16,10 @@ import CourierApplicationPage from "./components/CourierApplicationPage";
 import AdminApplicationsPage from "./components/AdminApplicationsPage";
 import CategoryManagement from "./components/CategoryManagement";
 import AdminBranchRequests from "./components/AdminBranchRequests";
+import PartnerCouriersPage from "./components/PartnerCouriersPage";
+import PartnerMerchantsPage from "./components/PartnerMerchantsPage";
+import PartnerCompaniesPage from "./components/PartnerCompaniesPage";
+import PartnerDrivePage from "./components/PartnerDrivePage";
 
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
@@ -354,6 +358,22 @@ if (hash.startsWith("#/admin/branch-requests")) {
       restaurantId: null,
       branchId: "",
     };
+  }
+
+  if (hash === "#/partners/couriers") {
+    return { page: "partnerCouriers", category: "", restaurantId: null, branchId: "" };
+  }
+
+  if (hash === "#/partners/merchants") {
+    return { page: "partnerMerchants", category: "", restaurantId: null, branchId: "" };
+  }
+
+  if (hash === "#/partners/companies") {
+    return { page: "partnerCompanies", category: "", restaurantId: null, branchId: "" };
+  }
+
+  if (hash === "#/partners/drive") {
+    return { page: "partnerDrive", category: "", restaurantId: null, branchId: "" };
   }
   if (hash === "#/admin/applications" || hash === "#/admin") {
     return {
@@ -3263,7 +3283,6 @@ if (hash.startsWith("#/admin/branch-requests")) {
         }),
       });
       const data = await res.json().catch(() => null);
-      console.log("Login response data:", JSON.stringify(data, null, 2)); // Shfaq objektin si tekst të lexueshëm
       if (!res.ok) {
         setLoginMessage(extractErrorMessage(data, "Login failed. Check your credentials."));
         return;
@@ -4211,25 +4230,25 @@ if (hash.startsWith("#/admin/branch-requests")) {
               </button>
               <ul className="dropdown-menu shadow p-2">
                 <li>
-                  <a className="dropdown-item" href="/couriers">
+                  <a className="dropdown-item" href="#/partners/couriers">
                     🚴 For Couriers
                     <p className="small text-muted mb-0">Earn delivering orders</p>
                   </a>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/merchants">
+                  <a className="dropdown-item" href="#/partners/merchants">
                     🍔 For Merchants
                     <p className="small text-muted mb-0">Grow your business</p>
                   </a>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/companies">
+                  <a className="dropdown-item" href="#/partners/companies">
                     🏢 For Companies
                     <p className="small text-muted mb-0">Office solutions</p>
                   </a>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/blinkbite-drive">
+                  <a className="dropdown-item" href="#/partners/drive">
                     🚚 BlinkBite Drive
                     <p className="small text-muted mb-0">Delivery service</p>
                   </a>
@@ -4535,6 +4554,23 @@ if (hash.startsWith("#/admin/branch-requests")) {
         {page === "applyCourier" && (
           <CourierApplicationPage />
         )}
+
+        {page === "partnerCouriers" && (
+          <PartnerCouriersPage onApply={() => { window.location.hash = "#/apply/courier"; }} />
+        )}
+
+        {page === "partnerMerchants" && (
+          <PartnerMerchantsPage onApply={() => { window.location.hash = "#/apply/merchant"; }} />
+        )}
+
+        {page === "partnerCompanies" && (
+          <PartnerCompaniesPage />
+        )}
+
+        {page === "partnerDrive" && (
+          <PartnerDrivePage />
+        )}
+
         {page === "adminApplications" && (
           <AdminApplicationsPage />
         )}
@@ -5674,6 +5710,10 @@ if (hash.startsWith("#/admin/branch-requests")) {
           "cart",
           "applyMerchant",
           "applyCourier",
+          "partnerCouriers",
+          "partnerMerchants",
+          "partnerCompanies",
+          "partnerDrive",
           "adminApplications",
           "adminBranchRequests",
           "adminCategories",

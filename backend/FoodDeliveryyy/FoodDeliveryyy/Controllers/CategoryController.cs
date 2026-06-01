@@ -51,7 +51,7 @@ public class CategoryController : ControllerBase
         return Ok(category);
     }
 
-    [HttpPost("{id}")]
+    [HttpPut("{id}")]
     public async Task<IActionResult> UpdateCategory(int id, [FromBody] Category updatedCategory)
     {
         if (id != updatedCategory.Id)

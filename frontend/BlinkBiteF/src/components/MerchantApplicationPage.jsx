@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import "./MerchantDashboard.css";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 
@@ -86,139 +87,121 @@ const MerchantApplicationPage = () => {
   };
 
   return (
-    <div className="container py-5" style={{ marginTop: "80px" }}>
-      <div className="row justify-content-center">
-        <div className="col-md-8 col-lg-6">
-          <div className="card shadow-sm border-0 rounded-4">
-            <div className="card-body p-4 p-md-5">
-              <h2 className="text-center mb-2">Bashkëpunoni me ne</h2>
-              <p className="text-center text-muted mb-4">Regjistroni restorantin tuaj në platformë</p>
-              
-              {message && (
-                <div className={`alert alert-${messageType === "success" ? "success" : "danger"} mb-4`}>
-                  {message}
-                </div>
-              )}
-              
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label className="form-label">Emri i Restorantit *</label>
-                  <input
-                    type="text"
-                    name="restaurantName"
-                    className="form-control"
-                    value={formData.restaurantName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label">Përshkrimi i Restorantit</label>
-                  <textarea
-                    name="restaurantDescription"
-                    className="form-control"
-                    rows="3"
-                    value={formData.restaurantDescription}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label">Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="form-control"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label">Numri i Telefonit *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    className="form-control"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label">Adresa *</label>
-                  <input
-                    type="text"
-                    name="address"
-                    className="form-control"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label className="form-label">Qyteti *</label>
-                  <select
-                    name="city"
-                    className="form-select"
-                    value={formData.city}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option>Prishtinë</option>
-                    <option>Prizren</option>
-                    <option>Pejë</option>
-                    <option>Gjakovë</option>
-                    <option>Ferizaj</option>
-                    <option>Gjilan</option>
-                    <option>Mitrovicë</option>
-                  </select>
-                </div>
-                
-                <div className="mb-4">
-                  <label className="form-label">Kategoria</label>
-                  <select
-                    name="category"
-                    className="form-select"
-                    value={formData.category}
-                    onChange={handleChange}
-                    disabled={loadingCategories}
-                  >
-                    {loadingCategories ? (
-                      <option>Duke ngarkuar kategoritë...</option>
-                    ) : (
-                      categories.map((cat) => (
-                        <option key={cat.id} value={cat.name}>
-                          {cat.name}
-                        </option>
-                      ))
-                    )}
-                  </select>
-                </div>
-                
-                <button
-                  type="submit"
-                  className="btn btn-primary w-100 py-2"
-                  disabled={submitting || loadingCategories}
-                >
-                  {submitting ? "Duke dërguar..." : "Dërgo Aplikimin"}
-                </button>
-              </form>
-              
-              <div className="text-center mt-4">
-                <button
-                  className="btn btn-link text-decoration-none"
-                  onClick={() => { window.location.hash = "/"; }}
-                >
-                  ← Kthehu në faqen kryesore
-                </button>
-              </div>
-            </div>
+    <div className="apply-merchant-bg">
+      <div className="apply-merchant-card">
+        <div className="apply-merchant-title">Partner with us</div>
+        <div className="apply-merchant-subtitle">Register your restaurant on our platform</div>
+        {message && (
+          <div className={`alert alert-${messageType === "success" ? "success" : "danger"} mb-4`}>
+            {message}
           </div>
+        )}
+        <form onSubmit={handleSubmit} className="apply-merchant-form-grid">
+          <div className="mb-3 apply-field apply-span-2">
+            <label className="form-label">Restaurant Name *</label>
+            <input
+              type="text"
+              name="restaurantName"
+              className="form-control"
+              value={formData.restaurantName}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3 apply-field apply-span-2">
+            <label className="form-label">Restaurant Description</label>
+            <textarea
+              name="restaurantDescription"
+              className="form-control"
+              rows="2"
+              value={formData.restaurantDescription}
+              onChange={handleChange}
+            />
+          </div>
+          <div className="mb-3 apply-field">
+            <label className="form-label">Email *</label>
+            <input
+              type="email"
+              name="email"
+              className="form-control"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3 apply-field">
+            <label className="form-label">Phone Number *</label>
+            <input
+              type="tel"
+              name="phone"
+              className="form-control"
+              value={formData.phone}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3 apply-field apply-span-2">
+            <label className="form-label">Address *</label>
+            <input
+              type="text"
+              name="address"
+              className="form-control"
+              value={formData.address}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3 apply-field">
+            <label className="form-label">City *</label>
+            <select
+              name="city"
+              className="form-select"
+              value={formData.city}
+              onChange={handleChange}
+              required
+            >
+              <option>Prishtinë</option>
+              <option>Prizren</option>
+              <option>Pejë</option>
+              <option>Gjakovë</option>
+              <option>Ferizaj</option>
+              <option>Gjilan</option>
+              <option>Mitrovicë</option>
+            </select>
+          </div>
+          <div className="mb-4 apply-field">
+            <label className="form-label">Category</label>
+            <select
+              name="category"
+              className="form-select"
+              value={formData.category}
+              onChange={handleChange}
+              disabled={loadingCategories}
+            >
+              {loadingCategories ? (
+                <option>Loading categories...</option>
+              ) : (
+                categories.map((cat) => (
+                  <option key={cat.id} value={cat.name}>{cat.name}</option>
+                ))
+              )}
+            </select>
+          </div>
+          <button
+            type="submit"
+            className="btn btn-modern-primary w-100 py-2 apply-span-2"
+            disabled={submitting || loadingCategories}
+          >
+            {submitting ? "Submitting..." : "Submit Application"}
+          </button>
+        </form>
+        <div className="text-center mt-4">
+          <button
+            className="btn btn-link text-decoration-none"
+            onClick={() => { window.location.hash = "/"; }}
+          >
+            ← Back to home page
+          </button>
         </div>
       </div>
     </div>

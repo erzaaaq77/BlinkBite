@@ -359,18 +359,49 @@ public class OrdersController : ControllerBase
             return NotFound("Restaurant not found");
         }
 
+        RestaurantAddress? branch = null;
         if (order.RestaurantAddressId.HasValue)
         {
-            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId.Value);
-            if (address == null || address.RestaurantId != restaurant.Id)
+            branch = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == order.RestaurantAddressId.Value);
+            if (branch == null || branch.RestaurantId != restaurant.Id)
             {
                 return BadRequest("Restaurant address not found");
             }
         }
-        if(order.ShumaTotale==0 && order.OrderItems.Any())
-        { order.ShumaTotale = order.OrderItems.Sum(oi => oi.Sasia * oi.Cmimi) + order.TarifaDorezimit - order.Zbritja;
-        
+
+        if (!order.OrderItems.Any())
+        {
+            return BadRequest("Order must contain at least one item.");
         }
+
+        // Server-side price validation — never trust prices from the client
+        var menuItemIds = order.OrderItems.Select(oi => oi.MenuItemId).Distinct().ToList();
+        var menuItems = await _context.MenuItems
+            .Where(m => menuItemIds.Contains(m.Id))
+            .ToListAsync();
+
+        var branchDetails = order.RestaurantAddressId.HasValue
+            ? await _context.MenuItemBranch
+                .Where(b => b.RestaurantAddressId == order.RestaurantAddressId.Value && menuItemIds.Contains(b.MenuItemId))
+                .ToListAsync()
+            : new List<MenuItemBranch>();
+
+        foreach (var item in order.OrderItems)
+        {
+            var menuItem = menuItems.FirstOrDefault(m => m.Id == item.MenuItemId);
+            if (menuItem == null)
+                return BadRequest($"Menu item {item.MenuItemId} not found.");
+
+            var branchDetail = branchDetails.FirstOrDefault(b => b.MenuItemId == item.MenuItemId);
+            // Use branch-specific price if set, otherwise base menu item price
+            item.Cmimi = branchDetail?.Cmimi ?? menuItem.Cmimi;
+        }
+
+        // Use delivery fee from branch record, not from client
+        order.TarifaDorezimit = branch?.TarifaDorezimit ?? 0;
+
+        // Recalculate total on server side
+        order.ShumaTotale = order.OrderItems.Sum(oi => oi.Sasia * oi.Cmimi) + order.TarifaDorezimit - order.Zbritja;
 
         _context.Orders.Add(order);
         await _context.SaveChangesAsync();

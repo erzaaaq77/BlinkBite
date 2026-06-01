@@ -109,9 +109,6 @@ public class DashboardController : ControllerBase
                 var restaurantId = branchAddresses[0].RestaurantId;
                 restaurant = await _context.Restaurants.FirstOrDefaultAsync(r => r.Id == restaurantId);
 
-                // Shto këtë log për debugging
-                Console.WriteLine($"Branch Manager {userId} - Restaurant: {restaurant?.Emertimi} (ID: {restaurant?.Id})");
-
                 if (restaurant == null)
                     return NotFound("No restaurant found for this branch manager");
 
@@ -311,8 +308,6 @@ public class DashboardController : ControllerBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"ERROR: {ex.Message}");
-            Console.WriteLine($"STACK: {ex.StackTrace}");
             return StatusCode(500, new { error = ex.Message });
         }
     }

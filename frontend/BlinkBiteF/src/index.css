@@ -1866,8 +1866,214 @@ body {
   object-position: 60% center;
   filter: saturate(1);
   border: 2px solid #f0f3f8;
+}
+
+/* =========================================================
+   PARTNER PAGES
+   ========================================================= */
+.partners-page {
+  padding-top: 70px;
+}
+
+.partners-hero {
+  padding: 80px 0 60px;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+  color: #fff;
+}
+
+.partners-hero--courier { background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%); }
+.partners-hero--merchant { background: linear-gradient(135deg, #1a2a1a 0%, #0f4020 100%); }
+.partners-hero--company { background: linear-gradient(135deg, #1a1a2e 0%, #2a1a3e 100%); }
+.partners-hero--drive { background: linear-gradient(135deg, #2a1a0a 0%, #3e2010 100%); }
+
+.partners-badge {
+  display: inline-block;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 20px;
+  margin-bottom: 16px;
+  border: 1px solid rgba(255,255,255,0.2);
+}
+
+.partners-hero-title {
+  font-size: clamp(1.8rem, 4vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.partners-accent {
+  color: #f5c518;
+}
+
+.partners-hero-sub {
+  font-size: 1.05rem;
+  color: rgba(255,255,255,0.8);
+  line-height: 1.7;
+  max-width: 500px;
+}
+
+.partners-hero-icon {
+  font-size: 8rem;
+  line-height: 1;
+  filter: drop-shadow(0 8px 24px rgba(0,0,0,0.4));
+}
+
+.partners-btn-primary {
+  background: #f5c518;
+  color: #1a1a1a;
+  font-weight: 700;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.partners-btn-primary:hover {
+  background: #e0b010;
+  color: #1a1a1a;
+  transform: translateY(-1px);
+}
+
+.partners-btn-outline {
+  background: transparent;
+  color: #fff;
+  border: 2px solid rgba(255,255,255,0.4);
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s;
+}
+
+.partners-btn-outline:hover {
+  border-color: #fff;
+  color: #fff;
+}
+
+/* Stats strip */
+.partners-stats {
+  background: #f8f7f4;
+  border-bottom: 1px solid #e8e0cc;
+  padding: 36px 0;
+}
+
+.partners-stat-value {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.partners-stat-label {
+  font-size: 0.82rem;
+  color: #7f7463;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+/* Sections */
+.partners-section {
+  padding: 64px 0;
+  background: #fff;
+}
+
+.partners-section--alt {
+  background: #f8f7f4;
+}
+
+.partners-section-title {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+/* Steps */
+.partners-step {
+  text-align: center;
+  padding: 32px 24px;
+  border: 1px solid #e8e0cc;
+  border-radius: 12px;
+  background: #fff;
+  height: 100%;
+}
+
+.partners-step-num {
+  width: 48px;
+  height: 48px;
+  background: #f5c518;
+  color: #1a1a1a;
+  font-size: 1.3rem;
+  font-weight: 800;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+/* Benefit cards */
+.partners-benefit-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px;
+  border: 1px solid #e8e0cc;
+  border-radius: 10px;
+  background: #fff;
+  height: 100%;
+}
+
+.partners-benefit-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Requirements list */
+.partners-req-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.partners-req-list li {
+  font-size: 0.95rem;
+  color: #2a2418;
+}
+
+/* CTA card */
+.partners-cta-card {
+  background: #1a1a2e;
+  color: #fff;
   border-radius: 16px;
-  box-shadow: 0 10px 24px rgba(18, 24, 38, 0.14);
+  padding: 36px;
+}
+
+.partners-cta-card h4 {
+  color: #f5c518;
+}
+
+.partners-cta-card p {
+  color: rgba(255,255,255,0.7) !important;
+}
+
+/* City items */
+.partners-city-item {
+  padding: 10px 14px;
+  border: 1px solid #e8e0cc;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: #fff;
 }
 
 .courier-panel img {

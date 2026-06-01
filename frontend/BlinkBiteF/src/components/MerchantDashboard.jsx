@@ -5,6 +5,7 @@ import toast from "react-hot-toast";
 import "./MerchantDashboard.css";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, "");
 
 const ORDER_STATUS_LABELS = {
   1: "Pending",
@@ -86,16 +87,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   
   const restaurant = dashboard?.restaurant || {};
 
-  // Debug log për të parë restorantin e Branch Manager
-  useEffect(() => {
-    if (dashboard && isBranchManagerRole) {
-      console.log("=== BRANCH MANAGER DASHBOARD ===");
-      console.log("Restaurant ID:", restaurant.id);
-      console.log("Restaurant Name:", restaurant.emertimi);
-      console.log("Branches:", dashboard.addresses);
-      console.log("================================");
-    }
-  }, [dashboard, isBranchManagerRole, restaurant.id, restaurant.emertimi]);
+
 
   const normalizeStatusLabel = (statusValue) => {
     if (typeof statusValue === "number") {
@@ -673,7 +665,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
             <div className="text-center">
               {restaurant.logo ? (
                 <img 
-                  src={`http://localhost:5063${restaurant.logo}`}
+                  src={`${API_ORIGIN}${restaurant.logo}`}
                   alt="Restaurant Logo" 
                   style={{ width: "100px", height: "100px", objectFit: "cover", borderRadius: "12px", border: "1px solid #ddd" }} 
                 />
@@ -909,7 +901,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     // Shto timestamp për të shmangur cache në URL
     const timestamp = Date.now();
     const url = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}&_t=${timestamp}`;
-    console.log("Navigating to:", url);
     window.location.hash = url;
   }}
 >

@@ -416,14 +416,10 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
     
     if (restaurantAddressId) {
       url += `&branchId=${restaurantAddressId}`;
-      console.log("Branch Manager mode - branchId:", restaurantAddressId);
     } else {
       url += `&restaurantId=${restaurantId}`;
-      console.log("Merchant mode - restaurantId:", restaurantId);
     }
 
-    console.log("Fetching menu from URL:", url);
-    
     const response = await axios.get(url, {
       headers: { 
         Authorization: `Bearer ${token}`,
@@ -433,7 +429,6 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
     });
     
     const allItems = Array.isArray(response.data) ? response.data : [];
-    console.log(`Received ${allItems.length} items from backend`);
 
     setMenuItems(
       allItems.map((item) => {

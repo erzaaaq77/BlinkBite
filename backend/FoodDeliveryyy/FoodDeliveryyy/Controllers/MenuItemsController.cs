@@ -38,18 +38,15 @@ public class MenuItemsController : ControllerBase
                 if (branch != null)
                 {
                     query = query.Where(m => m.Category != null && m.Category.RestaurantId == branch.RestaurantId);
-                    Console.WriteLine($"Filtering by branch {branchId} -> Restaurant {branch.RestaurantId}");
                 }
             }
             // 🔥 FILTRO SIPAS RESTORANTIT (për Merchant)
             else if (restaurantId.HasValue)
             {
                 query = query.Where(m => m.Category != null && m.Category.RestaurantId == restaurantId.Value);
-                Console.WriteLine($"Filtering by restaurant {restaurantId}");
             }
 
             var items = await query.ToListAsync();
-            Console.WriteLine($"Found {items.Count} items");
 
             var result = items.Select(item => {
                 MenuItemBranch? branchCustom = null;
