@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { favoriteService } from '../services/FavoriteService';
+import { tokenService } from '../services/tokenService';
 
 const toFavoriteBoolean = (value) => {
   if (typeof value === 'boolean') return value;
@@ -38,6 +39,7 @@ const FavoriteButton = ({ type, id, size = 'medium', onToggleComplete }) => {
   const [isPopping, setIsPopping] = useState(false);
 
   const checkFavoriteStatus = useCallback(async () => {
+    if (!tokenService.getToken()) return;
     try {
       let result;
       if (type === 'restaurant') {

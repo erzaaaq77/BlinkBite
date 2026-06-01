@@ -1,6 +1,6 @@
 import React from "react";
 import FavoriteButton from './FavoriteButton';
-function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearbyError, locationQuery, onRestaurantSelect, onRestaurantFavoriteToggle }) {
+function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearbyError, locationQuery, onRestaurantSelect, onRestaurantFavoriteToggle, onBack }) {
   const isNearby = (selectedCategory || "").toLowerCase() === "nearby";
 
   return (
@@ -15,9 +15,7 @@ function RestaurantsPage({ selectedCategory, restaurantsLoading, filtered, nearb
           <button
             type="button"
             className="btn btn-outline-secondary"
-            onClick={() => {
-              window.location.hash = "/";
-            }}
+            onClick={() => onBack ? onBack() : (window.location.hash = "/")}
           >
             <i className="bi bi-arrow-left me-2"></i>Back to categories
           </button>

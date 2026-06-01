@@ -333,6 +333,17 @@ if (hash.startsWith("#/admin/branch-requests")) {
       };
     }
 
+    if (hash.startsWith("#/restaurants/search/")) {
+      // navbar search — data is loaded imperatively, skip category fetch
+      return {
+        page: "restaurants",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+        isNavSearch: true,
+      };
+    }
+
     if (hash.startsWith("#/restaurants/")) {
       const rawCategory = hash.replace("#/restaurants/", "");
       return {
@@ -513,13 +524,57 @@ if (hash.startsWith("#/admin/branch-requests")) {
   const [addressStreet, setAddressStreet] = useState("");
   const [addressPostal, setAddressPostal] = useState("");
 
-  const filtered = (restaurants || []).filter(r =>
-    (r.name || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const isSearchMode = (selectedCategory || "").startsWith('"') && (selectedCategory || "").endsWith('"');
+  const filtered = isSearchMode
+    ? (restaurants || [])
+    : (restaurants || []).filter(r =>
+        (r.name || "").toLowerCase().includes(search.toLowerCase())
+      );
 
   const filteredFavorites = (favoriteRestaurants || []).filter((r) =>
     (r?.name || "").toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleNavSearch = async (e) => {
+    if (e.key !== "Enter") return;
+    const q = search.trim();
+    if (!q) return;
+    const lq = q.toLowerCase();
+    setRestaurantsLoading(true);
+    setSelectedCategory(`"${q}"`);
+    setPage("restaurants");
+    try {
+      // Try search endpoint first, fall back to all restaurants filtered client-side
+      let matched = [];
+      const searchRes = await authenticatedFetch(`${API_BASE}/restaurants?search=${encodeURIComponent(q)}`);
+      if (searchRes.ok) {
+        const data = await searchRes.json();
+        const all = Array.isArray(data) ? data : [];
+        matched = all.filter((r) =>
+          (r?.name ?? r?.Name ?? r?.emertimi ?? r?.Emertimi ?? "").toLowerCase().includes(lq)
+        );
+      }
+      // If nothing came back, try fetching all and filter
+      if (matched.length === 0) {
+        const allRes = await authenticatedFetch(`${API_BASE}/restaurants`);
+        if (allRes.ok) {
+          const allData = await allRes.json();
+          matched = (Array.isArray(allData) ? allData : []).filter((r) =>
+            (r?.name ?? r?.Name ?? r?.emertimi ?? r?.Emertimi ?? "").toLowerCase().includes(lq)
+          );
+        }
+      }
+      setRestaurants(matched.map((r) => ({
+        id: r?.id ?? r?.Id,
+        name: r?.name ?? r?.Name ?? r?.emertimi ?? r?.Emertimi ?? "Restaurant",
+        image: toAbsoluteAssetUrl(r?.image ?? r?.Image ?? r?.logo ?? r?.Logo ?? ""),
+      })));
+    } catch (_) {
+      setRestaurants([]);
+    } finally {
+      setRestaurantsLoading(false);
+    }
+  };
 
   const getRoleFromJwt = () => {
     try {
@@ -3347,26 +3402,27 @@ if (hash.startsWith("#/admin/branch-requests")) {
   };
 
   const handleSaveAddress = async () => {
-    try {
-      const res = await authenticatedFetch(`${API_BASE}/addresses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          Country: addressCountry,
-          City: addressCity,
-          Adresa: addressStreet,
-          PostalCode: addressPostal,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to save address");
-      closeModal("#locationModal");
-      setAddressCountry("");
-      setAddressCity("");
-      setAddressStreet("");
-      setAddressPostal("");
-    } catch (err) {
-      console.error(err);
-      alert("Could not save address. Make sure you are logged in.");
+    // Always set delivery address locally regardless of login state
+    const combined = [addressStreet, addressCity, addressCountry].filter(Boolean).join(", ");
+    if (combined) setDeliveryAddress(combined);
+    closeModal("#locationModal");
+
+    // If logged in, also persist to server
+    if (tokenService.getToken()) {
+      try {
+        await authenticatedFetch(`${API_BASE}/addresses`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            Country: addressCountry,
+            City: addressCity,
+            Adresa: addressStreet,
+            PostalCode: addressPostal,
+          }),
+        });
+      } catch (err) {
+        console.error("Address save to server failed:", err);
+      }
     }
   };
 
@@ -3775,7 +3831,9 @@ if (hash.startsWith("#/admin/branch-requests")) {
           }
           return;
         }
-        await fetchRestaurantsByCategory(route.category);
+        if (!route.isNavSearch) {
+          await fetchRestaurantsByCategory(route.category);
+        }
       } else {
         setSelectedCategory("");
         setNearbyError("");
@@ -4178,6 +4236,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
               onChange={(e) => setSearch(e.target.value)}
               onFocus={() => setSearchInputUnlocked(true)}
               onPointerDown={() => setSearchInputUnlocked(true)}
+              onKeyDown={handleNavSearch}
             />
           </div>
 
@@ -4221,7 +4280,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
               data-bs-toggle="modal"
               data-bs-target="#locationModal"
             >
-              📍 Prishtina
+              📍 {addressCity || "Prishtina"}
             </button>
 
             <div className="dropdown">
@@ -4533,6 +4592,13 @@ if (hash.startsWith("#/admin/branch-requests")) {
             locationQuery={locationQuery}
             onRestaurantSelect={handleRestaurantSelect}
             onRestaurantFavoriteToggle={handleRestaurantFavoriteToggle}
+            onBack={() => {
+              setPage("home");
+              setSelectedCategory("");
+              setRestaurants([]);
+              setSearch("");
+              window.location.hash = "/";
+            }}
           />
         )}
 

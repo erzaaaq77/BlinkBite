@@ -17,7 +17,7 @@ const PartnerCouriersPage = ({ onApply }) => {
                 <button className="btn partners-btn-primary" onClick={onApply}>
                   Apply Now &rarr;
                 </button>
-                <a href="#how-it-works" className="btn partners-btn-outline">How it works</a>
+                <button className="btn partners-btn-outline" onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}>How it works</button>
               </div>
             </div>
             <div className="col-lg-6 text-center">
@@ -143,6 +143,15 @@ const PartnerCouriersPage = ({ onApply }) => {
           </div>
         </div>
       </section>
+
+      <div className="text-center py-4">
+        <button
+          className="btn btn-link text-decoration-none"
+          onClick={() => { window.location.hash = "/"; }}
+        >
+          ← Back to home page
+        </button>
+      </div>
     </div>
   );
 };

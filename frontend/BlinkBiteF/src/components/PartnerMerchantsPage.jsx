@@ -17,7 +17,7 @@ const PartnerMerchantsPage = ({ onApply }) => {
                 <button className="btn partners-btn-primary" onClick={onApply}>
                   List Your Restaurant &rarr;
                 </button>
-                <a href="#merchant-how" className="btn partners-btn-outline">Learn more</a>
+                <button className="btn partners-btn-outline" onClick={() => document.getElementById('merchant-how')?.scrollIntoView({ behavior: 'smooth' })}>Learn more</button>
               </div>
             </div>
             <div className="col-lg-6 text-center">
@@ -141,6 +141,15 @@ const PartnerMerchantsPage = ({ onApply }) => {
           </div>
         </div>
       </section>
+
+      <div className="text-center py-4">
+        <button
+          className="btn btn-link text-decoration-none"
+          onClick={() => { window.location.hash = "/"; }}
+        >
+          ← Back to home page
+        </button>
+      </div>
     </div>
   );
 };
