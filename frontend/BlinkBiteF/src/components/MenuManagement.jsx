@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
-
+import Swal from "sweetalert2";
 // Helper: get query param from URL
 function getQueryParam(name) {
   if (typeof window === 'undefined') return null;
@@ -769,20 +769,52 @@ const MenuManagement = ({ token, restaurantId, restaurantAddressId: propRestaura
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Are you sure?")) {
-      try {
-        await axios.delete(`${API_BASE_URL}/MenuItems/${id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        await fetchMenuItems();
-        showToast("Menu item deleted.", "success");
-      } catch (error) {
-        console.error(error);
-        showToast("Failed to delete menu item.", "danger");
+
+const handleDelete = async (id, name) => {
+  const result = await Swal.fire({
+    title: `Delete item "${name}"?`,
+    html: "This action cannot be undone!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    confirmButtonColor: "#d33",
+    cancelButtonText: "Cancel",
+    reverseButtons: true,
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    Swal.fire({
+      title: "Deleting...",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
       }
-    }
-  };
+    });
+
+    await axios.delete(`${API_BASE_URL}/MenuItems/${id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    Swal.fire({
+      icon: "success",
+      title: "Deleted!",
+      text: `"${name}" has been deleted.`,
+      timer: 1500,
+      showConfirmButton: false,
+    });
+    
+    fetchMenuItems();
+  } catch (err) {
+    Swal.fire({
+      icon: "error",
+      title: "Delete failed",
+      text: err.response?.data || "Failed to delete menu item",
+      confirmButtonColor: "#d33",
+    });
+  }
+};
 
   const normalizedMenuItems = Array.isArray(menuItems) ? menuItems : [];
   const debugApiHost = getApiHostLabel();
