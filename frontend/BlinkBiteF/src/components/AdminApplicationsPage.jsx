@@ -164,6 +164,8 @@ const AdminApplicationsPage = () => {
     <div className="d-flex justify-content-between align-items-center mb-4">
       <h2>📋 Admin Dashboard</h2>
       <div>
+
+    
         <button 
           className="btn btn-outline-primary me-2"
           onClick={() => setShowCategoryManagement(true)}
@@ -176,6 +178,12 @@ const AdminApplicationsPage = () => {
         >
           🏢 Branch Requests
         </button>
+        <button 
+      className="btn btn-outline-success me-2"
+      onClick={() => { window.location.hash = "/admin/restaurants"; }}
+    >
+      🏪 Manage Restaurants
+    </button>
         <button className="btn btn-outline-secondary btn-sm" onClick={fetchApplications}>
           🔄 Refresh
         </button>

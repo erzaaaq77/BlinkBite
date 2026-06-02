@@ -2344,3 +2344,12 @@ body {
   grid-template-columns: minmax(420px, 640px) minmax(250px, 30%);
   justify-content: center;
 }
+
+/* Prevent fixed navbar overlapping page content */
+.content-offset {
+  padding-top: 120px !important; /* ensure fixed navbar offset */
+}
+
+@media (max-width: 992px) {
+  .content-offset { padding-top: 110px !important; }
+}

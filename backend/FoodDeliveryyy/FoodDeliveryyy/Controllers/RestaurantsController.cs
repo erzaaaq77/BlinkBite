@@ -2,12 +2,14 @@
 
 using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
+using FoodDeliveryyy.Models.Enums;
 using FoodDeliveryyy.Models.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -21,7 +23,9 @@ namespace FoodDeliveryyy.Controllers;
     {
         _context = context;
     }
+
     [HttpGet]
+    [Authorize(Roles =AppRoles.Admin + "," + AppRoles.Merchant)]
     public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurant([FromQuery] string? search)
     {
         var query = _context.Restaurants.AsQueryable();
@@ -41,6 +45,8 @@ namespace FoodDeliveryyy.Controllers;
 
 
     [HttpGet("{id:int}")]
+    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
+
     public async Task<ActionResult<Restaurant>> GetRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FindAsync(id);
@@ -118,18 +124,30 @@ namespace FoodDeliveryyy.Controllers;
 
     [HttpPost]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
-    public async Task<ActionResult<Restaurant>> CreateRestaurant(Restaurant restaurant)
+    public async Task<ActionResult<Restaurant>> CreateRestaurant([FromBody] JsonElement restaurantData)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
+        var emertimi = restaurantData.GetProperty("emertimi").GetString();
+        if (string.IsNullOrWhiteSpace(emertimi))
+            return BadRequest("Restaurant name is required");
+
+        var restaurant = new Restaurant
+        {
+            Emertimi = emertimi,
+            Pershkrimi = restaurantData.TryGetProperty("pershkrimi", out var p) ? p.GetString() : null,
+            Telefoni = restaurantData.TryGetProperty("telefoni", out var t) ? t.GetString() : null,
+            Email = restaurantData.TryGetProperty("email", out var e) ? e.GetString() : null,
+            Kategori = restaurantData.TryGetProperty("kategori", out var k) ? k.GetString() : null,
+            Statusi = RestaurantStatus.Active,
+            Rating = 0
+        };
+
         if (role == AppRoles.Merchant)
         {
             if (string.IsNullOrWhiteSpace(userId))
-            {
                 return Unauthorized();
-            }
-
             restaurant.UserId = userId;
         }
 
@@ -138,35 +156,55 @@ namespace FoodDeliveryyy.Controllers;
         return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id }, restaurant);
     }
 
+
     [HttpPut("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
-    public async Task<ActionResult> UpdateRestaurant(int id, Restaurant restaurant)
+    public async Task<ActionResult> UpdateRestaurant(int id, [FromBody] JsonElement updateData)
     {
-        if (id != restaurant.Id) return BadRequest();
-
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        if (role == AppRoles.Merchant)
+        var existing = await _context.Restaurants.FindAsync(id);
+        if (existing == null) return NotFound();
+
+        if (role == AppRoles.Merchant && existing.UserId != userId)
+            return Forbid();
+
+        // Përditëso fushat
+        if (updateData.TryGetProperty("emertimi", out var emertimi))
+            existing.Emertimi = emertimi.GetString();
+
+        if (updateData.TryGetProperty("pershkrimi", out var pershkrimi))
+            existing.Pershkrimi = pershkrimi.GetString();
+
+        if (updateData.TryGetProperty("telefoni", out var telefoni))
+            existing.Telefoni = telefoni.GetString();
+
+        if (updateData.TryGetProperty("email", out var email))
+            existing.Email = email.GetString();
+
+        if (updateData.TryGetProperty("kategori", out var kategori))
+            existing.Kategori = kategori.GetString();
+
+        if (updateData.TryGetProperty("statusi", out var statusi))
         {
-            var existing = await _context.Restaurants.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
-            if (existing == null)
+            var statusString = statusi.GetString();
+            existing.Statusi = statusString switch
             {
-                return NotFound();
-            }
-
-            if (existing.UserId != userId)
-            {
-                return Forbid();
-            }
-
-            restaurant.UserId = existing.UserId;
+                "Active" => RestaurantStatus.Active,
+                "Pending" => RestaurantStatus.Pending,
+                "Inactive" => RestaurantStatus.Inactive,
+                _ => existing.Statusi
+            };
         }
 
-        _context.Entry(restaurant).State = EntityState.Modified;
+        if (updateData.TryGetProperty("categoryId", out var categoryId) && categoryId.ValueKind != System.Text.Json.JsonValueKind.Null)
+            existing.CategoryId = categoryId.GetInt32();
+
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(existing);
     }
+
 
     [HttpDelete("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
