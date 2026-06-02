@@ -127,35 +127,24 @@ namespace FoodDeliveryyy.Controllers;
     public async Task<ActionResult<Restaurant>> CreateRestaurant([FromBody] JsonElement restaurantData)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
-
-        var emertimi = restaurantData.GetProperty("emertimi").GetString();
-        if (string.IsNullOrWhiteSpace(emertimi))
-            return BadRequest("Restaurant name is required");
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            return Forbid();
+        }
 
         var restaurant = new Restaurant
         {
-            Emertimi = emertimi,
+            Emertimi = restaurantData.GetProperty("emertimi").GetString(),
             Pershkrimi = restaurantData.TryGetProperty("pershkrimi", out var p) ? p.GetString() : null,
-            Telefoni = restaurantData.TryGetProperty("telefoni", out var t) ? t.GetString() : null,
-            Email = restaurantData.TryGetProperty("email", out var e) ? e.GetString() : null,
-            Kategori = restaurantData.TryGetProperty("kategori", out var k) ? k.GetString() : null,
             Statusi = RestaurantStatus.Active,
-            Rating = 0
+            Rating = 0,
+            UserId = userId
         };
-
-        if (role == AppRoles.Merchant)
-        {
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized();
-            restaurant.UserId = userId;
-        }
 
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
         return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id }, restaurant);
     }
-
 
     [HttpPut("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
@@ -170,7 +159,6 @@ namespace FoodDeliveryyy.Controllers;
         if (role == AppRoles.Merchant && existing.UserId != userId)
             return Forbid();
 
-        // Përditëso fushat
         if (updateData.TryGetProperty("emertimi", out var emertimi))
             existing.Emertimi = emertimi.GetString();
 

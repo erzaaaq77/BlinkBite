@@ -10,6 +10,21 @@ const toNumberId = (value) => {
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : null;
 };
 
+const normalizeRestaurantPayload = (restaurant) => {
+  const category = restaurant.category ?? restaurant.Category;
+  return {
+    ...restaurant,
+    id: restaurant.id ?? restaurant.Id,
+    emertimi: restaurant.emertimi ?? restaurant.Emertimi ?? restaurant.name ?? restaurant.Name ?? "",
+    pershkrimi: restaurant.pershkrimi ?? restaurant.Pershkrimi ?? restaurant.description ?? restaurant.Description ?? "",
+    telefoni: restaurant.telefoni ?? restaurant.Telefoni ?? restaurant.phone ?? restaurant.phoneNumber ?? "",
+    email: restaurant.email ?? restaurant.Email ?? "",
+    kategori: restaurant.kategori ?? restaurant.Kategoria ?? restaurant.categoryName ?? restaurant.CategoryName ?? category?.emertimi ?? category?.name ?? "",
+    categoryId: toNumberId(restaurant.categoryId ?? restaurant.CategoryId ?? category?.id ?? category?.Id),
+    statusi: restaurant.statusi ?? restaurant.Statusi ?? restaurant.status ?? "Active"
+  };
+};
+
 const normalizeRestaurantStatus = (statusValue) => {
   if (typeof statusValue === "number" && Number.isFinite(statusValue)) {
     return statusValue;
@@ -25,6 +40,21 @@ const getRestaurantStatusLabel = (statusValue) => {
   if (normalized === 2) return "Pending";
   if (normalized === 0) return "Inactive";
   return "Active";
+};
+
+const getRestaurantCategoryLabel = (restaurant, categories) => {
+  const directCategory = restaurant.kategori ?? restaurant.Kategoria ?? restaurant.categoryName ?? restaurant.CategoryName;
+  if (typeof directCategory === "string" && directCategory.trim()) return directCategory;
+  const categoryObject = restaurant.category ?? restaurant.Category;
+  if (categoryObject && typeof categoryObject === "object") {
+    return categoryObject.emertimi || categoryObject.name || categoryObject.Kategoria || categoryObject.Name || "";
+  }
+  const categoryId = toNumberId(restaurant.categoryId ?? restaurant.CategoryId ?? categoryObject?.id ?? categoryObject?.Id);
+  if (categoryId && Array.isArray(categories)) {
+    const found = categories.find((cat) => toNumberId(cat.id ?? cat.Id) === categoryId);
+    return found?.emertimi || found?.name || found?.kategori || found?.Kategoria || "";
+  }
+  return "";
 };
 
 const RestaurantManagement = ({ token, onBack }) => {
@@ -53,7 +83,9 @@ const RestaurantManagement = ({ token, onBack }) => {
       const response = await axios.get(`${API_BASE_URL}/Restaurants`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setRestaurants(response.data);
+      setRestaurants(Array.isArray(response.data)
+        ? response.data.map(normalizeRestaurantPayload)
+        : []);
     } catch (err) {
       toast.error("Failed to load restaurants");
     } finally {
@@ -108,15 +140,16 @@ const RestaurantManagement = ({ token, onBack }) => {
 
   const openModal = (restaurant = null) => {
     if (restaurant) {
-      setEditingRestaurant(restaurant);
+      const normalizedRestaurant = normalizeRestaurantPayload(restaurant);
+      setEditingRestaurant(normalizedRestaurant);
       setFormData({
-        emertimi: restaurant.emertimi,
-        pershkrimi: restaurant.pershkrimi || "",
-        telefoni: restaurant.telefoni || "",
-        email: restaurant.email || "",
-        kategori: restaurant.kategori || restaurant.kategoria || "",
-        categoryId: toNumberId(restaurant.categoryId ?? restaurant.CategoryId) ?? null,
-        statusi: getRestaurantStatusLabel(restaurant.statusi ?? restaurant.Statusi ?? restaurant.status)
+        emertimi: normalizedRestaurant.emertimi,
+        pershkrimi: normalizedRestaurant.pershkrimi || "",
+        telefoni: normalizedRestaurant.telefoni || "",
+        email: normalizedRestaurant.email || "",
+        kategori: normalizedRestaurant.kategori || "",
+        categoryId: normalizedRestaurant.categoryId || null,
+        statusi: getRestaurantStatusLabel(normalizedRestaurant.statusi)
       });
     } else {
       setEditingRestaurant(null);
@@ -142,26 +175,17 @@ const RestaurantManagement = ({ token, onBack }) => {
 
     const statusLabel = String(formData.statusi || "Active");
     const payload = {
-      emertimi: formData.emertimi,
-      Emertimi: formData.emertimi,
-      pershkrimi: formData.pershkrimi,
-      Pershkrimi: formData.pershkrimi,
-      telefoni: formData.telefoni,
-      Telefoni: formData.telefoni,
-      email: formData.email,
-      Email: formData.email,
-      kategori: formData.kategori,
-      Kategoria: formData.kategoria,
-      categoryId: toNumberId(formData.categoryId),
-      CategoryId: toNumberId(formData.categoryId),
-      status: statusLabel,
-      Status: statusLabel
-    };
+  emertimi: formData.emertimi,
+  pershkrimi: formData.pershkrimi || "",
+  telefoni: formData.telefoni || "",
+  email: formData.email || "",
+  kategori: formData.kategori || "",
+  statusi: formData.statusi || "Active"
+};
 
-    if (payload.categoryId === null) {
-      toast.error("Please select a valid category.");
-      return;
-    }
+if (formData.categoryId) {
+  payload.categoryId = parseInt(formData.categoryId);
+}
 
     console.debug("Restaurant save payload", payload);
 
@@ -258,10 +282,12 @@ const RestaurantManagement = ({ token, onBack }) => {
               {restaurants.map((r) => (
                 <tr key={r.id}>
                   <td>{r.id}</td>
-                  <td><strong>{r.emertimi}</strong></td>
-                  <td>{r.telefoni || "-"}</td>
-                  <td>{r.email || "-"}</td>
-                  <td>{r.kategori || r.kategoria || "-"}</td>
+                  <td><strong>{r.emertimi || r.Emertimi || r.name || r.Name}</strong></td>
+                  <td>{r.telefoni || r.Telefoni || r.phone || r.phoneNumber || "-"}</td>
+                  <td>{r.email || r.Email || "-"}</td>
+                  <td>{
+                    getRestaurantCategoryLabel(r, categories) || "-"
+                  }</td>
                   <td>{getStatusBadge(r.statusi ?? r.Statusi ?? r.status)}</td>
                   <td>
                     <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(r)}>Edit</button>
