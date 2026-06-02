@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 /* --- GLOBAL MODERN PALETTE FOR MERCHANT DASHBOARD (UNIFIED) --- */
 .merchant-dashboard-page {
   background: linear-gradient(135deg, #fff8ee 0%, #fdf0d8 100%) !important;
@@ -196,7 +197,6 @@
   color: #7a4a00;
   border-color: #ffb347;
 }
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 /* ═══════════════════════════════════════════
   MERCHANT DASHBOARD  —  Premium Edition
 ════════════════════════════════════════════ */
