@@ -161,12 +161,7 @@ const MerchantApplicationPage = () => {
               required
             >
               <option>Prishtinë</option>
-              <option>Prizren</option>
-              <option>Pejë</option>
-              <option>Gjakovë</option>
-              <option>Ferizaj</option>
-              <option>Gjilan</option>
-              <option>Mitrovicë</option>
+          
             </select>
           </div>
           <div className="mb-4 apply-field">
