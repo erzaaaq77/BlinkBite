@@ -192,21 +192,50 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   };
 
   const handleDeleteCategory = async (category) => {
-    if (!confirm(`Are you sure you want to delete category "${category.emertimi}"? Items in this category will also be deleted.`)) {
-      return;
-    }
+  const result = await Swal.fire({
+    title: `Delete category "${category.emertimi}"?`,
+    html: "Items in this category will also be deleted.<br>This action cannot be undone!",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, delete",
+    confirmButtonColor: "#d33",
+    cancelButtonText: "Cancel",
+    reverseButtons: true,
+  });
+
+  if (!result.isConfirmed) return;
+
+  try {
+    Swal.fire({
+      title: "Deleting...",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+
+    await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    Swal.fire({
+      icon: "success",
+      title: "Deleted!",
+      text: `Category "${category.emertimi}" has been deleted.`,
+      timer: 1500,
+      showConfirmButton: false,
+    });
     
-    try {
-      await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      toast.success("Category deleted successfully");
-      fetchCategories();
-    } catch (error) {
-      console.error(error);
-      toast.error(error.response?.data?.message || "Failed to delete category");
-    }
-  };
+    fetchCategories();
+  } catch (error) {
+    Swal.fire({
+      icon: "error",
+      title: "Delete failed",
+      text: error.response?.data?.message || "Failed to delete category",
+      confirmButtonColor: "#d33",
+    });
+  }
+};
 
   const handleAddBranch = async () => {
     if (!newBranch.address.trim()) {
