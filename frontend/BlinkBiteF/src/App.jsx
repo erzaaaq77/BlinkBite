@@ -659,7 +659,7 @@ const filtered = (restaurants || []).filter(r => {
   const isBranchManagerRole = normalizedCurrentUserRole === "branchmanager" || String(currentUserRole || "").toLowerCase().includes("branch");
   const isMerchantLikeRole = isMerchantRole || isBranchManagerRole;
   const isCourierRole = normalizedCurrentUserRole === "courier" || String(currentUserRole || "").toLowerCase().includes("courier");
-  const canManageOperationalOrders = isAdminRole || isMerchantLikeRole || isCourierRole;
+  const canManageOperationalOrders = isAdminRole || isMerchantLikeRole;
   const [merchantRestaurantIdForUi, setMerchantRestaurantIdForUi] = useState("");
   const [showAdminDrivers, setShowAdminDrivers] = useState(false);
 
@@ -4352,21 +4352,21 @@ const handleRoleStatusUpdate = async (orderId, nextStatus) => {
 
             {token ? (
               <>
-                {!isAdminRole && (
-                  <button
-                    className="btn btn-outline-primary nav-orders-btn"
-                    onClick={() => {
-                      primeAudioFromGesture();
-                      setNewOrderCount(0);
-                      window.location.hash = "/my-orders";
-                    }}
-                  >
-                    {canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}
-                    {newOrderCount > 0 && (
-                      <span className="nav-new-order-badge">{newOrderCount}</span>
-                    )}
-                  </button>
-                )}
+                {!isAdminRole && !isCourierRole && (
+  <button
+    className="btn btn-outline-primary nav-orders-btn"
+    onClick={() => {
+      primeAudioFromGesture();
+      setNewOrderCount(0);
+      window.location.hash = "/my-orders";
+    }}
+  >
+    {canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}
+    {newOrderCount > 0 && (
+      <span className="nav-new-order-badge">{newOrderCount}</span>
+    )}
+  </button>
+)}
                 
                 <div className="me-2">
                   <span className="small text-muted">Hi, {currentUser?.userName || "User"}</span>
@@ -4658,22 +4658,27 @@ const handleRoleStatusUpdate = async (orderId, nextStatus) => {
           <AdminApplicationsPage />
         )}
         
-        {/* Partner Pages */}
-        {page === "partnerCouriers" && (
-          <PartnerCouriersPage />
-        )}
+       {page === "partnerCouriers" && (
+  <PartnerCouriersPage 
+    onApply={() => { window.location.hash = "/apply/courier"; }}
+  />
+)}
         
         {page === "partnerMerchants" && (
-          <PartnerMerchantsPage />
-        )}
+  <PartnerMerchantsPage 
+    onApply={() => { window.location.hash = "/apply/merchant"; }}
+  />
+)}
         
         {page === "partnerCompanies" && (
           <PartnerCompaniesPage />
         )}
         
         {page === "partnerDrive" && (
-          <PartnerDrivePage />
-        )}
+  <PartnerDrivePage 
+    onApply={() => { window.location.hash = "/apply/courier"; }}
+  />
+)}
 
         {page === "myOrders" && window.location.hash.startsWith("#/invoice/") && (
           <section className="cart-page pb-5">

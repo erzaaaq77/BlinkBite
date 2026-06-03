@@ -102,11 +102,11 @@
 }
 
 .kanban-col-body {
+  max-height: calc(70vh - 20px);
   display: flex;
   flex-direction: column;
   gap: 10px;
   padding: 12px;
-  max-height: 70vh;
   overflow-y: auto;
 }
 
@@ -496,6 +496,8 @@ body {
   background-color: #f5f5f5;
   font-family: 'Segoe UI', sans-serif;
   min-height: 100vh;
+  margin: 0;
+  padding: 0;
 }
 
 .custom-navbar {
@@ -635,7 +637,7 @@ body {
 }
 
 .hero {
-  margin-top: 92px;
+  margin-top: 0;
   background: linear-gradient(rgba(0, 0, 0, 0.42), rgba(0, 0, 0, 0.28)), url("./assets/Gemini_Generated_Image_7lkq4l7lkq4l7lkq.webp") center 35%/cover no-repeat;
   min-height: 800px;
   border-radius: 0 0 10px 10px;
@@ -650,7 +652,7 @@ body {
 
 @media (max-width: 768px) {
   .hero {
-    margin-top: 84px;
+    margin-top: 0;
     min-height: 620px;
     background-position: center;
   }
@@ -1872,7 +1874,7 @@ body {
    PARTNER PAGES
    ========================================================= */
 .partners-page {
-  padding-top: 70px;
+  padding-top: 0;
 }
 
 .partners-hero {
@@ -2385,15 +2387,28 @@ body {
 /* Për desktop - navbar normal */
 @media (min-width: 769px) {
   body {
-    padding-top: 88px;
+    padding-top: 160px;
   }
 }
 
-/* Rregullim për faqet që kanë padding të veçantë */
+body {
+  padding-top: 76px;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding-top: 68px;
+  }
+}
+
+/* Hiq padding shtesë nga klasat specifike */
 .restaurants-page,
 .restaurant-details-page,
 .cart-page,
-.merchant-dashboard-page {
+.orders-page,
+.merchant-dashboard-page,
+.driver-dashboard-page,
+.partners-page {
   padding-top: 0;
 }
 
@@ -2403,7 +2418,7 @@ body {
 /* Hero Section */
 @media (max-width: 768px) {
   .hero {
-    margin-top: 70px;
+    margin-top: 0;
     min-height: 500px;
     padding: 40px 16px;
   }
@@ -2700,4 +2715,67 @@ body {
   .home-page-shell .categories {
     flex-grow: 0;
   }
+}
+
+/* ========== RRREGULLIMI I BUTONAVE PËR PARTNER PAGES ========== */
+.partners-btn-primary,
+.partners-btn-outline {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.25s ease !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  text-decoration: none !important;
+}
+
+.partners-btn-primary {
+  background: #f5c518 !important;
+  color: #1a1a1a !important;
+  border: none !important;
+  padding: 12px 28px !important;
+  font-size: 0.95rem !important;
+}
+
+.partners-btn-primary:hover {
+  background: #e0b010 !important;
+  color: #1a1a1a !important;
+  transform: translateY(-2px) !important;
+}
+
+.partners-btn-outline {
+  background: transparent !important;
+  color: #fff !important;
+  border: 2px solid rgba(255,255,255,0.5) !important;
+  padding: 12px 28px !important;
+  font-size: 0.95rem !important;
+}
+
+.partners-btn-outline:hover {
+  border-color: #fff !important;
+  color: #fff !important;
+  background: rgba(255,255,255,0.1) !important;
+}
+
+/* Butoni në CTA card */
+.partners-cta-card .partners-btn-primary {
+  background: #f5c518 !important;
+  color: #1a1a1a !important;
+  width: 100% !important;
+}
+
+.partners-cta-card .partners-btn-primary:hover {
+  background: #e0b010 !important;
+}
+
+/* Butoni Back to home */
+.btn-link {
+  color: #6c757d !important;
+  text-decoration: none !important;
+}
+
+.btn-link:hover {
+  color: #f5c518 !important;
+  text-decoration: underline !important;
 }

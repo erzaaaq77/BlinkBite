@@ -139,9 +139,12 @@ const PartnerDrivePage = () => {
                 <div style={{ fontSize: "3rem" }}>🚀</div>
                 <h4 className="mt-2 mb-2">Ready to order?</h4>
                 <p className="text-muted mb-4">Browse restaurants near you and get your first order delivered by BlinkBite Drive.</p>
-                <button className="btn partners-btn-primary w-100" onClick={() => window.location.hash = "/"}>
-                  Browse Restaurants
-                </button>
+                <button 
+  className="btn btn-primary mt-3" 
+  onClick={() => { window.location.hash = "/restaurants/Nearby"; }}
+>
+  Browse Restaurants
+</button>
               </div>
             </div>
           </div>

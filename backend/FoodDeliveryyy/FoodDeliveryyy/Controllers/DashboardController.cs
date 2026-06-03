@@ -419,50 +419,51 @@ public class DashboardController : ControllerBase
                 Completed = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.Statusi == DeliveryStatus.Delivered)
             },
             CurrentOrders = await _context.Orders
-                .Where(o => _context.Deliveries.Any(d => d.OrderId == o.Id && d.DriverId == driver.Id)
-                         && o.Statusi != OrderStatus.Delivered
-                         && o.Statusi != OrderStatus.Cancelled)
-                .Include(o => o.Restaurant)
-                .Select(o => new
-                {
-                    o.Id,
-                    o.AdresaDorezimit,
-                    o.ShumaTotale,
-                    RestaurantName = o.Restaurant.Emertimi,
-                    o.Statusi,
-                    o.DataPorosis
-                })
-                .ToListAsync(),
+    .Where(o => o.AssignedCourierId == userId
+             && o.Statusi != OrderStatus.Delivered
+             && o.Statusi != OrderStatus.Cancelled)
+    .Include(o => o.Restaurant)
+    .Select(o => new
+    {
+        o.Id,
+        o.AdresaDorezimit,
+        o.ShumaTotale,
+        RestaurantName = o.Restaurant.Emertimi,
+        o.Statusi,
+        o.DataPorosis,
+        o.AssignedAt
+    })
+    .ToListAsync(),
             DeliveryHistory = await _context.Orders
-                .Where(o => _context.Deliveries.Any(d => d.OrderId == o.Id && d.DriverId == driver.Id)
-                         && o.Statusi == OrderStatus.Delivered)
-                .Include(o => o.Restaurant)
-                .Include(o => o.Delivery)
-                .OrderByDescending(o => o.DataPorosis)
-                .Take(50)
-                .Select(o => new
-                {
-                    o.Id,
-                    o.AdresaDorezimit,
-                    o.ShumaTotale,
-                    RestaurantName = o.Restaurant.Emertimi,
-                    o.DataPorosis,
-                    DeliveredAt = o.Delivery != null ? o.Delivery.DataDorezimit : (DateTime?)null
-                })
-                .ToListAsync(),
+    .Where(o => o.AssignedCourierId == userId
+             && o.Statusi == OrderStatus.Delivered)
+    .Include(o => o.Restaurant)
+    .OrderByDescending(o => o.AssignedAt)
+    .Take(50)
+    .Select(o => new
+    {
+        o.Id,
+        o.AdresaDorezimit,
+        o.ShumaTotale,
+        RestaurantName = o.Restaurant.Emertimi,
+        o.DataPorosis,
+        DeliveredAt = o.AssignedAt
+    })
+    .ToListAsync(),
+
             AvailableOrders = await _context.Orders
-                .Where(o => o.Statusi == OrderStatus.Ready
-                         && !_context.Deliveries.Any(d => d.OrderId == o.Id))
-                .Include(o => o.Restaurant)
-                .Select(o => new
-                {
-                    o.Id,
-                    o.AdresaDorezimit,
-                    o.ShumaTotale,
-                    RestaurantName = o.Restaurant.Emertimi,
-                    o.DataPorosis
-                })
-                .ToListAsync(),
+    .Where(o => o.Statusi == OrderStatus.Ready
+             && o.AssignedCourierId == null)
+    .Include(o => o.Restaurant)
+    .Select(o => new
+    {
+        o.Id,
+        o.AdresaDorezimit,
+        o.ShumaTotale,
+        RestaurantName = o.Restaurant.Emertimi,
+        o.DataPorosis
+    })
+    .ToListAsync(),
             Performance = new
             {
                 Rating = driver.Vlersimi,

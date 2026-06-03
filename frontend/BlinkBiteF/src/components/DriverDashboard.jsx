@@ -251,7 +251,7 @@ const DriverDashboard = ({ token, onBack }) => {
   const driverStatusLabel = normalizeDriverAvailability(driver.statusi ?? driver.Statusi);
 
   return (
-    <section className="container py-4" style={{ marginTop: "88px" }}>
+    <section className="container py-4" style={{ marginTop: "20px" }}>
       <div className="mb-4">
         <button className="btn btn-outline-secondary" onClick={onBack}>
           ← Back to Home
