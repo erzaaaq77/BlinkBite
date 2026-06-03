@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import axios from "axios";
 import Swal from "sweetalert2";
 import toast from "react-hot-toast";
+import { reviewService } from "../services/reviewService";
 import "./MerchantDashboard.css";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
@@ -43,6 +44,9 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     pershkrimi: "",
     renditja: 0
   });
+  const [restaurantReviews, setRestaurantReviews] = useState([]);
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [reviewError, setReviewError] = useState("");
   const [requestData, setRequestData] = useState({
     branchId: null,
     newAddress: "",
@@ -144,6 +148,37 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       console.error("Failed to fetch categories", error);
     }
   };
+
+  const normalizeReviewPayload = (payload) => {
+    if (!payload) return [];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.data)) return payload.data;
+    if (Array.isArray(payload.reviews)) return payload.reviews;
+    if (Array.isArray(payload.Items)) return payload.Items;
+    return [];
+  };
+
+  const loadRestaurantReviews = async () => {
+    if (!restaurant?.id) {
+      setRestaurantReviews([]);
+      return;
+    }
+    setReviewLoading(true);
+    setReviewError("");
+    try {
+      const data = await reviewService.getByRestaurant(restaurant.id);
+      setRestaurantReviews(normalizeReviewPayload(data));
+    } catch (err) {
+      console.error("Failed to load restaurant reviews", err);
+      setReviewError("Failed to load restaurant reviews.");
+    } finally {
+      setReviewLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadRestaurantReviews();
+  }, [restaurant?.id]);
 
   const handleSaveCategory = async () => {
     if (!categoryForm.emertimi.trim()) {
@@ -853,6 +888,47 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="merchant-card mb-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h5 className="merchant-section-title mb-1">Customer Reviews</h5>
+              <p className="text-muted small mb-0">Reviews received for your restaurant.</p>
+            </div>
+            <button className="btn btn-sm btn-outline-secondary" onClick={loadRestaurantReviews}>
+              Refresh
+            </button>
+          </div>
+          {reviewLoading ? (
+            <p className="text-muted">Loading reviews...</p>
+          ) : reviewError ? (
+            <div className="alert alert-danger mb-0">{reviewError}</div>
+          ) : restaurantReviews.length === 0 ? (
+            <p className="text-muted mb-0">No reviews have been submitted for this restaurant yet.</p>
+          ) : (
+            <div className="list-group list-group-flush">
+              {restaurantReviews.slice(0, 6).map((review, idx) => {
+                const reviewer = review?.customerName ?? review?.CustomerName ?? review?.userName ?? review?.UserName ?? review?.name ?? review?.Name ?? "Anonymous";
+                const comment = review?.comment ?? review?.comments ?? review?.description ?? review?.note ?? review?.message ?? "No comment provided.";
+                const rating = Number(review?.vlersimi ?? review?.Vlersimi ?? review?.rating ?? review?.Rating ?? 0).toFixed(1);
+                const reviewDate = review?.createdAt ?? review?.CreatedAt ?? review?.date ?? review?.Date;
+
+                return (
+                  <div key={review?.id ?? review?.Id ?? idx} className="list-group-item">
+                    <div className="d-flex justify-content-between align-items-start">
+                      <div>
+                        <strong>{reviewer}</strong>
+                        <div className="text-muted small">{comment}</div>
+                      </div>
+                      <span className="badge bg-primary">{rating} ★</span>
+                    </div>
+                    {reviewDate && <div className="text-muted small mt-2">{new Date(reviewDate).toLocaleDateString()}</div>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Categories Management - Only for Main Merchant */}

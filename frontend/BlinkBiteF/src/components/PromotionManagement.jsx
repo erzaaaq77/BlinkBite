@@ -22,6 +22,15 @@ const PromotionManagement = ({ token, restaurantId, onBack }) => {
   const getErrorMessage = (error, fallback) => {
     const data = error?.response?.data;
     if (typeof data === "string") return data;
+    if (data?.errors) {
+      if (Array.isArray(data.errors)) return data.errors.join(" ");
+      if (typeof data.errors === "object") {
+        return Object.values(data.errors)
+          .flat()
+          .filter(Boolean)
+          .join(" ");
+      }
+    }
     if (typeof data?.message === "string") return data.message;
     if (typeof data?.detail === "string") return data.detail;
     if (typeof data?.title === "string") return data.title;

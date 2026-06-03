@@ -9,14 +9,26 @@ const ReviewModal = ({ orderId, restaurantId, onClose, onReviewChanged }) => {
   const [comment, setComment] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const getReviewField = (review, ...keys) => {
+    if (!review) return undefined;
+    for (const key of keys) {
+      const value = review?.[key];
+      if (value !== undefined && value !== null && value !== "") {
+        return value;
+      }
+    }
+    return undefined;
+  };
+
   useEffect(() => {
     const fetch = async () => {
       try {
         const review = await reviewService.getByOrder(orderId);
-        if (review && review.id) {
+        const reviewId = getReviewField(review, "id", "Id", "reviewId", "ReviewId");
+        if (review && reviewId) {
           setExistingReview(review);
-          setRating(review.vlersimi);
-          setComment(review.komenti);
+          setRating(Number(getReviewField(review, "vlersimi", "Vlersimi", "vleresimi", "rating", "Rating", "score")) || 0);
+          setComment(getReviewField(review, "komenti", "Komenti", "koment", "Koment", "comment", "Comment", "description", "note", "message") || "");
         }
       } catch (err) {
         // Nëse nuk ka vlerësim, injorojmë
@@ -26,19 +38,88 @@ const ReviewModal = ({ orderId, restaurantId, onClose, onReviewChanged }) => {
     fetch();
   }, [orderId]);
 
+  const getErrorMessage = (err, fallback) => {
+    const data = err?.response?.data;
+    if (typeof data === "string") return data;
+    if (data?.errors) {
+      if (Array.isArray(data.errors)) return data.errors.join(" ");
+      if (typeof data.errors === "object") {
+        return Object.values(data.errors)
+          .flat()
+          .filter(Boolean)
+          .join(" ");
+      }
+    }
+    if (typeof data?.message === "string") return data.message;
+    if (typeof data?.detail === "string") return data.detail;
+    if (typeof data?.title === "string") return data.title;
+    if (err?.message) return err.message;
+    if (data && typeof data === "object") return JSON.stringify(data);
+    return fallback;
+  };
+
+  const getStoredToken = () => {
+    return (
+      sessionStorage.getItem("access_token") ||
+      localStorage.getItem("access_token") ||
+      localStorage.getItem("token") ||
+      ""
+    );
+  };
+
+  const getUserIdFromJwt = () => {
+    try {
+      const jwt = getStoredToken();
+      if (!jwt || !jwt.includes(".")) return "";
+      const payloadBase64 = jwt.split(".")[1]
+        .replace(/-/g, "+")
+        .replace(/_/g, "/");
+      const padded = payloadBase64 + "=".repeat((4 - (payloadBase64.length % 4)) % 4);
+      const payload = JSON.parse(window.atob(padded));
+      return (
+        payload?.nameid ||
+        payload?.sub ||
+        payload?.id ||
+        payload?.userId ||
+        payload?.UserId ||
+        payload?.["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"] ||
+        ""
+      );
+    } catch (err) {
+      console.error("Failed to parse JWT for user ID", err);
+      return "";
+    }
+  };
+
   const handleSubmit = async () => {
+    if (!orderId || !restaurantId) {
+      toast.error("Cannot submit review: missing order or restaurant information.");
+      return;
+    }
     if (rating === 0) {
       toast.error("Please select a rating");
       return;
     }
     setLoading(true);
     try {
+      const jwtUserId = getUserIdFromJwt();
       const payload = {
         orderId: Number(orderId),
         restaurantId: Number(restaurantId),
+        OrderId: Number(orderId),
+        RestaurantId: Number(restaurantId),
+        userId: jwtUserId || undefined,
+        UserId: jwtUserId || undefined,
         vlersimi: rating,
+        Vlersimi: rating,
+        vleresimi: rating,
+        rating: rating,
+        Rating: rating,
         komenti: comment,
-        userId: "" // do të merret nga token-i në backend
+        Komenti: comment,
+        koment: comment,
+        comment: comment,
+        Comment: comment
       };
       if (existingReview) {
         await reviewService.update(existingReview.id, payload);
@@ -48,9 +129,10 @@ const ReviewModal = ({ orderId, restaurantId, onClose, onReviewChanged }) => {
         toast.success("Review submitted successfully");
       }
       if (onReviewChanged) onReviewChanged();
-      onClose();
+      if (onClose) onClose();
     } catch (err) {
-      toast.error(err.response?.data || "Failed to save review");
+      toast.error(getErrorMessage(err, "Failed to save review"));
+      console.error("Review submit failed:", err?.response?.data ?? err);
     } finally {
       setLoading(false);
     }
@@ -119,12 +201,12 @@ const ReviewModal = ({ orderId, restaurantId, onClose, onReviewChanged }) => {
           </div>
           <div className="modal-footer">
             {existingReview && (
-              <button className="btn btn-danger me-auto" onClick={handleDelete} disabled={loading}>
+              <button type="button" className="btn btn-danger me-auto" onClick={handleDelete} disabled={loading}>
                 Delete
               </button>
             )}
-            <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-            <button className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={loading}>
               {loading ? "Saving..." : existingReview ? "Update" : "Submit"}
             </button>
           </div>

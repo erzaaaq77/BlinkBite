@@ -6,6 +6,7 @@ import "./index.css";
 import logo from "./assets/LogoBB.webp";
 import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
+import { Toaster } from "react-hot-toast";
 import { favoriteService } from "./services/FavoriteService";
 import { tokenService } from './services/tokenService';
 import InvoiceView from "./components/InvoiceView";
@@ -17,13 +18,12 @@ import AdminBranchRequests from "./components/AdminBranchRequests";
 import RestaurantManagement from "./components/RestaurantManagement";
 import PromotionManagement from "./components/PromotionManagement";
 import ReviewModal from "./components/ReviewModal";
+import ReviewList from "./components/ReviewList";
 
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
 const FavoritesPage = lazy(() => import("./components/FavoritesPage.jsx"));
-const [reviewOrderId, setReviewOrderId] = useState(null);
-const [reviewRestaurantId, setReviewRestaurantId] = useState(null);
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 const ACCESS_TOKEN_KEY = "access_token";
@@ -461,6 +461,8 @@ function App() {
   const [activeRestaurantId, setActiveRestaurantId] = useState(initialRoute.restaurantId);
   const [activeBranchId, setActiveBranchId] = useState(initialRoute.branchId || "");
   const [trackOrderId, setTrackOrderId] = useState(initialRoute.orderId || "");
+  const [reviewOrderId, setReviewOrderId] = useState(null);
+  const [reviewRestaurantId, setReviewRestaurantId] = useState(null);
   const [page, setPage] = useState(initialRoute.page);
   const [restaurantsLoading, setRestaurantsLoading] = useState(false);
   const [restaurantDetailsLoading, setRestaurantDetailsLoading] = useState(false);
@@ -2890,6 +2892,14 @@ const filtered = (restaurants || []).filter(r => {
           address: order?.adresaDorezimit ?? order?.AdresaDorezimit ?? "",
           note: order?.shenimet ?? order?.Shenimet ?? "",
           createdAt: order?.dataPorosis ?? order?.DataPorosis ?? "",
+          restaurantId:
+            order?.restaurantId ??
+            order?.RestaurantId ??
+            order?.restaurant?.id ??
+            order?.restaurant?.Id ??
+            order?.restaurant?.restaurantId ??
+            order?.restaurant?.RestaurantId ??
+            null,
           restaurantName:
             order?.restaurant?.name ??
             order?.restaurant?.Name ??
@@ -4537,6 +4547,7 @@ const filtered = (restaurants || []).filter(r => {
         </div>
       </div>
 
+      <Toaster position="top-right" />
       <Suspense fallback={<div className="text-center py-5">Loading page...</div>}>
         {page === "home" && (
           <HomePage
@@ -4977,7 +4988,13 @@ const filtered = (restaurants || []).filter(r => {
       className="btn btn-sm btn-outline-warning"
       onClick={() => {
         setReviewOrderId(order.id);
-        setReviewRestaurantId(order.restaurantId || order.restaurant?.id);
+        setReviewRestaurantId(
+          order.restaurantId ??
+          order.restaurant?.id ??
+          order.restaurant?.Id ??
+          order.restaurant?.RestaurantId ??
+          null
+        );
       }}
     >
       ⭐ Write a Review
@@ -5396,23 +5413,34 @@ const filtered = (restaurants || []).filter(r => {
         )}
 
         {page === "restaurantDetails" && (
-          <RestaurantDetailsPage
-            restaurant={selectedRestaurant}
-            branches={restaurantBranches}
-            menuItems={restaurantMenuItems}
-            brandRestaurantCount={brandRestaurantCount}
-            loading={restaurantDetailsLoading}
-            error={restaurantDetailsError}
-            onSelectBranch={(branch) => handleBranchSelect(activeRestaurantId, branch?.id)}
-            onBack={() => {
-              if (selectedCategory) {
-                window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
-                return;
+          <>
+            <RestaurantDetailsPage
+              restaurant={selectedRestaurant}
+              branches={restaurantBranches}
+              menuItems={restaurantMenuItems}
+              brandRestaurantCount={brandRestaurantCount}
+              loading={restaurantDetailsLoading}
+              error={restaurantDetailsError}
+              onSelectBranch={(branch) => handleBranchSelect(activeRestaurantId, branch?.id)}
+              onBack={() => {
+                if (selectedCategory) {
+                  window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
+                  return;
+                }
+                window.location.hash = "/";
+              }}
+              restaurantId={activeRestaurantId}
+            />
+            <ReviewList
+              restaurantId={activeRestaurantId}
+              canViewReviews={
+                isCustomerRole ||
+                isAdminRole ||
+                (merchantRestaurantIdForUi && String(activeRestaurantId) === String(merchantRestaurantIdForUi))
               }
-              window.location.hash = "/";
-            }}
-            restaurantId={activeRestaurantId}
-          />
+              canDeleteReviews={isAdminRole}
+            />
+          </>
         )}
 
         {page === "branchMenu" && (
@@ -5845,6 +5873,20 @@ const filtered = (restaurants || []).filter(r => {
               </div>
             </div>
           </section>
+        )}
+
+        {reviewOrderId && (
+          <ReviewModal
+            orderId={reviewOrderId}
+            restaurantId={reviewRestaurantId}
+            onClose={() => {
+              setReviewOrderId(null);
+              setReviewRestaurantId(null);
+            }}
+            onReviewChanged={() => {
+              /* Optionally refresh orders or review state here */
+            }}
+          />
         )}
       </Suspense>
     </>
