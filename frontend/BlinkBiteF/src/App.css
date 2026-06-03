@@ -1,240 +1,240 @@
-body {
-  min-height: 100vh;
-  min-width: 100vw;
+/* ========== VARIABLES ========== */
+:root {
+  --accent: #b5761e;
+  --accent-bg: rgba(181, 118, 30, 0.1);
+  --accent-border: #d4921f;
+  --border: #e2d4b0;
+  --text-h: #1c1510;
+  --social-bg: #f5f0e0;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+* {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
   background: linear-gradient(135deg, #fffbe6 0%, #f7e7c4 60%, #bfa76a 100%);
   font-family: 'Poppins', sans-serif;
 }
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
+/* ========== CONTAINER ========== */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 16px;
   }
 }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
+/* ========== RESPONSIVE NAVBAR (SHTESË E RE - VETËM PËR MOBILE) ========== */
+@media (max-width: 768px) {
+  .navbar .container-fluid {
     flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
+  }
+  
+  .navbar .d-flex.align-items-center.gap-2 {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  
+  .search-box {
+    order: 3;
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .search-box input {
+    width: 100%;
   }
 }
 
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
+/* ========== TABELA RESPONSIVE ========== */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ========== KATEGORITË - SCROLL HORIZONTAL NË MOBILE ========== */
+@media (max-width: 768px) {
+  .categories-grid {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 16px;
+  }
+  
+  .categories-grid > * {
+    flex: 0 0 140px;
+    scroll-snap-align: start;
   }
 }
 
-.ticks {
-  position: relative;
+/* ========== HERO SECTION - FLEX KOLONË NË MOBILE ========== */
+@media (max-width: 768px) {
+  .hero-search {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .hero-search input,
+  .hero-search button {
+    width: 100%;
+  }
+}
+
+/* ========== DASHBOARD STATS - WRAP NË MOBILE ========== */
+@media (max-width: 768px) {
+  .dashboard-stats,
+  .row.g-4,
+  .merchant-card .row {
+    flex-wrap: wrap;
+  }
+  
+  .dashboard-stats > div,
+  .row.g-4 > div,
+  .merchant-card .row > div {
+    width: 100%;
+  }
+}
+
+/* ========== ORDER CARD - MOBILE ========== */
+@media (max-width: 768px) {
+  .order-card-v2-head,
+  .order-card-v2-metrics,
+  .order-card-v2-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .order-card-v2-actions {
+    flex-direction: column;
+  }
+  
+  .order-card-v2-actions .btn {
+    width: 100%;
+  }
+}
+
+/* ========== CART PAGE - MOBILE ========== */
+@media (max-width: 768px) {
+  .cart-item-main {
+    flex-direction: column;
+  }
+  
+  .cart-qty-controls {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  
+  .cart-summary-sticky {
+    position: static;
+    margin-top: 20px;
+  }
+}
+
+/* ========== MODAL RESPONSIVE ========== */
+@media (max-width: 768px) {
+  .modal-dialog {
+    margin: 10px;
+  }
+  
+  .modal-content {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* ========== HARTË RESPONSIVE ========== */
+.map-container,
+#map {
   width: 100%;
+  height: 500px;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
+@media (max-width: 768px) {
+  .map-container,
+  #map {
+    height: 300px;
   }
 }
 
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* ========== KANBAN BOARD - MOBILE ========== */
+@media (max-width: 1024px) {
+  .kanban-board {
+    flex-wrap: wrap;
+  }
+  
+  .kanban-col {
+    min-width: 280px;
+    flex: 1;
+  }
 }
 
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateX(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+@media (max-width: 768px) {
+  .kanban-board {
+    flex-direction: column;
+  }
+  
+  .kanban-col {
+    width: 100%;
+  }
 }
 
-.animate-slideUp {
-    animation: slideUp 0.3s ease-out;
+/* ========== ORDERS PAGINATION - MOBILE ========== */
+@media (max-width: 768px) {
+  .orders-pagination-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .orders-pagination-bar .btn {
+    width: 100%;
+  }
 }
 
-.animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
+/* ========== KARTAT DHE BUTONAT (PA NDRYSHUAR MADHËSITË) ========== */
+@media (max-width: 768px) {
+  .card,
+  .merchant-card,
+  .restaurant-menu {
+    padding: 16px;
+  }
+  
+  /* BUTONAT MBESIN TË NJËJTË - PA NDRYSHIM MADHËSIE */
+  button, .btn {
+    white-space: normal;
+    word-break: break-word;
+  }
+  
+  /* BUTONAT E VEGJËL (sm) MBESIN TË VEGJËL */
+  .btn-sm {
+    white-space: nowrap;
+  }
 }
 
-.overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
+/* ========== FLOATING TOAST (S'KA NDRYSHIM) ========== */
+.role-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 9999;
 }
 
-.overflow-y-auto::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 10px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-    background: #555;
+@media (max-width: 768px) {
+  .role-toast {
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
+    width: auto;
+  }
 }

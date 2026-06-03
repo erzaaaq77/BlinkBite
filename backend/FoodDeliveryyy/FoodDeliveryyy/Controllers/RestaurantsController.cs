@@ -125,7 +125,6 @@ public class RestaurantsController : ControllerBase
         return Ok(addresses);
     }
 
-    // 🔥 VETËM PËR MERCHANT DHE ADMIN - Krijim restoranti
     [HttpPost]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult<Restaurant>> CreateRestaurant([FromBody] JsonElement restaurantData)
@@ -136,7 +135,6 @@ public class RestaurantsController : ControllerBase
             return Unauthorized(new { message = "User not authenticated" });
         }
 
-        // Validimi i fushave të detyrueshme
         if (!restaurantData.TryGetProperty("emertimi", out var emertimiElement) || string.IsNullOrWhiteSpace(emertimiElement.GetString()))
         {
             return BadRequest(new { message = "Restaurant name is required" });
@@ -163,11 +161,9 @@ public class RestaurantsController : ControllerBase
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
 
-        // Kthe restorantin e krijuar me të gjitha të dhënat
         return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id }, restaurant);
     }
 
-    // 🔥 VETËM PËR MERCHANT DHE ADMIN - Përditësim restoranti
     [HttpPut("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult> UpdateRestaurant(int id, [FromBody] JsonElement updateData)
