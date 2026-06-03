@@ -524,24 +524,23 @@ function App() {
   const pollingIntervalRef = React.useRef(null);
 
   const getStoredToken = () => {
-    try {
-      const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
-      if (sessionToken) return sessionToken;
+  try {
+    const sessionToken = sessionStorage.getItem(ACCESS_TOKEN_KEY);
+    if (sessionToken) return sessionToken;
 
-      // One-time migration from legacy localStorage token to per-tab session storage.
-      const legacyToken = localStorage.getItem(ACCESS_TOKEN_KEY) || "";
-      if (legacyToken) {
-        sessionStorage.setItem(ACCESS_TOKEN_KEY, legacyToken);
-        localStorage.removeItem(ACCESS_TOKEN_KEY);
-        return legacyToken;
-      }
-    } catch (err) {
-      console.error("Token storage read failed", err);
+    // One-time migration from legacy localStorage token to per-tab session storage.
+    const legacyToken = localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+    if (legacyToken) {
+      sessionStorage.setItem(ACCESS_TOKEN_KEY, legacyToken);
+      localStorage.removeItem(ACCESS_TOKEN_KEY);
+      return legacyToken;
     }
+  } catch (err) {
+    console.error("Token storage read failed", err);
+  }
 
-    return "";
-  };
-  
+  return "";
+};
   const [token, setToken] = useState(getStoredToken());
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -3170,6 +3169,13 @@ const filtered = (restaurants || []).filter(r => {
   };
 
   const handleRoleOrderStatusUpdate = async (order, nextStatus) => {
+    // ========== LOGJET PËR DEBUG ==========
+    console.log("🔴 DELIVER BUTTON CLICKED!");
+    console.log("Order:", order);
+    console.log("Next Status:", nextStatus);
+    console.log("Order ID:", order?.id);
+    // ======================================
+    
     const orderId = Number(order?.id);
     if (!Number.isFinite(orderId) || !nextStatus) return;
 
@@ -3198,9 +3204,52 @@ const filtered = (restaurants || []).filter(r => {
     if (normalizedNextStatus === "Ready") {
       explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/ready`, payload: JSON.stringify("") });
     }
-    if (normalizedNextStatus === "Delivered") {
-      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/deliver`, payload: JSON.stringify("") });
+   if (normalizedNextStatus === "Delivered") {
+  console.log("📦 DELIVER ENDPOINT WILL BE CALLED");
+  console.log("URL:", `${API_BASE}/orders/${orderId}/deliver`);
+  
+  try {
+    const token = getStoredToken();
+    const response = await fetch(`${API_BASE}/orders/${orderId}/deliver`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify("")
+    });
+    
+    console.log("Response status:", response.status);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log("✅ Order delivered:", data);
+      setRoleActionMessage(`Order #${orderId} delivered successfully!`);
+      setRoleToastVisible(true);
+      setTimeout(() => setRoleToastVisible(false), 3000);
+      
+      // Përditëso UI-në
+      setRoleOrders(current =>
+        current.map(o =>
+          Number(o.id) === orderId
+            ? { ...o, statusLabel: "Delivered" }
+            : o
+        )
+      );
+    } else {
+      const error = await response.text();
+      console.error("❌ Delivery failed:", error);
+      setRoleActionMessage(`Failed to deliver: ${response.status}`);
+      setRoleToastVisible(true);
     }
+  } catch (err) {
+    console.error("❌ Network error:", err);
+    setRoleActionMessage("Network error during delivery");
+  }
+  
+  setRoleActionOrderId(null);
+  return;
+}
 
     const genericCandidates = [
       { method: "PUT", url: `${API_BASE}/orders/${orderId}/status` },
@@ -3225,11 +3274,14 @@ const filtered = (restaurants || []).filter(r => {
           : payloadVariants.map((p) => JSON.stringify(p));
 
         for (const payloadBody of candidatePayloads) {
+          console.log(`Trying: ${candidate.method} ${candidate.url}`);
           const res = await authenticatedFetch(candidate.url, {
             method: candidate.method,
             headers: { "Content-Type": "application/json" },
             body: payloadBody,
           });
+
+          console.log(`Response status: ${res.status}`);
 
           if (res.ok) {
             updated = true;
@@ -3242,8 +3294,6 @@ const filtered = (restaurants || []).filter(r => {
             setRoleActionOrderId(null);
             return;
           }
-
-          // For other failure codes (400/404/405/415/500/etc), try the next candidate.
         }
 
         if (updated) break;
@@ -3277,7 +3327,7 @@ const filtered = (restaurants || []).filter(r => {
     } finally {
       setRoleActionOrderId(null);
     }
-  };
+};
 
   const handleSignup = async () => {
     setSignupMessage("");

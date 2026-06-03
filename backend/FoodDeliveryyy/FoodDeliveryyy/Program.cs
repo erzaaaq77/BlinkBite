@@ -84,22 +84,41 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.Zero
     };
 
+    // ========== PJESA E RËNDËSISHME PËR SIGNALR ==========
     options.Events = new JwtBearerEvents
     {
+        OnMessageReceived = context =>
+        {
+            // SignalR i dërgon token-in në query string
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+
+            // Nëse është kërkesë për SignalR hub, merre token-in nga query string
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/orderHub") || path.StartsWithSegments("/locationHub")))
+            {
+                context.Token = accessToken;
+            }
+
+            return Task.CompletedTask;
+        },
         OnAuthenticationFailed = context =>
         {
-            Console.WriteLine($"JWT Auth Failed: {context.Exception.GetType().Name}");
+            Console.WriteLine($"JWT Auth Failed: {context.Exception.Message}");
             return Task.CompletedTask;
         },
         OnTokenValidated = context =>
         {
+            Console.WriteLine("JWT Token validated successfully");
             return Task.CompletedTask;
         },
         OnChallenge = context =>
         {
+            Console.WriteLine($"JWT Challenge: {context.Error}");
             return Task.CompletedTask;
         }
     };
+    // ========== DERI KËTU ==========
 });
 builder.Services.AddAuthorization();
 builder.Services.AddScoped<IOrderService, OrderService>();
@@ -152,7 +171,8 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 app.UseCors("ReactPolicy");
-app.UseExceptionHandler();
+app.UseExceptionHandler(opt => { });
+app.UseStatusCodePages();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
