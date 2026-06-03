@@ -5793,6 +5793,7 @@ const filtered = (restaurants || []).filter(r => {
           "merchantDashboard",
           "driverDashboard",
           "merchantMenu",
+          "merchantPromotions",
           "trackOrder",
           "restaurants",
           "myOrders",

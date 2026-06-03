@@ -83,55 +83,64 @@ const PromotionManagement = ({ token, restaurantId, onBack }) => {
     setShowModal(true);
   };
 
-  const handleSave = async () => {
-    if (!formData.kodi.trim()) {
-      toast.error("Promotion code is required");
-      return;
-    }
-    if (!formData.zbritjaPerqind || formData.zbritjaPerqind < 1 || formData.zbritjaPerqind > 100) {
-      toast.error("Discount must be between 1 and 100");
-      return;
-    }
-    if (!formData.dataFillimit || !formData.dataPerfundimit) {
-      toast.error("Start and end dates are required");
-      return;
-    }
-    if (new Date(formData.dataFillimit) >= new Date(formData.dataPerfundimit)) {
-      toast.error("End date must be after start date");
-      return;
-    }
- const payload = {
-    kodi: formData.kodi,
-    zbritjaPerqind: parseFloat(formData.zbritjaPerqind),
-    zbritjaMax: formData.zbritjaMax ? parseFloat(formData.zbritjaMax) : null,
-    restaurantId: restaurantId
-  };
-   if (editingPromotion) {
-    payload.id = editingPromotion.id;
-    payload.statusi = formData.statusi;  // 🔥 Dërgo si numër (1,2,3)
+ const handleSave = async () => {
+  // Validimi i kodit
+  if (!formData.kodi.trim()) {
+    toast.error("Promotion code is required");
+    return;
   }
-    try {
-      if (editingPromotion) {
-        await axios.put(
-          `${API_BASE_URL}/Promotions/${editingPromotion.id}`,
-          { ...formData, id: editingPromotion.id },
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("Promotion updated successfully");
-      } else {
-        await axios.post(
-          `${API_BASE_URL}/Promotions`,
-          formData,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        toast.success("Promotion created successfully");
-      }
-      setShowModal(false);
-      fetchPromotions();
-    } catch (err) {
-      toast.error(getErrorMessage(err, "Failed to save promotion"));
-    }
+
+  // Validimi i zbritjes
+  const discount = parseFloat(formData.zbritjaPerqind);
+  if (isNaN(discount) || discount < 1 || discount > 100) {
+    toast.error("Discount must be between 1 and 100");
+    return;
+  }
+
+  // Validimi i datave
+  if (!formData.dataFillimit || !formData.dataPerfundimit) {
+    toast.error("Start and end dates are required");
+    return;
+  }
+  if (new Date(formData.dataFillimit) >= new Date(formData.dataPerfundimit)) {
+    toast.error("End date must be after start date");
+    return;
+  }
+
+  // Ndërto payload-in e pastër (pa `statusi`, pa fusha të tepërta)
+  const payload = {
+    kodi: formData.kodi,
+    zbritjaPerqind: discount,
+    zbritjaMax: formData.zbritjaMax ? parseFloat(formData.zbritjaMax) : null,
+    dataFillimit: formData.dataFillimit,
+    dataPerfundimit: formData.dataPerfundimit,
+    restaurantId: Number(restaurantId) // Sigurohu që është numër
   };
+
+  // Nëse është edit, shto vetëm ID-në (pa status)
+  if (editingPromotion) {
+    payload.id = editingPromotion.id;
+  }
+
+  try {
+    if (editingPromotion) {
+      await axios.put(`${API_BASE_URL}/Promotions/${editingPromotion.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Promotion updated successfully");
+    } else {
+      await axios.post(`${API_BASE_URL}/Promotions`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Promotion created successfully");
+    }
+    setShowModal(false);
+    fetchPromotions();
+  } catch (err) {
+    console.error("Save error:", err.response?.data);
+    toast.error(err.response?.data || "Failed to save promotion");
+  }
+};
 
   const handleDelete = async (promotion) => {
     const result = await Swal.fire({
