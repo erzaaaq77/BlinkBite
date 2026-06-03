@@ -544,10 +544,22 @@ function App() {
   const [addressStreet, setAddressStreet] = useState("");
   const [addressPostal, setAddressPostal] = useState("");
 
-  const filtered = (restaurants || []).filter(r =>
-    (r.name || "").toLowerCase().includes(search.toLowerCase())
-  );
-
+const filtered = (restaurants || []).filter(r => {
+  if (!r) return false;
+  
+  const name = r.emertimi || r.name || r.Emertimi || r.Name || "";
+  const searchLower = (search || "").toLowerCase().trim();
+  
+  if (searchLower === "") return true;
+  
+  const matches = name.toLowerCase().includes(searchLower);
+  
+  if (matches) {
+    console.log("Match found:", name);
+  }
+  
+  return matches;
+});
   const filteredFavorites = (favoriteRestaurants || []).filter((r) =>
     (r?.name || "").toLowerCase().includes(search.toLowerCase())
   );
