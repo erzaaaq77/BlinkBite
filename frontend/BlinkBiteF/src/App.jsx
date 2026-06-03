@@ -15,7 +15,7 @@ import AdminApplicationsPage from "./components/AdminApplicationsPage";
 import CategoryManagement from "./components/CategoryManagement";
 import AdminBranchRequests from "./components/AdminBranchRequests";
 import RestaurantManagement from "./components/RestaurantManagement";
-
+import PromotionManagement from "./components/PromotionManagement";
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
@@ -210,6 +210,16 @@ function App() {
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
 
+    if (hash.startsWith("#/merchant/promotions/")) {
+      const restaurantId = hash.replace("#/merchant/promotions/", "");
+      return {
+        page: "merchantPromotions",
+        restaurantId: restaurantId,
+        category: "",
+        branchId: "",
+      };
+    }
+
     if (hash.startsWith("#/merchant/menu/")) {
       let cleanHash = hash.split('?_t=')[0];
       const afterPrefix = cleanHash.replace("#/merchant/menu/", "");
@@ -222,6 +232,7 @@ function App() {
         branchId: decodeURIComponent(branchParam),
       };
     }
+
 
     if (hash.startsWith("#/admin/restaurants")) {
       return {
@@ -3698,6 +3709,9 @@ const filtered = (restaurants || []).filter(r => {
   useEffect(() => {
     const syncRouteFromHash = async () => {
       const route = getRouteState();
+      console.log("🔄 syncRouteFromHash. New page:", route.page, "route:", route);
+  setPage(route.page);
+  setActiveRestaurantId(route.restaurantId);
       const isInvoiceRoute = window.location.hash.startsWith("#/invoice/");
 
       // Restrict merchant role strictly to merchant dashboard/menu/orders dashboard
@@ -3706,6 +3720,7 @@ const filtered = (restaurants || []).filter(r => {
         if (
           route.page !== "merchantDashboard" &&
           route.page !== "merchantMenu" &&
+          route.page !== "merchantPromotions" &&
           route.page !== "myOrders"
         ) {
           window.location.hash = "/merchant/dashboard";
@@ -3717,6 +3732,7 @@ const filtered = (restaurants || []).filter(r => {
         }
       }
 
+      
       // Courier should use Driver Dashboard, not Orders Dashboard (/my-orders)
       if (!isInvoiceRoute && isCourierRole && route.page === "myOrders") {
         window.location.hash = "/driver/dashboard";
@@ -4530,7 +4546,13 @@ const filtered = (restaurants || []).filter(r => {
             nearbyError={nearbyError}
           />
         )}
-
+        {page === "merchantPromotions" && (
+          <PromotionManagement
+            token={token}
+            restaurantId={activeRestaurantId ? parseInt(activeRestaurantId) : null}
+            onBack={() => window.location.hash = "/merchant/dashboard"}
+          />
+        )}
         {page === "adminRestaurants" && (
           <RestaurantManagement
             token={token}

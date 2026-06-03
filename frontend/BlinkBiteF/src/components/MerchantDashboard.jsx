@@ -656,7 +656,15 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
             <i className="bi bi-grid-3x3-gap-fill me-2"></i>
             {isBranchManagerRole ? "Manage Menu" : "Manage Menu (All Branches)"}
           </button>
-
+          <button
+            type="button"
+            className="btn btn-outline-warning me-2"
+            onClick={() => {
+              window.location.hash = `#/merchant/promotions/${restaurant.id}`;
+            }}
+          >
+            🎟️ Manage Promotions
+          </button>
           <button
             type="button"
             className="btn btn-outline-secondary merchant-refresh-btn"

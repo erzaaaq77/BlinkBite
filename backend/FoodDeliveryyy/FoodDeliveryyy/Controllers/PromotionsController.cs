@@ -2,10 +2,11 @@
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
 using FoodDeliveryyy.Models.Identity;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+using System.Text.Json;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -159,70 +160,98 @@ public class PromotionsController : ControllerBase
             message = $"Kodi valid! Zbritje {promotion.ZbritjaPerqind}%"
         });
     }
-
     [HttpPost]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
-    public async Task<ActionResult<Promotions>> CreatePromotion(Promotions promotion)
+    public async Task<ActionResult<Promotions>> CreatePromotion([FromBody] JsonElement promotionData)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        var restaurant = await _context.Restaurants.FindAsync(promotion.RestaurantId);
-        if (restaurant == null)
-        {
-            return BadRequest("Restoranti nuk ekziston");
-        }
+        // Lexo RestaurantId
+        if (!promotionData.TryGetProperty("restaurantId", out var restaurantIdProp))
+            return BadRequest("RestaurantId is required");
+        var restaurantId = restaurantIdProp.GetInt32();
+
+        var restaurant = await _context.Restaurants.FindAsync(restaurantId);
+        if (restaurant == null) return BadRequest("Restoranti nuk ekziston");
 
         if (role == AppRoles.Merchant && restaurant.UserId != userId)
-        {
             return Forbid();
+
+        // Lexo Kodin
+        if (!promotionData.TryGetProperty("kodi", out var kodiProp))
+            return BadRequest("Kodi promocional është i detyrueshëm");
+        var kodi = kodiProp.GetString();
+
+        // Lexo ZbritjaPerqind
+        if (!promotionData.TryGetProperty("zbritjaPerqind", out var zbritjaProp))
+            return BadRequest("Zbritja është e detyrueshme");
+        var zbritjaPerqind = zbritjaProp.GetDecimal();
+
+        // Lexo ZbritjaMax (nëse nuk ekziston ose është null, vendos 0)
+        decimal zbritjaMax = 0;
+        if (promotionData.TryGetProperty("zbritjaMax", out var zbritjaMaxProp) && zbritjaMaxProp.ValueKind != JsonValueKind.Null)
+        {
+            zbritjaMax = zbritjaMaxProp.GetDecimal();
         }
 
-        if (role == AppRoles.BranchManager && !promotion.RestaurantAddressId.HasValue)
-        {
+        // Datat
+        if (!promotionData.TryGetProperty("dataFillimit", out var dataFillimitProp))
+            return BadRequest("Data e fillimit është e detyrueshme");
+        var dataFillimit = dataFillimitProp.GetDateTime();
+
+        if (!promotionData.TryGetProperty("dataPerfundimit", out var dataPerfundimitProp))
+            return BadRequest("Data e përfundimit është e detyrueshme");
+        var dataPerfundimit = dataPerfundimitProp.GetDateTime();
+
+        if (dataFillimit >= dataPerfundimit)
+            return BadRequest("Data e fillimit duhet të jetë para datës së përfundimit");
+
+        // RestaurantAddressId opsional
+        int? restaurantAddressId = null;
+        if (promotionData.TryGetProperty("restaurantAddressId", out var addressIdProp) && addressIdProp.ValueKind != JsonValueKind.Null)
+            restaurantAddressId = addressIdProp.GetInt32();
+
+        if (role == AppRoles.BranchManager && !restaurantAddressId.HasValue)
             return BadRequest("Branch managers must provide restaurantAddressId.");
-        }
 
-        if (promotion.RestaurantAddressId.HasValue)
+        if (restaurantAddressId.HasValue)
         {
-            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
-            if (address == null || address.RestaurantId != restaurant.Id)
-            {
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == restaurantAddressId.Value);
+            if (address == null || address.RestaurantId != restaurantId)
                 return BadRequest("Restaurant address does not exist");
-            }
 
             if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
-            {
                 return Forbid();
-            }
         }
 
+        // Kontrollo nëse kodi ekziston për këtë restorant
         var existingPromo = await _context.Promotions
-            .FirstOrDefaultAsync(p => p.RestaurantId == promotion.RestaurantId && p.Kodi == promotion.Kodi);
-
+            .FirstOrDefaultAsync(p => p.RestaurantId == restaurantId && p.Kodi == kodi);
         if (existingPromo != null)
-        {
             return BadRequest("Ky kod promocional tashmë ekziston për këtë restorant");
-        }
 
-        if (promotion.DataFillimit >= promotion.DataPerfundimit)
+        // Krijo promocionin
+        var promotion = new Promotions
         {
-            return BadRequest("Data e fillimit duhet të jetë para datës së përfundimit");
-        }
+            RestaurantId = restaurantId,
+            Kodi = kodi,
+            ZbritjaPerqind = zbritjaPerqind,
+            ZbritjaMax = zbritjaMax,
+            DataFillimit = dataFillimit,
+            DataPerfundimit = dataPerfundimit,
+            RestaurantAddressId = restaurantAddressId,
+            Statusi = PromotionStatus.Inactive // inicial, do të rillogaritet më poshtë
+        };
 
+        // Llogarit statusin
         var tani = DateTime.Now;
         if (promotion.DataFillimit <= tani && promotion.DataPerfundimit >= tani)
-        {
             promotion.Statusi = PromotionStatus.Active;
-        }
         else if (promotion.DataPerfundimit < tani)
-        {
             promotion.Statusi = PromotionStatus.Expired;
-        }
         else
-        {
             promotion.Statusi = PromotionStatus.Inactive;
-        }
 
         _context.Promotions.Add(promotion);
         await _context.SaveChangesAsync();
@@ -233,86 +262,74 @@ public class PromotionsController : ControllerBase
 
         return CreatedAtAction(nameof(GetPromotion), new { id = promotion.Id }, createdPromotion);
     }
-
     [HttpPut("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
-    public async Task<IActionResult> UpdatePromotion(int id, Promotions promotion)
+    public async Task<IActionResult> UpdatePromotion(int id, [FromBody] JsonElement promotionData)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        if (id != promotion.Id)
-        {
-            return BadRequest();
-        }
+        // Gjej promocionin ekzistues
+        var promotion = await _context.Promotions.FindAsync(id);
+        if (promotion == null) return NotFound();
 
+        // Verifiko autorizimin
         var restaurant = await _context.Restaurants.FindAsync(promotion.RestaurantId);
-        if (restaurant == null)
-        {
-            return BadRequest("Restoranti nuk ekziston");
-        }
+        if (restaurant == null) return BadRequest("Restoranti nuk ekziston");
 
         if (role == AppRoles.Merchant && restaurant.UserId != userId)
-        {
             return Forbid();
-        }
 
-        if (role == AppRoles.BranchManager && !promotion.RestaurantAddressId.HasValue)
+        if (role == AppRoles.BranchManager)
         {
-            return BadRequest("Branch managers must provide restaurantAddressId.");
-        }
-
-        if (promotion.RestaurantAddressId.HasValue)
-        {
-            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
-            if (restaurant == null || address == null || address.RestaurantId != restaurant.Id)
-            {
-                return BadRequest("Restaurant address does not exist");
-            }
-
-            if (role == AppRoles.BranchManager && address.MerchantUserId != userId)
-            {
+            if (!promotion.RestaurantAddressId.HasValue)
                 return Forbid();
-            }
+            var address = await _context.RestaurantAddresses.FirstOrDefaultAsync(a => a.Id == promotion.RestaurantAddressId.Value);
+            if (address == null || address.MerchantUserId != userId)
+                return Forbid();
         }
 
+        // Përditëso fushat që vijnë nga JSON
+        if (promotionData.TryGetProperty("kodi", out var kodiProp))
+            promotion.Kodi = kodiProp.GetString();
+
+        if (promotionData.TryGetProperty("zbritjaPerqind", out var zbritjaProp))
+            promotion.ZbritjaPerqind = zbritjaProp.GetDecimal();
+
+        if (promotionData.TryGetProperty("zbritjaMax", out var zbritjaMaxProp) && zbritjaMaxProp.ValueKind != JsonValueKind.Null)
+            promotion.ZbritjaMax = zbritjaMaxProp.GetDecimal();
+        else
+            promotion.ZbritjaMax = 0; // ose vlera ekzistuese nëse nuk dërgohet? Nëse nuk dërgohet, mos e ndrysho. Ndrysho vetëm nëse vjen.
+
+        if (promotionData.TryGetProperty("dataFillimit", out var dataFillimitProp))
+            promotion.DataFillimit = dataFillimitProp.GetDateTime();
+
+        if (promotionData.TryGetProperty("dataPerfundimit", out var dataPerfundimitProp))
+            promotion.DataPerfundimit = dataPerfundimitProp.GetDateTime();
+
+        // Validimi i datave
         if (promotion.DataFillimit >= promotion.DataPerfundimit)
-        {
             return BadRequest("Data e fillimit duhet të jetë para datës së përfundimit");
-        }
 
+        // Përditëso RestaurantAddressId nëse vjen
+        if (promotionData.TryGetProperty("restaurantAddressId", out var addressIdProp) && addressIdProp.ValueKind != JsonValueKind.Null)
+            promotion.RestaurantAddressId = addressIdProp.GetInt32();
+
+        // Rillogarit statusin
         var tani = DateTime.Now;
         if (promotion.DataFillimit <= tani && promotion.DataPerfundimit >= tani)
-        {
             promotion.Statusi = PromotionStatus.Active;
-        }
         else if (promotion.DataPerfundimit < tani)
-        {
             promotion.Statusi = PromotionStatus.Expired;
-        }
         else
-        {
             promotion.Statusi = PromotionStatus.Inactive;
-        }
 
-        _context.Entry(promotion).State = EntityState.Modified;
+        // Nëse ke propertin Status (i cili nuk është mapped? Nëse është në model, mund ta sinkronizosh)
+        // promotion.Status = promotion.Statusi; // nëse dëshiron t'i mbash të dyja
 
-        try
-        {
-            await _context.SaveChangesAsync();
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!PromotionExists(id))
-            {
-                return NotFound();
-            }
-            throw;
-        }
-
-        return NoContent();
+        await _context.SaveChangesAsync();
+        return Ok(promotion);
     }
-
     [HttpPatch("{id}/status")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.BranchManager + "," + AppRoles.Admin)]
     public async Task<IActionResult> UpdatePromotionStatus(int id, [FromBody] PromotionStatus status)
