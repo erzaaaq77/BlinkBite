@@ -1,9 +1,8 @@
-﻿
-
-using FoodDeliveryyy.Data;
+﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
 using FoodDeliveryyy.Models.Identity;
+using FoodDeliveryyy.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -15,17 +14,20 @@ namespace FoodDeliveryyy.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-
-    public class RestaurantsController : ControllerBase
-    {
+public class RestaurantsController : ControllerBase
+{
     private readonly AppDbContext _context;
-    public RestaurantsController(AppDbContext context)
+    private readonly IEmailService _emailService;
+
+    public RestaurantsController(AppDbContext context, IEmailService emailService)
     {
         _context = context;
+        _emailService = emailService;
     }
 
+    // 🔥 PUBLIC - Kushdo mund të shohë listën e restoranteve (pa login)
     [HttpGet]
-    [Authorize(Roles =AppRoles.Admin + "," + AppRoles.Merchant)]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurant([FromQuery] string? search)
     {
         var query = _context.Restaurants.AsQueryable();
@@ -33,7 +35,6 @@ namespace FoodDeliveryyy.Controllers;
         if (!string.IsNullOrEmpty(search))
         {
             search = search.Trim().ToLower();
-
             query = query.Where(r =>
                 r.Emertimi.ToLower().Contains(search) ||
                 (r.Kategori != null && r.Kategori.ToLower().Contains(search))
@@ -43,10 +44,9 @@ namespace FoodDeliveryyy.Controllers;
         return await query.ToListAsync();
     }
 
-
+    // 🔥 PUBLIC - Kushdo mund të shohë detajet e një restoranti (pa login)
     [HttpGet("{id:int}")]
-    [Authorize(Roles = AppRoles.Admin + "," + AppRoles.Merchant)]
-
+    [AllowAnonymous]
     public async Task<ActionResult<Restaurant>> GetRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FindAsync(id);
@@ -54,7 +54,9 @@ namespace FoodDeliveryyy.Controllers;
         return restaurant;
     }
 
+    // 🔥 VETËM PËR PËRDORUES TË LOGUAR - Shikon adresat e restorantit
     [HttpGet("{id:int}/addresses")]
+    [Authorize]
     public async Task<ActionResult> GetRestaurantAddresses(int id)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -115,13 +117,15 @@ namespace FoodDeliveryyy.Controllers;
                 isMain = a.IsMain,
                 isActive = a.IsActive,
                 latitude = a.Latitude,
-                longitude = a.Longitude
+                longitude = a.Longitude,
+                tarifaDorezimit = a.TarifaDorezimit
             })
             .ToListAsync();
 
         return Ok(addresses);
     }
 
+    // 🔥 VETËM PËR MERCHANT DHE ADMIN - Krijim restoranti
     [HttpPost]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult<Restaurant>> CreateRestaurant([FromBody] JsonElement restaurantData)
@@ -129,23 +133,41 @@ namespace FoodDeliveryyy.Controllers;
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrWhiteSpace(userId))
         {
-            return Forbid();
+            return Unauthorized(new { message = "User not authenticated" });
+        }
+
+        // Validimi i fushave të detyrueshme
+        if (!restaurantData.TryGetProperty("emertimi", out var emertimiElement) || string.IsNullOrWhiteSpace(emertimiElement.GetString()))
+        {
+            return BadRequest(new { message = "Restaurant name is required" });
         }
 
         var restaurant = new Restaurant
         {
-            Emertimi = restaurantData.GetProperty("emertimi").GetString(),
-            Pershkrimi = restaurantData.TryGetProperty("pershkrimi", out var p) ? p.GetString() : null,
+            Emertimi = emertimiElement.GetString(),
+            Pershkrimi = restaurantData.TryGetProperty("pershkrimi", out var pershkrimi) ? pershkrimi.GetString() : null,
+            Telefoni = restaurantData.TryGetProperty("telefoni", out var telefoni) ? telefoni.GetString() : null,
+            Email = restaurantData.TryGetProperty("email", out var email) ? email.GetString() : null,
+            Kategori = restaurantData.TryGetProperty("kategori", out var kategori) ? kategori.GetString() : null,
             Statusi = RestaurantStatus.Active,
             Rating = 0,
             UserId = userId
         };
 
+        // Shto CategoryId nëse është dërguar
+        if (restaurantData.TryGetProperty("categoryId", out var categoryId) && categoryId.ValueKind != JsonValueKind.Null)
+        {
+            restaurant.CategoryId = categoryId.GetInt32();
+        }
+
         _context.Restaurants.Add(restaurant);
         await _context.SaveChangesAsync();
+
+        // Kthe restorantin e krijuar me të gjitha të dhënat
         return CreatedAtAction(nameof(GetRestaurant), new { id = restaurant.Id }, restaurant);
     }
 
+    // 🔥 VETËM PËR MERCHANT DHE ADMIN - Përditësim restoranti
     [HttpPut("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult> UpdateRestaurant(int id, [FromBody] JsonElement updateData)
@@ -154,26 +176,33 @@ namespace FoodDeliveryyy.Controllers;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
         var existing = await _context.Restaurants.FindAsync(id);
-        if (existing == null) return NotFound();
+        if (existing == null)
+            return NotFound(new { message = "Restaurant not found" });
 
         if (role == AppRoles.Merchant && existing.UserId != userId)
             return Forbid();
 
+        // Update emertimi
         if (updateData.TryGetProperty("emertimi", out var emertimi))
             existing.Emertimi = emertimi.GetString();
 
+        // Update pershkrimi
         if (updateData.TryGetProperty("pershkrimi", out var pershkrimi))
             existing.Pershkrimi = pershkrimi.GetString();
 
+        // Update telefoni
         if (updateData.TryGetProperty("telefoni", out var telefoni))
             existing.Telefoni = telefoni.GetString();
 
+        // Update email
         if (updateData.TryGetProperty("email", out var email))
             existing.Email = email.GetString();
 
+        // Update kategori
         if (updateData.TryGetProperty("kategori", out var kategori))
             existing.Kategori = kategori.GetString();
 
+        // Update statusi
         if (updateData.TryGetProperty("statusi", out var statusi))
         {
             var statusString = statusi.GetString();
@@ -186,20 +215,24 @@ namespace FoodDeliveryyy.Controllers;
             };
         }
 
-        if (updateData.TryGetProperty("categoryId", out var categoryId) && categoryId.ValueKind != System.Text.Json.JsonValueKind.Null)
+        // Update categoryId
+        if (updateData.TryGetProperty("categoryId", out var categoryId) && categoryId.ValueKind != JsonValueKind.Null)
+        {
             existing.CategoryId = categoryId.GetInt32();
+        }
 
         await _context.SaveChangesAsync();
         return Ok(existing);
     }
 
-
+    // 🔥 VETËM PËR MERCHANT DHE ADMIN - Fshirje restoranti
     [HttpDelete("{id}")]
     [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
     public async Task<ActionResult> DeleteRestaurant(int id)
     {
         var restaurant = await _context.Restaurants.FindAsync(id);
-        if (restaurant == null) return NotFound();
+        if (restaurant == null)
+            return NotFound(new { message = "Restaurant not found" });
 
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
@@ -211,9 +244,12 @@ namespace FoodDeliveryyy.Controllers;
 
         _context.Restaurants.Remove(restaurant);
         await _context.SaveChangesAsync();
-        return NoContent();
+        return Ok(new { message = "Restaurant deleted successfully" });
     }
+
+    // 🔥 PUBLIC - Kategoritë për të gjithë
     [HttpGet("kategori")]
+    [AllowAnonymous]
     public async Task<ActionResult> GetCategories()
     {
         var categories = await _context.Categories
@@ -222,6 +258,7 @@ namespace FoodDeliveryyy.Controllers;
             {
                 id = c.Id,
                 name = c.Name,
+                emertimi = c.Name,
                 imageUrl = c.ImageUrl
             })
             .ToListAsync();
@@ -229,7 +266,9 @@ namespace FoodDeliveryyy.Controllers;
         return Ok(categories);
     }
 
+    // 🔥 PUBLIC - Restorantet sipas kategorisë
     [HttpGet("bykategori/{kategori}")]
+    [AllowAnonymous]
     public async Task<ActionResult<IEnumerable<Restaurant>>> GetRestaurantsByCategory(string kategori)
     {
         var restaurants = await _context.Restaurants
@@ -239,12 +278,14 @@ namespace FoodDeliveryyy.Controllers;
         return Ok(restaurants);
     }
 
+    // 🔥 PUBLIC - Restorantet afër (për Customer)
     [HttpGet("nearby")]
+    [AllowAnonymous]
     public async Task<ActionResult> GetNearbyRestaurants([FromQuery] double latitude, [FromQuery] double longitude, [FromQuery] int take = 20)
     {
         if (latitude is < -90 or > 90 || longitude is < -180 or > 180)
         {
-            return BadRequest("Invalid coordinates.");
+            return BadRequest(new { message = "Invalid coordinates." });
         }
 
         if (take <= 0) take = 20;
@@ -305,7 +346,4 @@ namespace FoodDeliveryyy.Controllers;
     }
 
     private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180.0;
-
-
 }
-

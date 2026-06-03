@@ -1,6 +1,7 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Identity;
+using FoodDeliveryyy.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -15,20 +16,68 @@ namespace FoodDeliveryyy.Controllers
     {
         private readonly AppDbContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly IEmailService _emailService;
 
-        public BranchController(AppDbContext context, UserManager<User> userManager)
+        public BranchController(
+            AppDbContext context,
+            UserManager<User> userManager,
+            IEmailService emailService)
         {
             _context = context;
             _userManager = userManager;
+            _emailService = emailService;
         }
 
+        // 🔥 METODA E RE - APLIKIM PËR BRANCH TË RI (shkon te admin për aprovim)
+        [HttpPost("apply")]
+        [Authorize(Roles = AppRoles.Merchant)]
+        public async Task<IActionResult> ApplyBranch([FromBody] BranchApplicationDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            var restaurant = await _context.Restaurants
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+
+            if (restaurant == null)
+                return BadRequest(new { message = "No restaurant found for this merchant" });
+
+            // Kontrollo nëse ka aplikim në pritje
+            var existingApplication = await _context.BranchApplications
+                .FirstOrDefaultAsync(a => a.RestaurantId == restaurant.Id && a.Status == "Pending");
+
+            if (existingApplication != null)
+                return BadRequest(new { message = "You already have a pending branch application" });
+
+            var application = new BranchApplication
+            {
+                RestaurantId = restaurant.Id,
+                Address = dto.Address,
+                City = dto.City,
+                Zone = dto.Zone ?? "",
+                DeliveryFee = dto.DeliveryFee,
+                Latitude = dto.Latitude,
+                Longitude = dto.Longitude,
+                IsMain = dto.IsMain,
+                CreateBranchManager = dto.CreateBranchManager,
+                ManagerName = dto.ManagerName,
+                ManagerEmail = dto.ManagerEmail,
+                Status = "Pending",
+                AppliedAt = DateTime.UtcNow
+            };
+
+            _context.BranchApplications.Add(application);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Branch application submitted successfully! Admin will review it." });
+        }
+
+        // METODA E VJETËR - KRIJIM DIREKT (vetëm për Admin, pa aprovim)
         [HttpPost("create")]
-        [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin)]
-        public async Task<IActionResult> CreateBranch([FromBody] CreateBranchDto dto)
+        [Authorize(Roles = AppRoles.Admin)]  // 🔥 Ndryshuar: vetëm Admin mund të krijojë direkt
+        public async Task<IActionResult> CreateBranchDirect([FromBody] CreateBranchDto dto)
         {
             try
             {
-                // Validimi bazik
                 if (string.IsNullOrWhiteSpace(dto.Address))
                 {
                     return BadRequest(new { message = "Address is required" });
@@ -39,16 +88,12 @@ namespace FoodDeliveryyy.Controllers
                     return BadRequest(new { message = "City is required" });
                 }
 
-                // Merr userId nga token
-                var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-                // Merr restorantin e merchantit
                 var restaurant = await _context.Restaurants
-                    .FirstOrDefaultAsync(r => r.UserId == userId);
+                    .FirstOrDefaultAsync(r => r.Id == dto.RestaurantId);
 
                 if (restaurant == null)
                 {
-                    return BadRequest(new { message = "No restaurant found for this merchant" });
+                    return BadRequest(new { message = "Restaurant not found" });
                 }
 
                 var branch = new RestaurantAddress
@@ -69,10 +114,7 @@ namespace FoodDeliveryyy.Controllers
                 await _context.SaveChangesAsync();
 
                 int? branchManagerId = null;
-                string? branchManagerUsername = null;
-                string? branchManagerPassword = null;
 
-                // Krijoni Branch Manager nëse kërkohet
                 if (dto.CreateBranchManager && !string.IsNullOrEmpty(dto.ManagerEmail))
                 {
                     var username = GenerateUsername(dto.ManagerName ?? dto.ManagerEmail.Split('@')[0]);
@@ -91,18 +133,24 @@ namespace FoodDeliveryyy.Controllers
                     if (createResult.Succeeded)
                     {
                         await _userManager.AddToRoleAsync(branchManager, "BranchManager");
-
-                        // Lidh branch manager-in me branch-in
                         branch.MerchantUserId = branchManager.Id;
                         await _context.SaveChangesAsync();
-
                         branchManagerId = branch.Id;
-                        branchManagerUsername = username;
-                        branchManagerPassword = password;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Failed to create branch manager: {string.Join(", ", createResult.Errors.Select(e => e.Description))}");
+
+                        try
+                        {
+                            await _emailService.SendBranchManagerCredentialsEmailAsync(
+                                branchManager.Email,
+                                branch.Adresa,
+                                restaurant.Emertimi,
+                                branchManager.UserName,
+                                password
+                            );
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"Email failed: {ex.Message}");
+                        }
                     }
                 }
 
@@ -110,15 +158,40 @@ namespace FoodDeliveryyy.Controllers
                 {
                     message = "Branch created successfully",
                     branchId = branch.Id,
-                    branchManagerCreated = dto.CreateBranchManager && branchManagerId != null,
-                    branchManagerUsername,
-                    branchManagerPassword
+                    branchManagerCreated = dto.CreateBranchManager && branchManagerId != null
                 });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = $"Error creating branch: {ex.Message}" });
             }
+        }
+
+        // MERRE BRANCH-IN SIPAS ID
+        [HttpGet("{id}")]
+        [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin + "," + AppRoles.BranchManager)]
+        public async Task<IActionResult> GetBranch(int id)
+        {
+            var branch = await _context.RestaurantAddresses
+                .Include(b => b.Restaurant)
+                .FirstOrDefaultAsync(b => b.Id == id);
+
+            if (branch == null)
+                return NotFound(new { message = "Branch not found" });
+
+            return Ok(branch);
+        }
+
+        // MERRE TE GJITHA BRANCHET E NJE RESTORANTI
+        [HttpGet("by-restaurant/{restaurantId}")]
+        [Authorize(Roles = AppRoles.Merchant + "," + AppRoles.Admin + "," + AppRoles.BranchManager)]
+        public async Task<IActionResult> GetBranchesByRestaurant(int restaurantId)
+        {
+            var branches = await _context.RestaurantAddresses
+                .Where(b => b.RestaurantId == restaurantId)
+                .ToListAsync();
+
+            return Ok(branches);
         }
 
         private string GenerateUsername(string name)
@@ -151,8 +224,25 @@ namespace FoodDeliveryyy.Controllers
         }
     }
 
+    // DTO për aplikim
+    public class BranchApplicationDto
+    {
+        public string Address { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string Zone { get; set; } = string.Empty;
+        public decimal DeliveryFee { get; set; }
+        public double? Latitude { get; set; }
+        public double? Longitude { get; set; }
+        public bool IsMain { get; set; }
+        public bool CreateBranchManager { get; set; }
+        public string? ManagerName { get; set; }
+        public string? ManagerEmail { get; set; }
+    }
+
+    // DTO për krijim direkt (vetëm për Admin)
     public class CreateBranchDto
     {
+        public int RestaurantId { get; set; }
         public string Address { get; set; } = string.Empty;
         public string City { get; set; } = string.Empty;
         public string Zone { get; set; } = string.Empty;

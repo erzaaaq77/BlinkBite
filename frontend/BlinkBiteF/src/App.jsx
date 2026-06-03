@@ -21,8 +21,6 @@ const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
 const FavoritesPage = lazy(() => import("./components/FavoritesPage.jsx"));
 
-
-
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 const ACCESS_TOKEN_KEY = "access_token";
 const NEARBY_COORDS_KEY = "nearby_coords";
@@ -138,10 +136,17 @@ const resolveDeliveryPricing = ({ mode, subtotal, baseFee, distanceKm }) => {
     ruleLabel: `Tier up to ${upperBoundLabel}`,
   };
 };
+
 const HomePage = lazy(() => import("./components/HomePage.jsx"));
 const RestaurantsPage = lazy(() => import("./components/RestaurantsPage.jsx"));
 const RestaurantDetailsPage = lazy(() => import("./components/RestaurantDetailsPage.jsx"));
 const BranchMenuPage = lazy(() => import("./components/BranchMenuPage.jsx"));
+
+// Partner Pages
+const PartnerCouriersPage = lazy(() => import("./components/PartnerCouriersPage.jsx"));
+const PartnerMerchantsPage = lazy(() => import("./components/PartnerMerchantsPage.jsx"));
+const PartnerCompaniesPage = lazy(() => import("./components/PartnerCompaniesPage.jsx"));
+const PartnerDrivePage = lazy(() => import("./components/PartnerDrivePage.jsx"));
 
 // Helper: image with multi-candidate fallback for Kanban detail modal
 function KanbanItemImage({ candidates = [], alt = "" }) {
@@ -201,42 +206,43 @@ function App() {
   const menuItemsLookupPromiseRef = useRef(null);
   const orderHubConnectionRef = useRef(null);
   const subscribedOrderGroupsRef = useRef(new Set());
+  
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
 
     if (hash.startsWith("#/merchant/menu/")) {
-  let cleanHash = hash.split('?_t=')[0];
-  const afterPrefix = cleanHash.replace("#/merchant/menu/", "");
-  const [rawRestaurantId, queryString = ""] = afterPrefix.split("?");
-  const params = new URLSearchParams(queryString);
-  const branchParam = params.get("branchId") || "";
-  return {
-    page: "merchantMenu",
-    restaurantId: rawRestaurantId,
-    branchId: decodeURIComponent(branchParam),
-  };
-}
+      let cleanHash = hash.split('?_t=')[0];
+      const afterPrefix = cleanHash.replace("#/merchant/menu/", "");
+      const [rawRestaurantId, queryString = ""] = afterPrefix.split("?");
+      const params = new URLSearchParams(queryString);
+      const branchParam = params.get("branchId") || "";
+      return {
+        page: "merchantMenu",
+        restaurantId: rawRestaurantId,
+        branchId: decodeURIComponent(branchParam),
+      };
+    }
 
-if (hash.startsWith("#/admin/restaurants")) {
-  return {
-    page: "adminRestaurants",
-  };
-}
-if (hash.startsWith("#/admin/branch-requests")) {
-  return {
-    page: "adminBranchRequests",
-    category: "",
-    restaurantId: null,
-    branchId: "",
-  };
-}
-
+    if (hash.startsWith("#/admin/restaurants")) {
+      return {
+        page: "adminRestaurants",
+      };
+    }
+    
+    if (hash.startsWith("#/admin/branch-requests")) {
+      return {
+        page: "adminBranchRequests",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
 
     if (hash.startsWith("#/admin/categories")) {
-  return {
-    page: "adminCategories",
-  };
-}
+      return {
+        page: "adminCategories",
+      };
+    }
 
     if (hash.startsWith("#/invoice/")) {
       const orderId = hash.replace("#/invoice/", "");
@@ -261,23 +267,22 @@ if (hash.startsWith("#/admin/branch-requests")) {
     }
 
     if (hash.startsWith("#/driver/dashboard")) {
-  return {
-    page: "driverDashboard",
-    category: "",
-    restaurantId: null,
-    branchId: "",
-  };
-}
-      if (hash.startsWith("#/merchant/dashboard")) {
-
-    return {
-      page: "merchantDashboard",
-      category: "",
-      restaurantId: null,
-      branchId: "",
-    };
-  }
-
+      return {
+        page: "driverDashboard",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+    
+    if (hash.startsWith("#/merchant/dashboard")) {
+      return {
+        page: "merchantDashboard",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
 
     if (hash.startsWith("#/my-orders")) {
       return {
@@ -342,31 +347,70 @@ if (hash.startsWith("#/admin/branch-requests")) {
         branchId: "",
       };
     }
+    
     if (hash === "#/apply/merchant") {
-    return {
-      page: "applyMerchant",
-      category: "",
-      restaurantId: null,
-      branchId: "",
-    };
-  }
+      return {
+        page: "applyMerchant",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
 
-  if (hash === "#/apply/courier") {
-    return {
-      page: "applyCourier",
-      category: "",
-      restaurantId: null,
-      branchId: "",
-    };
-  }
-  if (hash === "#/admin/applications" || hash === "#/admin") {
-    return {
-      page: "adminApplications",
-      category: "",
-      restaurantId: null,
-      branchId: "",
-    };
-  }
+    if (hash === "#/apply/courier") {
+      return {
+        page: "applyCourier",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+    
+    if (hash === "#/admin/applications" || hash === "#/admin") {
+      return {
+        page: "adminApplications",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+    
+    // Partner Pages Routes
+    if (hash === "#/partners/couriers") {
+      return {
+        page: "partnerCouriers",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
+    if (hash === "#/partners/merchants") {
+      return {
+        page: "partnerMerchants",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
+    if (hash === "#/partners/companies") {
+      return {
+        page: "partnerCompanies",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
+
+    if (hash === "#/partners/drive") {
+      return {
+        page: "partnerDrive",
+        category: "",
+        restaurantId: null,
+        branchId: "",
+      };
+    }
 
     return {
       page: "home",
@@ -387,6 +431,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
       return {};
     }
   };
+  
   const persistFavoriteRestaurantsCache = (nextMap) => {
     try {
       localStorage.setItem(FAVORITE_RESTAURANTS_CACHE_KEY, JSON.stringify(nextMap || {}));
@@ -394,6 +439,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
       // Ignore storage write failures.
     }
   };
+  
   const [restaurants, setRestaurants] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(initialRoute.category);
@@ -478,10 +524,9 @@ if (hash.startsWith("#/admin/branch-requests")) {
 
     return "";
   };
+  
   const [token, setToken] = useState(getStoredToken());
   const [currentUser, setCurrentUser] = useState(null);
-
-
 
   const [loginMessage, setLoginMessage] = useState("");
   const [signupMessage, setSignupMessage] = useState("");
@@ -561,6 +606,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
     if (key === "4") return "Online";
     return "Unknown";
   };
+  
   const normalizedCurrentUserRole = String(currentUserRole || "").trim().toLowerCase();
   const isCustomerRole = ["customer", "user"].includes(normalizedCurrentUserRole);
   const isAdminRole = normalizedCurrentUserRole === "admin";
@@ -654,12 +700,12 @@ if (hash.startsWith("#/admin/branch-requests")) {
 
   const persistToken = (nextToken) => {
     if (nextToken) {
-     tokenService.setToken(nextToken);
-     setToken(nextToken);
-     return;
+      tokenService.setToken(nextToken);
+      setToken(nextToken);
+      return;
     }
 
-      tokenService.removeToken();
+    tokenService.removeToken();
     setToken("");
   };
 
@@ -1276,31 +1322,31 @@ if (hash.startsWith("#/admin/branch-requests")) {
               : getAssetUrlCandidates(rawImagePath);
 
           return {
-          cartLineId: `${menuItem.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          customizationSignature,
-          menuItemId: menuItem.id,
-          name: menuItem.name || "Item",
-          price: Number(menuItem.price || 0),
-          rawImagePath,
-          imageCandidates,
-          image: menuItem?.image || imageCandidates[0] || "",
-          quantity: nextQty,
-          selectedRequests: [],
-          ingredients:
-            Array.isArray(menuItem?.ingredients) && menuItem.ingredients.length > 0
-              ? menuItem.ingredients
-              : [],
-          selectedRemovedIngredients: removedIngredients,
-          quickRequestOptions:
-            Array.isArray(menuItem?.quickRequestOptions) && menuItem.quickRequestOptions.length > 0
-              ? menuItem.quickRequestOptions
-              : inferItemQuickRequests(menuItem),
-          availableAddOns: normalizeAddOns(menuItem?.addOns ?? menuItem?.AddOns),
-          selectedAddOns,
-          restaurantId: activeRestaurantId,
-          restaurantName: selectedRestaurant?.name || "Restaurant",
-          branchId: activeBranchId,
-          branchAddress: restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.address || "",
+            cartLineId: `${menuItem.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            customizationSignature,
+            menuItemId: menuItem.id,
+            name: menuItem.name || "Item",
+            price: Number(menuItem.price || 0),
+            rawImagePath,
+            imageCandidates,
+            image: menuItem?.image || imageCandidates[0] || "",
+            quantity: nextQty,
+            selectedRequests: [],
+            ingredients:
+              Array.isArray(menuItem?.ingredients) && menuItem.ingredients.length > 0
+                ? menuItem.ingredients
+                : [],
+            selectedRemovedIngredients: removedIngredients,
+            quickRequestOptions:
+              Array.isArray(menuItem?.quickRequestOptions) && menuItem.quickRequestOptions.length > 0
+                ? menuItem.quickRequestOptions
+                : inferItemQuickRequests(menuItem),
+            availableAddOns: normalizeAddOns(menuItem?.addOns ?? menuItem?.AddOns),
+            selectedAddOns,
+            restaurantId: activeRestaurantId,
+            restaurantName: selectedRestaurant?.name || "Restaurant",
+            branchId: activeBranchId,
+            branchAddress: restaurantBranches.find((b) => String(b.id) === String(activeBranchId))?.address || "",
           };
         })(),
       ];
@@ -2920,9 +2966,6 @@ if (hash.startsWith("#/admin/branch-requests")) {
         : isMerchantLikeRole
           ? [
               ...merchantRestaurantEndpoints,
-            //  `${API_BASE}/orders/merchant`,
-              //`${API_BASE}/orders/for-merchant`,
-              //`${API_BASE}/orders/my-restaurant`,
               `${API_BASE}/orders/pending`,
               `${API_BASE}/orders/in-progress`,
               `${API_BASE}/orders/my`,
@@ -3268,7 +3311,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
         }),
       });
       const data = await res.json().catch(() => null);
-      console.log("Login response data:", JSON.stringify(data, null, 2)); // Shfaq objektin si tekst të lexueshëm
+      console.log("Login response data:", JSON.stringify(data, null, 2));
       if (!res.ok) {
         setLoginMessage(extractErrorMessage(data, "Login failed. Check your credentials."));
         return;
@@ -4216,28 +4259,44 @@ if (hash.startsWith("#/admin/branch-requests")) {
               </button>
               <ul className="dropdown-menu shadow p-2">
                 <li>
-                  <a className="dropdown-item" href="/couriers">
+                  <button 
+                    className="dropdown-item" 
+                    onClick={() => window.location.hash = "/partners/couriers"}
+                    style={{ cursor: 'pointer' }}
+                  >
                     🚴 For Couriers
                     <p className="small text-muted mb-0">Earn delivering orders</p>
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/merchants">
+                  <button 
+                    className="dropdown-item" 
+                    onClick={() => window.location.hash = "/partners/merchants"}
+                    style={{ cursor: 'pointer' }}
+                  >
                     🍔 For Merchants
                     <p className="small text-muted mb-0">Grow your business</p>
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/companies">
+                  <button 
+                    className="dropdown-item" 
+                    onClick={() => window.location.hash = "/partners/companies"}
+                    style={{ cursor: 'pointer' }}
+                  >
                     🏢 For Companies
                     <p className="small text-muted mb-0">Office solutions</p>
-                  </a>
+                  </button>
                 </li>
                 <li>
-                  <a className="dropdown-item" href="/blinkbite-drive">
+                  <button 
+                    className="dropdown-item" 
+                    onClick={() => window.location.hash = "/partners/drive"}
+                    style={{ cursor: 'pointer' }}
+                  >
                     🚚 BlinkBite Drive
                     <p className="small text-muted mb-0">Delivery service</p>
-                  </a>
+                  </button>
                 </li>
               </ul>
             </div>
@@ -4461,18 +4520,18 @@ if (hash.startsWith("#/admin/branch-requests")) {
         )}
 
         {page === "adminRestaurants" && (
-  <RestaurantManagement
-    token={token}
-    onBack={() => window.location.hash = "/admin"}
-  />
-)}
+          <RestaurantManagement
+            token={token}
+            onBack={() => window.location.hash = "/admin"}
+          />
+        )}
 
-      {page === "adminBranchRequests" && (
-        <AdminBranchRequests
-          token={token}
-          onBack={() => window.location.hash = "/admin/applications"}
-        />
-      )}
+        {page === "adminBranchRequests" && (
+          <AdminBranchRequests
+            token={token}
+            onBack={() => window.location.hash = "/admin/applications"}
+          />
+        )}
 
         {page === "adminCategories" && (
           <section className="container py-4" style={{ marginTop: "96px" }}>
@@ -4482,6 +4541,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
             />
           </section>
         )}
+        
         {page === "merchantDashboard" && (
           <MerchantDashboard 
             token={token}
@@ -4489,9 +4549,11 @@ if (hash.startsWith("#/admin/branch-requests")) {
             onBack={() => { window.location.hash = "/"; }}
           />
         )}
+        
         {page === "driverDashboard" && (
           <DriverDashboard token={token} onBack={() => { window.location.hash = "/"; }} />
         )}
+        
         {page === "merchantMenu" && (
           <section className="container py-4" style={{ marginTop: "96px" }}>
             <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
@@ -4514,9 +4576,11 @@ if (hash.startsWith("#/admin/branch-requests")) {
             </PageErrorBoundary>
           </section>
         )}
+        
         {page === "trackOrder" && (
           <OrderTracking orderId={trackOrderId} token={token} />
         )}
+        
         {page === "restaurants" && (
           <RestaurantsPage
             selectedCategory={selectedCategory}
@@ -4540,6 +4604,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
             }}
           />
         )}
+        
         {page === "applyMerchant" && (
           <MerchantApplicationPage />
         )}
@@ -4547,8 +4612,26 @@ if (hash.startsWith("#/admin/branch-requests")) {
         {page === "applyCourier" && (
           <CourierApplicationPage />
         )}
+        
         {page === "adminApplications" && (
           <AdminApplicationsPage />
+        )}
+        
+        {/* Partner Pages */}
+        {page === "partnerCouriers" && (
+          <PartnerCouriersPage />
+        )}
+        
+        {page === "partnerMerchants" && (
+          <PartnerMerchantsPage />
+        )}
+        
+        {page === "partnerCompanies" && (
+          <PartnerCompaniesPage />
+        )}
+        
+        {page === "partnerDrive" && (
+          <PartnerDrivePage />
         )}
 
         {page === "myOrders" && window.location.hash.startsWith("#/invoice/") && (
@@ -4563,6 +4646,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
 
         {page === "myOrders" && !window.location.hash.startsWith("#/invoice/") && (
           <section className="container cart-page pb-5">
+            {/* Rest of myOrders rendering remains the same */}
             <div className="mb-4 restaurants-back-wrap d-flex gap-2 flex-wrap">
               <button
                 type="button"
@@ -4583,6 +4667,7 @@ if (hash.startsWith("#/admin/branch-requests")) {
               <h2 className="mb-1">{canManageOperationalOrders ? "Orders Dashboard" : "My Orders"}</h2>
               <p className="small text-muted mb-0">{getRoleCapabilitiesLabel()}</p>
             </div>
+            
             {isMerchantLikeRole && (
               <button
                 type="button"
@@ -5685,6 +5770,10 @@ if (hash.startsWith("#/admin/branch-requests")) {
           "adminApplications",
           "adminBranchRequests",
           "adminCategories",
+          "partnerCouriers",
+          "partnerMerchants",
+          "partnerCompanies",
+          "partnerDrive",
         ].includes(page) && (
           <section className="container py-5">
             <div className="alert alert-warning d-flex justify-content-between align-items-center flex-wrap gap-2">

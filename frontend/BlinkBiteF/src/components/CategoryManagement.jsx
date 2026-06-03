@@ -5,6 +5,7 @@ import "sweetalert2/dist/sweetalert2.min.css";
 import toast, { Toaster } from "react-hot-toast";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
+const API_ORIGIN = API_BASE_URL.replace(/\/api\/?$/, ""); // http://localhost:5063
 
 const CategoryManagement = ({ token, onBack }) => {
   const [categories, setCategories] = useState([]);
@@ -26,8 +27,10 @@ const CategoryManagement = ({ token, onBack }) => {
       const response = await axios.get(`${API_BASE_URL}/Category`, {
         headers: { Authorization: `Bearer ${token}` }
       });
+      console.log("Categories loaded:", response.data);
       setCategories(response.data);
     } catch (err) {
+      console.error("Error fetching categories:", err);
       setError("Failed to load categories");
     } finally {
       setLoading(false);
@@ -87,7 +90,8 @@ const CategoryManagement = ({ token, onBack }) => {
       setShowModal(false);
       fetchCategories();
     } catch (err) {
-      toast.error(err.response?.data || "Failed to save category", {
+      console.error("Save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save category", {
         position: "top-right",
         duration: 4000,
       });
@@ -131,10 +135,11 @@ const CategoryManagement = ({ token, onBack }) => {
       
       fetchCategories();
     } catch (err) {
+      console.error("Delete error:", err);
       Swal.fire({
         icon: "error",
         title: "Delete failed",
-        text: err.response?.data || "Failed to delete category",
+        text: err.response?.data?.message || "Failed to delete category",
         confirmButtonColor: "#d33",
       });
     }
@@ -188,21 +193,26 @@ const CategoryManagement = ({ token, onBack }) => {
       ) : (
         <div className="row">
           {categories.map((cat) => (
-            <div className="col-md-3 mb-3" key={cat.id}>
-              <div className="card h-100 text-center">
+            <div className="col-md-3 col-sm-4 col-6 mb-3" key={cat.id}>
+              <div className="card h-100 text-center shadow-sm">
                 <div className="card-body">
+                  {/* 🔥 Pjesa e fotos - TANI PUNON SAKTË */}
                   {cat.imageUrl ? (
                     <img 
-                      src={cat.imageUrl} 
+                      src={`${API_ORIGIN}${cat.imageUrl}`} 
                       alt={cat.name} 
-                      style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover" }}
+                      style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", margin: "0 auto" }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "https://cdn-icons-png.flaticon.com/512/1145/1145780.png";
+                      }}
                     />
                   ) : (
                     <div style={{ width: 80, height: 80, borderRadius: "50%", background: "#f0f0f0", margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      🏷️
+                      <span style={{ fontSize: "2rem" }}>🏷️</span>
                     </div>
                   )}
-                  <h5 className="mt-3">{cat.name}</h5>
+                  <h5 className="mt-3 mb-0">{cat.name}</h5>
                   <div className="mt-3">
                     <button
                       className="btn btn-sm btn-outline-primary me-1"
@@ -250,11 +260,26 @@ const CategoryManagement = ({ token, onBack }) => {
                     type="text"
                     name="imageUrl"
                     className="form-control"
-                    placeholder="https://example.com/category.jpg"
+                    placeholder="/uploads/categories/fastFoodIcon.png"
                     value={formData.imageUrl}
                     onChange={handleInputChange}
                   />
+                  <small className="text-muted">
+                    Example: /uploads/categories/fastFoodIcon.png
+                  </small>
                 </div>
+                {formData.imageUrl && (
+                  <div className="text-center mt-2">
+                    <img 
+                      src={`${API_ORIGIN}${formData.imageUrl}`} 
+                      alt="Preview" 
+                      style={{ width: 100, height: 100, objectFit: "cover", borderRadius: "10px" }}
+                      onError={(e) => {
+                        e.target.style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
               </div>
               <div className="modal-footer">
                 <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>

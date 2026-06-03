@@ -51,3 +51,16 @@ public class AssignBranchManagerDto
     [Required]
     public int RestaurantAddressId { get; set; }
 }
+public class BranchApplicationDto
+{
+    public string Address { get; set; } = string.Empty;
+    public string City { get; set; } = string.Empty;
+    public string Zone { get; set; } = string.Empty;
+    public decimal DeliveryFee { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public bool IsMain { get; set; }
+    public bool CreateBranchManager { get; set; }
+    public string? ManagerName { get; set; }
+    public string? ManagerEmail { get; set; }
+}

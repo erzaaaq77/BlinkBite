@@ -87,8 +87,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   
   const restaurant = dashboard?.restaurant || {};
 
-
-
   const normalizeStatusLabel = (statusValue) => {
     if (typeof statusValue === "number") {
       return ORDER_STATUS_LABELS[statusValue] || `Status ${statusValue}`;
@@ -122,8 +120,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         const response = await axios.get(`${API_BASE_URL}/Dashboard/Merchant`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-
-
         setDashboard(response.data || null);
         setError("");
       } catch (err) {
@@ -192,51 +188,52 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   };
 
   const handleDeleteCategory = async (category) => {
-  const result = await Swal.fire({
-    title: `Delete category "${category.emertimi}"?`,
-    html: "Items in this category will also be deleted.<br>This action cannot be undone!",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, delete",
-    confirmButtonColor: "#d33",
-    cancelButtonText: "Cancel",
-    reverseButtons: true,
-  });
-
-  if (!result.isConfirmed) return;
-
-  try {
-    Swal.fire({
-      title: "Deleting...",
-      allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      }
-    });
-
-    await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    Swal.fire({
-      icon: "success",
-      title: "Deleted!",
-      text: `Category "${category.emertimi}" has been deleted.`,
-      timer: 1500,
-      showConfirmButton: false,
-    });
-    
-    fetchCategories();
-  } catch (error) {
-    Swal.fire({
-      icon: "error",
-      title: "Delete failed",
-      text: error.response?.data?.message || "Failed to delete category",
+    const result = await Swal.fire({
+      title: `Delete category "${category.emertimi}"?`,
+      html: "Items in this category will also be deleted.<br>This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete",
       confirmButtonColor: "#d33",
+      cancelButtonText: "Cancel",
+      reverseButtons: true,
     });
-  }
-};
 
+    if (!result.isConfirmed) return;
+
+    try {
+      Swal.fire({
+        title: "Deleting...",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      await axios.delete(`${API_BASE_URL}/MenuCategories/${category.id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        text: `Category "${category.emertimi}" has been deleted.`,
+        timer: 1500,
+        showConfirmButton: false,
+      });
+      
+      fetchCategories();
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Delete failed",
+        text: error.response?.data?.message || "Failed to delete category",
+        confirmButtonColor: "#d33",
+      });
+    }
+  };
+
+  // 🔥 NDRYSHUAR: Tani dërgon aplikim për branch në vend të krijimit direkt
   const handleAddBranch = async () => {
     if (!newBranch.address.trim()) {
       alert("Please enter branch address");
@@ -245,7 +242,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
     
     setAddingBranch(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/Branch/create`, {
+      const response = await axios.post(`${API_BASE_URL}/Branch/apply`, {
         address: newBranch.address,
         city: newBranch.city,
         zone: newBranch.zone,
@@ -253,7 +250,6 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         latitude: newBranch.latitude || null,
         longitude: newBranch.longitude || null,
         isMain: newBranch.isMain,
-        isActive: newBranch.isActive,
         createBranchManager: newBranch.createManager,
         managerName: newBranch.managerName,
         managerEmail: newBranch.managerEmail
@@ -261,7 +257,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      toast.success(response.data.message);
+      toast.success(response.data.message || "Branch application submitted successfully! Admin will review it.");
       setShowAddBranchModal(false);
       setNewBranch({
         address: "",
@@ -280,7 +276,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
       fetchBranches();
     } catch (error) {
       console.error(error);
-      toast.error(error.response?.data?.message || "Failed to add branch");
+      toast.error(error.response?.data?.message || "Failed to submit branch application");
     } finally {
       setAddingBranch(false);
     }
@@ -391,30 +387,29 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   };
 
   const submitDeleteRequest = async () => {
-  if (!selectedBranch) {
-    toast.error("No branch selected for deletion request.");
-    return;
-  }
+    if (!selectedBranch) {
+      toast.error("No branch selected for deletion request.");
+      return;
+    }
 
-  const branchId = selectedBranch.id ?? selectedBranch.Id;
-  
-  try {
-    // 🔥 Ndrysho URL-në - dërgo branchId në URL, jo në body
-    await axios.post(`${API_BASE_URL}/BranchRequest/request-delete/${branchId}`, 
-      null,  // body i zbrazët (ose mund të dërgosh reason)
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const branchId = selectedBranch.id ?? selectedBranch.Id;
+    
+    try {
+      await axios.post(`${API_BASE_URL}/BranchRequest/request-delete/${branchId}`, 
+        null,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
-    toast.success("Delete request sent to admin for approval.");
-    setShowDeleteModal(false);
-    setSelectedBranch(null);
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to send delete request.");
-  }
-};
+      toast.success("Delete request sent to admin for approval.");
+      setShowDeleteModal(false);
+      setSelectedBranch(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to send delete request.");
+    }
+  };
 
   useEffect(() => {
     fetchDashboard();
@@ -867,32 +862,32 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
               <p className="text-muted">No categories yet. Create your first category to start adding menu items.</p>
             ) : (
               <div className="table-responsive">
-                <table className="table merchant-categories-table">
-                  <thead>
-                    <tr>
-                      <th>Order</th>
-                      <th>Name</th>
-                      <th>Description</th>
-                      <th>Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {categories.sort((a,b) => a.renditja - b.renditja).map((cat) => (
-                      <tr key={cat.id}>
-                        <td style={{ width: "80px" }}>{cat.renditja}</td>
-                        <td><strong>{cat.emertimi}</strong></td>
-                        <td>{cat.pershkrimi || "-"}</td>
-                        <td style={{ width: "140px" }}>
-                          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
-                            <button className="btn btn-modern-outline" onClick={() => { setEditingCategory(cat); setCategoryForm({ emertimi: cat.emertimi, pershkrimi: cat.pershkrimi || "", renditja: cat.renditja }); setShowAddCategoryModal(true); }}>Edit</button>
-                            <button className="btn btn-modern-danger" onClick={() => handleDeleteCategory(cat)}>Delete</button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+  <table className="table merchant-categories-table">
+    <thead>
+      <tr>
+        <th>Order</th>
+        <th>Name</th>
+        <th>Description</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {categories.sort((a,b) => a.renditja - b.renditja).map((cat) => (
+        <tr key={cat.id}>
+          <td style={{ width: "80px" }}>{cat.renditja}</td>
+          <td><strong>{cat.emertimi}</strong></td>
+          <td>{cat.pershkrimi || "-"}</td>
+          <td style={{ width: "140px" }}>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-start' }}>
+              <button className="btn btn-modern-outline" onClick={() => { setEditingCategory(cat); setCategoryForm({ emertimi: cat.emertimi, pershkrimi: cat.pershkrimi || "", renditja: cat.renditja }); setShowAddCategoryModal(true); }}>Edit</button>
+              <button className="btn btn-modern-danger" onClick={() => handleDeleteCategory(cat)}>Delete</button>
+            </div>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
             )}
             <div className="mt-3">
               <button className="btn btn-modern-secondary" onClick={() => { window.location.hash = `/merchant/menu/${restaurant.id}`; }}>🍽️ Manage Menu Items</button>
@@ -926,15 +921,14 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
                     <div className="d-flex gap-2">
                       <button 
                         className="btn btn-sm btn-outline-primary flex-grow-1" 
-  onClick={() => { 
-    // Shto timestamp për të shmangur cache në URL
-    const timestamp = Date.now();
-    const url = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}&_t=${timestamp}`;
-    window.location.hash = url;
-  }}
->
-  Manage menu for this location
-</button>
+                        onClick={() => { 
+                          const timestamp = Date.now();
+                          const url = `/merchant/menu/${restaurant.id}?branchId=${encodeURIComponent(String(address.id))}&_t=${timestamp}`;
+                          window.location.hash = url;
+                        }}
+                      >
+                        Manage menu for this location
+                      </button>
                       {!isBranchManagerRole && (
                         <>
                           <button className="btn btn-sm btn-outline-secondary" onClick={() => openEditBranchModal(address)} title="Request Edit">✏️</button>
@@ -1022,7 +1016,7 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
                   </>
                 )}
               </div>
-              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Creating..." : "Create Branch"}</button></div>
+              <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowAddBranchModal(false)}>Cancel</button><button className="btn btn-primary" onClick={handleAddBranch} disabled={addingBranch}>{addingBranch ? "Submitting..." : "Submit Branch Application"}</button></div>
             </div>
           </div>
         </div>
@@ -1095,7 +1089,8 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
                 <h6>Items:</h6>
                 <table className="table table-sm"><tbody>
                   {selectedOrder.orderItems?.map((item, idx) => (<tr key={idx}><td>{item.menuItem?.emertimi}</td><td>x{item.sasia}</td><td>€{(item.cmimi * item.sasia).toFixed(2)}</td></tr>))}
-                </tbody></table>
+                </tbody>
+                </table>
                 <h5>Total: {formatCurrency(selectedOrder.shumaTotale)}</h5>
               </div>
               <div className="modal-footer"><button className="btn btn-secondary" onClick={() => setShowModal(false)}>Close</button></div>

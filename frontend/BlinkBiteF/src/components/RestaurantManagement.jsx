@@ -3,7 +3,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import toast, { Toaster } from "react-hot-toast";
 
-const API_BASE_URL = "http://localhost:5063/api";
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 
 const toNumberId = (value) => {
   const numberValue = Number(value);
@@ -11,50 +11,16 @@ const toNumberId = (value) => {
 };
 
 const normalizeRestaurantPayload = (restaurant) => {
-  const category = restaurant.category ?? restaurant.Category;
   return {
-    ...restaurant,
     id: restaurant.id ?? restaurant.Id,
     emertimi: restaurant.emertimi ?? restaurant.Emertimi ?? restaurant.name ?? restaurant.Name ?? "",
     pershkrimi: restaurant.pershkrimi ?? restaurant.Pershkrimi ?? restaurant.description ?? restaurant.Description ?? "",
     telefoni: restaurant.telefoni ?? restaurant.Telefoni ?? restaurant.phone ?? restaurant.phoneNumber ?? "",
     email: restaurant.email ?? restaurant.Email ?? "",
-    kategori: restaurant.kategori ?? restaurant.Kategoria ?? restaurant.categoryName ?? restaurant.CategoryName ?? category?.emertimi ?? category?.name ?? "",
-    categoryId: toNumberId(restaurant.categoryId ?? restaurant.CategoryId ?? category?.id ?? category?.Id),
+    kategori: restaurant.kategori ?? restaurant.Kategoria ?? restaurant.categoryName ?? restaurant.CategoryName ?? "",
+    categoryId: toNumberId(restaurant.categoryId ?? restaurant.CategoryId),
     statusi: restaurant.statusi ?? restaurant.Statusi ?? restaurant.status ?? "Active"
   };
-};
-
-const normalizeRestaurantStatus = (statusValue) => {
-  if (typeof statusValue === "number" && Number.isFinite(statusValue)) {
-    return statusValue;
-  }
-  const normalized = String(statusValue || "Active").trim().toLowerCase();
-  if (normalized === "inactive") return 0;
-  if (normalized === "pending") return 2;
-  return 1;
-};
-
-const getRestaurantStatusLabel = (statusValue) => {
-  const normalized = normalizeRestaurantStatus(statusValue);
-  if (normalized === 2) return "Pending";
-  if (normalized === 0) return "Inactive";
-  return "Active";
-};
-
-const getRestaurantCategoryLabel = (restaurant, categories) => {
-  const directCategory = restaurant.kategori ?? restaurant.Kategoria ?? restaurant.categoryName ?? restaurant.CategoryName;
-  if (typeof directCategory === "string" && directCategory.trim()) return directCategory;
-  const categoryObject = restaurant.category ?? restaurant.Category;
-  if (categoryObject && typeof categoryObject === "object") {
-    return categoryObject.emertimi || categoryObject.name || categoryObject.Kategoria || categoryObject.Name || "";
-  }
-  const categoryId = toNumberId(restaurant.categoryId ?? restaurant.CategoryId ?? categoryObject?.id ?? categoryObject?.Id);
-  if (categoryId && Array.isArray(categories)) {
-    const found = categories.find((cat) => toNumberId(cat.id ?? cat.Id) === categoryId);
-    return found?.emertimi || found?.name || found?.kategori || found?.Kategoria || "";
-  }
-  return "";
 };
 
 const RestaurantManagement = ({ token, onBack }) => {
@@ -69,7 +35,7 @@ const RestaurantManagement = ({ token, onBack }) => {
     telefoni: "",
     email: "",
     kategori: "",
-    categoryId: null,
+    categoryId: "",
     statusi: "Active"
   });
 
@@ -104,52 +70,23 @@ const RestaurantManagement = ({ token, onBack }) => {
     }
   };
 
-  const getErrorMessage = (err) => {
-    const data = err?.response?.data;
-    if (!data) return err?.message || "Failed to save restaurant";
-    if (typeof data === "string") return data;
-    if (data.title || data.detail) {
-      return `${data.title ? data.title + ": " : ""}${data.detail || data.message || "An error occurred"}`;
-    }
-    if (data.message) return data.message;
-    try {
-      return JSON.stringify(data);
-    } catch {
-      return "Failed to save restaurant";
-    }
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "statusi") {
-      setFormData({ ...formData, statusi: value });
-      return;
-    }
-    if (name === "categoryId") {
-      const categoryId = toNumberId(value);
-      const selectedCategory = categories.find((cat) => (cat.id ?? cat.Id) === categoryId);
-      setFormData({
-        ...formData,
-        categoryId,
-        kategori: selectedCategory?.emertimi || selectedCategory?.name || selectedCategory?.kategori || formData.kategori || ""
-      });
-      return;
-    }
     setFormData({ ...formData, [name]: value });
   };
 
   const openModal = (restaurant = null) => {
     if (restaurant) {
-      const normalizedRestaurant = normalizeRestaurantPayload(restaurant);
-      setEditingRestaurant(normalizedRestaurant);
+      const normalized = normalizeRestaurantPayload(restaurant);
+      setEditingRestaurant(normalized);
       setFormData({
-        emertimi: normalizedRestaurant.emertimi,
-        pershkrimi: normalizedRestaurant.pershkrimi || "",
-        telefoni: normalizedRestaurant.telefoni || "",
-        email: normalizedRestaurant.email || "",
-        kategori: normalizedRestaurant.kategori || "",
-        categoryId: normalizedRestaurant.categoryId || null,
-        statusi: getRestaurantStatusLabel(normalizedRestaurant.statusi)
+        emertimi: normalized.emertimi,
+        pershkrimi: normalized.pershkrimi || "",
+        telefoni: normalized.telefoni || "",
+        email: normalized.email || "",
+        kategori: normalized.kategori || "",
+        categoryId: normalized.categoryId || "",
+        statusi: normalized.statusi || "Active"
       });
     } else {
       setEditingRestaurant(null);
@@ -159,43 +96,46 @@ const RestaurantManagement = ({ token, onBack }) => {
         telefoni: "",
         email: "",
         kategori: "",
-        categoryId: null,
+        categoryId: "",
         statusi: "Active"
       });
     }
     setShowModal(true);
   };
 
-  const handleSave = async (event) => {
-    event?.preventDefault();
+  const handleSave = async () => {
+    // Validimi
     if (!formData.emertimi.trim()) {
       toast.error("Restaurant name is required");
       return;
     }
 
-    const statusLabel = String(formData.statusi || "Active");
+    // Krijo payload-in
     const payload = {
-  emertimi: formData.emertimi,
-  pershkrimi: formData.pershkrimi || "",
-  telefoni: formData.telefoni || "",
-  email: formData.email || "",
-  kategori: formData.kategori || "",
-  statusi: formData.statusi || "Active"
-};
+      emertimi: formData.emertimi.trim(),
+      pershkrimi: formData.pershkrimi || "",
+      telefoni: formData.telefoni || "",
+      email: formData.email || "",
+      kategori: formData.kategori || "",
+      statusi: formData.statusi || "Active"
+    };
 
-if (formData.categoryId) {
-  payload.categoryId = parseInt(formData.categoryId);
-}
+    // Shto categoryId nëse është zgjedhur
+    if (formData.categoryId && formData.categoryId !== "") {
+      payload.categoryId = parseInt(formData.categoryId);
+      
+      // Gjej kategorinë e zgjedhur për ta dërguar emrin
+      const selectedCategory = categories.find(c => (c.id ?? c.Id) === parseInt(formData.categoryId));
+      if (selectedCategory && !payload.kategori) {
+        payload.kategori = selectedCategory.emertimi || selectedCategory.name;
+      }
+    }
 
-    console.debug("Restaurant save payload", payload);
+    console.log("Sending payload:", payload);
 
     try {
       if (editingRestaurant) {
-        await axios.put(`${API_BASE_URL}/Restaurants/${editingRestaurant.id}`, {
-          ...payload,
-          id: editingRestaurant.id,
-          Id: editingRestaurant.id
-        }, {
+        await axios.put(`${API_BASE_URL}/Restaurants/${editingRestaurant.id}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success("Restaurant updated successfully");
@@ -208,8 +148,8 @@ if (formData.categoryId) {
       setShowModal(false);
       fetchRestaurants();
     } catch (err) {
-      console.error("Save restaurant error", err);
-      toast.error(getErrorMessage(err));
+      console.error("Save error:", err);
+      toast.error(err.response?.data?.message || "Failed to save restaurant");
     }
   };
 
@@ -238,16 +178,16 @@ if (formData.categoryId) {
   };
 
   const getStatusBadge = (status) => {
-    const normalized = normalizeRestaurantStatus(status);
-    if (normalized === 1) return <span className="badge bg-success">Active</span>;
-    if (normalized === 2) return <span className="badge bg-warning">Pending</span>;
+    const statusText = String(status || "Active").toLowerCase();
+    if (statusText === "active") return <span className="badge bg-success">Active</span>;
+    if (statusText === "pending") return <span className="badge bg-warning">Pending</span>;
     return <span className="badge bg-secondary">Inactive</span>;
   };
 
   if (loading) return <div className="text-center py-5">Loading restaurants...</div>;
 
   return (
-    <div className="container py-4 content-offset">
+    <div className="container py-4" style={{ marginTop: "80px" }}>
       <Toaster position="top-right" />
 
       <div className="d-flex justify-content-between align-items-center mb-4">
@@ -282,13 +222,11 @@ if (formData.categoryId) {
               {restaurants.map((r) => (
                 <tr key={r.id}>
                   <td>{r.id}</td>
-                  <td><strong>{r.emertimi || r.Emertimi || r.name || r.Name}</strong></td>
-                  <td>{r.telefoni || r.Telefoni || r.phone || r.phoneNumber || "-"}</td>
-                  <td>{r.email || r.Email || "-"}</td>
-                  <td>{
-                    getRestaurantCategoryLabel(r, categories) || "-"
-                  }</td>
-                  <td>{getStatusBadge(r.statusi ?? r.Statusi ?? r.status)}</td>
+                  <td><strong>{r.emertimi}</strong></td>
+                  <td>{r.telefoni || "-"}</td>
+                  <td>{r.email || "-"}</td>
+                  <td>{r.kategori || "-"}</td>
+                  <td>{getStatusBadge(r.statusi)}</td>
                   <td>
                     <button className="btn btn-sm btn-outline-primary me-1" onClick={() => openModal(r)}>Edit</button>
                     <button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(r)}>Delete</button>
@@ -300,6 +238,7 @@ if (formData.categoryId) {
         </div>
       )}
 
+      {/* Modal for Add/Edit */}
       {showModal && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
@@ -311,32 +250,33 @@ if (formData.categoryId) {
               <div className="modal-body">
                 <div className="mb-3">
                   <label className="form-label">Restaurant Name *</label>
-                  <input type="text" name="emertimi" className="form-control" value={formData.emertimi} onChange={handleInputChange} />
+                  <input type="text" name="emertimi" className="form-control" placeholder="Enter restaurant name" value={formData.emertimi} onChange={handleInputChange} />
                 </div>
                 <div className="mb-3">
                   <label className="form-label">Description</label>
-                  <textarea name="pershkrimi" className="form-control" rows="2" value={formData.pershkrimi} onChange={handleInputChange} />
+                  <textarea name="pershkrimi" className="form-control" rows="2" placeholder="Enter description" value={formData.pershkrimi} onChange={handleInputChange} />
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label">Phone</label>
-                    <input type="text" name="telefoni" className="form-control" value={formData.telefoni} onChange={handleInputChange} />
+                    <input type="text" name="telefoni" className="form-control" placeholder="+383 XX XXX XXX" value={formData.telefoni} onChange={handleInputChange} />
                   </div>
                   <div className="col-md-6 mb-3">
                     <label className="form-label">Email</label>
-                    <input type="email" name="email" className="form-control" value={formData.email} onChange={handleInputChange} />
+                    <input type="email" name="email" className="form-control" placeholder="restaurant@email.com" value={formData.email} onChange={handleInputChange} />
                   </div>
                 </div>
                 <div className="row">
                   <div className="col-md-6 mb-3">
                     <label className="form-label">Category</label>
-                    <select name="categoryId" className="form-select" value={formData.categoryId ?? ""} onChange={handleInputChange}>
+                    <select name="categoryId" className="form-select" value={formData.categoryId} onChange={handleInputChange}>
                       <option value="">Select a category</option>
                       {categories.map((category) => {
-                        const categoryId = category.id ?? category.Id;
+                        const catId = category.id ?? category.Id;
+                        const catName = category.emertimi || category.name || category.kategori || `Category ${catId}`;
                         return (
-                          <option key={categoryId} value={categoryId}>
-                            {category.emertimi || category.name || category.kategori || category.Kategoria || `Category ${categoryId}`}
+                          <option key={catId} value={catId}>
+                            {catName}
                           </option>
                         );
                       })}

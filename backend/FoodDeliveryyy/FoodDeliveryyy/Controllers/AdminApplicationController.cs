@@ -2,6 +2,7 @@
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
 using FoodDeliveryyy.Models.Identity;
+using FoodDeliveryyy.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -17,38 +18,32 @@ public class AdminApplicationController : ControllerBase
     private readonly AppDbContext _context;
     private readonly UserManager<User> _userManager;
     private readonly RoleManager<Role> _roleManager;
+    private readonly IEmailService _emailService;
 
     public AdminApplicationController(
         AppDbContext context,
         UserManager<User> userManager,
-        RoleManager<Role> roleManager)
+        RoleManager<Role> roleManager,
+        IEmailService emailService)
     {
         _context = context;
         _userManager = userManager;
         _roleManager = roleManager;
+        _emailService = emailService;
     }
 
+    // ==================== TESTS ====================
     [HttpGet]
     public IActionResult Test()
     {
         return Ok(new { message = "Admin controller is working!" });
     }
 
+    // ==================== RESTAURANT APPLICATIONS ====================
     [HttpGet("restaurants")]
     public async Task<IActionResult> GetRestaurantApplications([FromQuery] string? status = null)
     {
         var query = _context.RestaurantApplications.AsQueryable();
-        if (!string.IsNullOrEmpty(status))
-            query = query.Where(x => x.Status == status);
-
-        var applications = await query.OrderByDescending(x => x.AppliedAt).ToListAsync();
-        return Ok(applications);
-    }
-
-    [HttpGet("couriers")]
-    public async Task<IActionResult> GetCourierApplications([FromQuery] string? status = null)
-    {
-        var query = _context.CourierApplications.AsQueryable();
         if (!string.IsNullOrEmpty(status))
             query = query.Where(x => x.Status == status);
 
@@ -66,7 +61,7 @@ public class AdminApplicationController : ControllerBase
         if (application.Status != "Pending")
             return BadRequest(new { message = "This application has already been reviewed" });
 
-        var username = GenerateUsername(application.RestaurantName);
+        var username = GenerateUsernameFromRestaurant(application.RestaurantName);
         var user = new User
         {
             UserName = username,
@@ -117,14 +112,68 @@ public class AdminApplicationController : ControllerBase
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
+        try
+        {
+            await _emailService.SendMerchantCredentialsEmailAsync(
+                application.Email,
+                restaurant.Emertimi,
+                username,
+                password
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Email failed for Merchant: {ex.Message}");
+        }
+
         return Ok(new
         {
-            message = "Restaurant approved and account created",
+            message = "Restaurant approved. Credentials sent via email.",
             email = application.Email,
             username = username,
-            password = password,
             restaurantId = restaurant.Id
         });
+    }
+
+    [HttpPost("restaurant/{id}/reject")]
+    public async Task<IActionResult> RejectRestaurant(int id, [FromBody] RejectDto dto)
+    {
+        var application = await _context.RestaurantApplications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        application.Status = "Rejected";
+        application.ReviewedAt = DateTime.UtcNow;
+        application.AdminNotes = dto.Reason;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Application rejected" });
+    }
+
+    // 🔥 DELETE PËR RESTAURANT APPLICATION
+    [HttpDelete("restaurant-application/{id}")]
+    public async Task<IActionResult> DeleteRestaurantApplication(int id)
+    {
+        var application = await _context.RestaurantApplications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        _context.RestaurantApplications.Remove(application);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Restaurant application deleted successfully" });
+    }
+
+    // ==================== COURIER APPLICATIONS ====================
+    [HttpGet("couriers")]
+    public async Task<IActionResult> GetCourierApplications([FromQuery] string? status = null)
+    {
+        var query = _context.CourierApplications.AsQueryable();
+        if (!string.IsNullOrEmpty(status))
+            query = query.Where(x => x.Status == status);
+
+        var applications = await query.OrderByDescending(x => x.AppliedAt).ToListAsync();
+        return Ok(applications);
     }
 
     [HttpPost("courier/{id}/approve")]
@@ -174,28 +223,26 @@ public class AdminApplicationController : ControllerBase
         application.AdminNotes = dto?.Notes;
         await _context.SaveChangesAsync();
 
+        try
+        {
+            await _emailService.SendCourierCredentialsEmailAsync(
+                application.Email,
+                application.FullName,
+                username,
+                password
+            );
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Email failed for Courier: {ex.Message}");
+        }
+
         return Ok(new
         {
-            message = "Courier approved and account created",
+            message = "Courier approved. Credentials sent via email.",
             email = application.Email,
-            username = username,
-            password = password
+            username = username
         });
-    }
-
-    [HttpPost("restaurant/{id}/reject")]
-    public async Task<IActionResult> RejectRestaurant(int id, [FromBody] RejectDto dto)
-    {
-        var application = await _context.RestaurantApplications.FindAsync(id);
-        if (application == null)
-            return NotFound(new { message = "Application not found" });
-
-        application.Status = "Rejected";
-        application.ReviewedAt = DateTime.UtcNow;
-        application.AdminNotes = dto.Reason;
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = "Application rejected" });
     }
 
     [HttpPost("courier/{id}/reject")]
@@ -213,7 +260,152 @@ public class AdminApplicationController : ControllerBase
         return Ok(new { message = "Application rejected" });
     }
 
-    [HttpDelete("{id}")]
+    // 🔥 DELETE PËR COURIER APPLICATION
+    [HttpDelete("courier-application/{id}")]
+    public async Task<IActionResult> DeleteCourierApplication(int id)
+    {
+        var application = await _context.CourierApplications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        _context.CourierApplications.Remove(application);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Courier application deleted successfully" });
+    }
+
+    // ==================== BRANCH APPLICATIONS ====================
+    [HttpGet("branches")]
+    public async Task<IActionResult> GetBranchApplications([FromQuery] string? status = null)
+    {
+        var query = _context.BranchApplications
+            .Include(b => b.Restaurant)
+            .AsQueryable();
+
+        if (!string.IsNullOrEmpty(status))
+            query = query.Where(x => x.Status == status);
+
+        var applications = await query
+            .OrderByDescending(x => x.AppliedAt)
+            .ToListAsync();
+
+        return Ok(applications);
+    }
+
+    [HttpPost("branch/{id}/approve")]
+    public async Task<IActionResult> ApproveBranchApplication(int id, [FromBody] ApproveDto? dto)
+    {
+        var application = await _context.BranchApplications
+            .Include(b => b.Restaurant)
+            .FirstOrDefaultAsync(b => b.Id == id);
+
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        if (application.Status != "Pending")
+            return BadRequest(new { message = "This application has already been reviewed" });
+
+        var branch = new RestaurantAddress
+        {
+            RestaurantId = application.RestaurantId,
+            Adresa = application.Address,
+            Qyteti = application.City,
+            Zona = application.Zone,
+            TarifaDorezimit = application.DeliveryFee,
+            Latitude = application.Latitude,
+            Longitude = application.Longitude,
+            IsMain = application.IsMain,
+            IsActive = true,
+            MerchantUserId = null
+        };
+
+        _context.RestaurantAddresses.Add(branch);
+        await _context.SaveChangesAsync();
+
+        if (application.CreateBranchManager && !string.IsNullOrEmpty(application.ManagerEmail))
+        {
+            var username = GenerateUsernameFromName(application.ManagerName ?? application.ManagerEmail.Split('@')[0]);
+            var password = GenerateRandomPassword();
+
+            var branchManager = new User
+            {
+                UserName = username,
+                Email = application.ManagerEmail,
+                EmailConfirmed = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            var createResult = await _userManager.CreateAsync(branchManager, password);
+
+            if (createResult.Succeeded)
+            {
+                await _userManager.AddToRoleAsync(branchManager, "BranchManager");
+                branch.MerchantUserId = branchManager.Id;
+                await _context.SaveChangesAsync();
+
+                try
+                {
+                    await _emailService.SendBranchManagerCredentialsEmailAsync(
+                        branchManager.Email,
+                        branch.Adresa,
+                        application.Restaurant!.Emertimi,
+                        branchManager.UserName,
+                        password
+                    );
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Email failed for Branch Manager: {ex.Message}");
+                }
+            }
+        }
+
+        application.Status = "Approved";
+        application.ProcessedAt = DateTime.UtcNow;
+        application.AdminNotes = dto?.Notes;
+        await _context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            message = "Branch application approved successfully",
+            branchId = branch.Id
+        });
+    }
+
+    [HttpPost("branch/{id}/reject")]
+    public async Task<IActionResult> RejectBranchApplication(int id, [FromBody] RejectDto dto)
+    {
+        var application = await _context.BranchApplications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        if (application.Status != "Pending")
+            return BadRequest(new { message = "This application has already been reviewed" });
+
+        application.Status = "Rejected";
+        application.ProcessedAt = DateTime.UtcNow;
+        application.AdminNotes = dto.Reason;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Branch application rejected" });
+    }
+
+    // 🔥 DELETE PËR BRANCH APPLICATION
+    [HttpDelete("branch-application/{id}")]
+    public async Task<IActionResult> DeleteBranchApplication(int id)
+    {
+        var application = await _context.BranchApplications.FindAsync(id);
+        if (application == null)
+            return NotFound(new { message = "Application not found" });
+
+        _context.BranchApplications.Remove(application);
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Branch application deleted successfully" });
+    }
+
+    // ==================== DELETE RESTAURANT (i plotë) ====================
+    [HttpDelete("restaurant/{id}")]
     public async Task<IActionResult> DeleteRestaurant(int id)
     {
         var application = await _context.RestaurantApplications.FindAsync(id);
@@ -226,24 +418,19 @@ public class AdminApplicationController : ControllerBase
         if (restaurant == null)
             return NotFound(new { message = "Restaurant not found" });
 
-        // Fshij të gjitha orders të lidhura
         var orders = _context.Orders.Where(o => o.RestaurantId == restaurant.Id).ToList();
         _context.Orders.RemoveRange(orders);
 
-        // Fshij të gjitha reviews të lidhura
         var reviews = _context.Reviews.Where(r => r.RestaurantId == restaurant.Id).ToList();
         _context.Reviews.RemoveRange(reviews);
 
-        // Fshij të gjitha deliveries të lidhura me këto orders
         var orderIds = orders.Select(o => o.Id).ToList();
         var deliveries = _context.Deliveries.Where(d => orderIds.Contains(d.OrderId)).ToList();
         _context.Deliveries.RemoveRange(deliveries);
 
-        // Fshij adresat
         var addresses = _context.RestaurantAddresses.Where(a => a.RestaurantId == restaurant.Id).ToList();
         _context.RestaurantAddresses.RemoveRange(addresses);
 
-        // Fshij menu kategoritë dhe itemet
         var menuCategories = _context.MenuCategories.Where(c => c.RestaurantId == restaurant.Id).ToList();
         foreach (var category in menuCategories)
         {
@@ -252,7 +439,6 @@ public class AdminApplicationController : ControllerBase
         }
         _context.MenuCategories.RemoveRange(menuCategories);
 
-        // Fshij restorantin dhe aplikacionin
         _context.Restaurants.Remove(restaurant);
         _context.RestaurantApplications.Remove(application);
 
@@ -260,7 +446,9 @@ public class AdminApplicationController : ControllerBase
 
         return Ok(new { message = "Restaurant deleted successfully" });
     }
-    private string GenerateUsername(string restaurantName)
+
+    // ==================== HELPER METHODS ====================
+    private string GenerateUsernameFromRestaurant(string restaurantName)
     {
         var baseName = restaurantName.ToLower()
             .Replace(" ", "")
@@ -313,6 +501,7 @@ public class AdminApplicationController : ControllerBase
     }
 }
 
+// ==================== DTOs ====================
 public class ApproveDto
 {
     public string? Notes { get; set; }
