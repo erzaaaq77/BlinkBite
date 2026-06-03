@@ -31,6 +31,7 @@ const MERCHANT_ORDERS_BATCH_SIZE = 8;
 const MerchantDashboard = ({ token, currentUserRole = "" }) => {
   const normalizedRole = String(currentUserRole || "").trim().toLowerCase();
   const isBranchManagerRole = normalizedRole === "branchmanager";
+  const isAdminRole = normalizedRole === "admin";
   const [restaurantBranches, setRestaurantBranches] = useState([]);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -700,6 +701,15 @@ const MerchantDashboard = ({ token, currentUserRole = "" }) => {
           >
             🎟️ Manage Promotions
           </button>
+          {isAdminRole && (
+            <button
+              type="button"
+              className="btn btn-outline-info me-2"
+              onClick={() => { if (window.openAdminDriversPanel) window.openAdminDriversPanel(); }}
+            >
+              🚚 Manage Couriers
+            </button>
+          )}
           <button
             type="button"
             className="btn btn-outline-secondary merchant-refresh-btn"

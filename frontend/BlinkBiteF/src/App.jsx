@@ -19,6 +19,8 @@ import RestaurantManagement from "./components/RestaurantManagement";
 import PromotionManagement from "./components/PromotionManagement";
 import ReviewModal from "./components/ReviewModal";
 import ReviewList from "./components/ReviewList";
+import AdminDriversPanel from "./components/AdminDriversPanel";
+import AdminDrivers from "./components/AdminDrivers";
 
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
@@ -637,13 +639,32 @@ const filtered = (restaurants || []).filter(r => {
   
   const normalizedCurrentUserRole = String(currentUserRole || "").trim().toLowerCase();
   const isCustomerRole = ["customer", "user"].includes(normalizedCurrentUserRole);
-  const isAdminRole = normalizedCurrentUserRole === "admin";
-  const isMerchantRole = normalizedCurrentUserRole === "merchant";
-  const isBranchManagerRole = normalizedCurrentUserRole === "branchmanager";
+  // Flexible admin detection: check common variants, roles arrays, and allow a local debug override
+  const adminRoleKeys = ["admin", "administrator", "superadmin", "systemadmin", "root"];
+  const roleLooksAdmin = adminRoleKeys.some((k) => normalizedCurrentUserRole.includes(k));
+  const rolesArrayLooksAdmin = (Array.isArray(currentUser?.roles) && currentUser.roles.some(r => adminRoleKeys.some(k => String(r || "").toLowerCase().includes(k))))
+    || (Array.isArray(currentUser?.Roles) && currentUser.Roles.some(r => adminRoleKeys.some(k => String(r || "").toLowerCase().includes(k))));
+  const forceAdminUi = String(localStorage.getItem("force_admin_ui") || "").trim() === "1";
+  const isAdminRole = roleLooksAdmin || rolesArrayLooksAdmin || forceAdminUi;
+  const isMerchantRole = normalizedCurrentUserRole === "merchant" || String(currentUserRole || "").toLowerCase().includes("merchant");
+  const isBranchManagerRole = normalizedCurrentUserRole === "branchmanager" || String(currentUserRole || "").toLowerCase().includes("branch");
   const isMerchantLikeRole = isMerchantRole || isBranchManagerRole;
-  const isCourierRole = normalizedCurrentUserRole === "courier";
+  const isCourierRole = normalizedCurrentUserRole === "courier" || String(currentUserRole || "").toLowerCase().includes("courier");
   const canManageOperationalOrders = isAdminRole || isMerchantLikeRole || isCourierRole;
   const [merchantRestaurantIdForUi, setMerchantRestaurantIdForUi] = useState("");
+  const [showAdminDrivers, setShowAdminDrivers] = useState(false);
+
+  useEffect(() => {
+    // Expose a global helper for other components to open the admin drivers panel
+    try {
+      window.openAdminDriversPanel = () => setShowAdminDrivers(true);
+    } catch (err) {
+      // ignore
+    }
+    return () => {
+      try { delete window.openAdminDriversPanel; } catch (e) {}
+    };
+  }, [setShowAdminDrivers]);
 
   useEffect(() => {
     if (page !== "myOrders") return;
@@ -3797,6 +3818,14 @@ const filtered = (restaurants || []).filter(r => {
         }
       }
 
+      if (hash.startsWith("#/admin/drivers")) {
+  return {
+    page: "adminDrivers",
+    category: "",
+    restaurantId: null,
+    branchId: "",
+  };
+}
       
       // Courier should use Driver Dashboard, not Orders Dashboard (/my-orders)
       if (!isInvoiceRoute && isCourierRole && route.page === "myOrders") {
@@ -4612,6 +4641,13 @@ const filtered = (restaurants || []).filter(r => {
             nearbyError={nearbyError}
           />
         )}
+
+        {page === "adminDrivers" && (
+  <AdminDrivers
+    token={token}
+    onBack={() => window.location.hash = "/admin"}
+  />
+)}
         {page === "merchantPromotions" && (
           <PromotionManagement
             token={token}
@@ -5937,6 +5973,31 @@ const filtered = (restaurants || []).filter(r => {
               /* Optionally refresh orders or review state here */
             }}
           />
+        )}
+        {isAdminRole && (
+          <>
+            <button
+              type="button"
+              title="Manage drivers"
+              onClick={() => setShowAdminDrivers(true)}
+              style={{
+                position: "fixed",
+                right: 18,
+                bottom: 18,
+                zIndex: 1070,
+                borderRadius: 999,
+                width: 56,
+                height: 56,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}
+              className="btn btn-danger shadow-lg"
+            >
+              <i className="bi bi-people-fill"></i>
+            </button>
+            <AdminDriversPanel show={showAdminDrivers} onClose={() => setShowAdminDrivers(false)} />
+          </>
         )}
       </Suspense>
     </>
