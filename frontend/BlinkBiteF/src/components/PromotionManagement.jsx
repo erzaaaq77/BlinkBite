@@ -176,19 +176,27 @@ const PromotionManagement = ({ token, restaurantId, onBack }) => {
   };
 
   const toggleStatus = async (promotion) => {
-    const newStatus = promotion.statusi === 1 ? 0 : 1;
-    try {
-      await axios.patch(
-        `${API_BASE_URL}/Promotions/${promotion.id}/status`,
-        newStatus,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      toast.success(`Promotion ${newStatus === 1 ? "activated" : "deactivated"}`);
-      fetchPromotions();
-    } catch (err) {
-      toast.error("Failed to update status");
-    }
-  };
+  // Nëse aktualisht Active (1), kalon në Inactive (3), përndryshe kalon në Active (1)
+  const newStatus = promotion.statusi === 1 ? 3 : 1;
+
+  try {
+    await axios.patch(
+      `${API_BASE_URL}/Promotions/${promotion.id}/status`,
+      newStatus,   // 🔥 dërgo numrin 1 ose 3
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    toast.success(`Promotion ${newStatus === 1 ? "activated" : "deactivated"}`);
+    fetchPromotions(); // rifresko listën
+  } catch (err) {
+    console.error("Patch error:", err.response?.data);
+    toast.error("Failed to update status");
+  }
+};
 
   const getStatusBadge = (status) => {
     if (status === 1) return <span className="badge bg-success">Active</span>;
