@@ -1,11 +1,15 @@
 ﻿using FoodDeliveryyy.Data;
 using FoodDeliveryyy.Models.Entities;
 using FoodDeliveryyy.Models.Enums;
+using FoodDeliveryyy.Models.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FoodDeliveryyy.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class ReviewsController : ControllerBase
@@ -20,32 +24,35 @@ public class ReviewsController : ControllerBase
     [HttpGet]
     public async Task<ActionResult<IEnumerable<Reviews>>> GetReviews()
     {
-        return await _context.Reviews
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
+
+        IQueryable<Reviews> query = _context.Reviews
             .Include(r => r.User)
             .Include(r => r.Restaurant)
             .Include(r => r.Order)
-            .OrderByDescending(r => r.DataKrijimit)
-            .ToListAsync();
-    }
+            .OrderByDescending(r => r.DataKrijimit);
 
-    [HttpGet("{id}")]
-    public async Task<ActionResult<Reviews>> GetReview(int id)
-    {
-        var review = await _context.Reviews
-            .Include(r => r.User)
-            .Include(r => r.Restaurant)
-            .Include(r => r.Order)
-            .FirstOrDefaultAsync(r => r.Id == id);
-
-        if (review == null)
+        if (role == AppRoles.Merchant)
         {
-            return NotFound();
+            var restaurant = await _context.Restaurants
+                .FirstOrDefaultAsync(r => r.UserId == userId);
+            if (restaurant != null)
+                query = query.Where(r => r.RestaurantId == restaurant.Id);
+            else
+                return Ok(new List<Reviews>());
+        }
+        else if (role != AppRoles.Admin)
+        {
+            return Forbid();
         }
 
-        return review;
+        return Ok(await query.ToListAsync());
     }
 
+
     [HttpGet("by-restaurant/{restaurantId}")]
+    [AllowAnonymous] 
     public async Task<ActionResult<IEnumerable<Reviews>>> GetReviewsByRestaurant(int restaurantId)
     {
         var reviews = await _context.Reviews
@@ -53,7 +60,6 @@ public class ReviewsController : ControllerBase
             .Include(r => r.User)
             .OrderByDescending(r => r.DataKrijimit)
             .ToListAsync();
-
         return Ok(reviews);
     }
 
@@ -120,6 +126,7 @@ public class ReviewsController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles =AppRoles.Customer + "," + AppRoles.Admin)]
     public async Task<ActionResult<Reviews>> CreateReview(Reviews review)
     {
         var order = await _context.Orders
@@ -128,17 +135,17 @@ public class ReviewsController : ControllerBase
 
         if (order == null)
         {
-            return BadRequest("Porosia nuk ekziston");
+            return BadRequest("Order does not exist");
         }
 
         if (order.Statusi != OrderStatus.Delivered)
         {
-            return BadRequest("Mund të vlerësoni vetëm porositë e dorëzuara");
+            return BadRequest("You can review only purchased orders");
         }
 
         if (order.UserId != review.UserId)
         {
-            return BadRequest("Ju mund të vlerësoni vetëm porositë tuaja");
+            return BadRequest("You can review only your purchases");
         }
 
         var existingReview = await _context.Reviews
@@ -146,12 +153,12 @@ public class ReviewsController : ControllerBase
 
         if (existingReview != null)
         {
-            return BadRequest("Kjo porosi tashmë është vlerësuar");
+            return BadRequest("This order is already reviewed");
         }
 
         if (order.RestaurantId != review.RestaurantId)
         {
-            return BadRequest("Restoranti nuk përputhet me porosinë");
+            return BadRequest("Restaurant does not match the order. ");
         }
 
         review.DataKrijimit = DateTime.Now;
@@ -166,44 +173,27 @@ public class ReviewsController : ControllerBase
             .Include(r => r.Restaurant)
             .FirstOrDefaultAsync(r => r.Id == review.Id);
 
-        return CreatedAtAction(nameof(GetReview), new { id = review.Id }, createdReview);
+        return CreatedAtAction(nameof(GetReviews), new { id = review.Id }, createdReview);
     }
 
     [HttpPut("{id}")]
+    [Authorize(Roles = AppRoles.Customer + "," + AppRoles.Admin)]
     public async Task<IActionResult> UpdateReview(int id, Reviews review)
     {
-        if (id != review.Id)
-        {
-            return BadRequest();
-        }
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        var oldReview = await _context.Reviews.AsNoTracking()
+        var existing = await _context.Reviews.AsNoTracking()
             .FirstOrDefaultAsync(r => r.Id == id);
+        if (existing == null) return NotFound();
 
-        if (oldReview == null)
-        {
-            return NotFound();
-        }
+        if (role == AppRoles.Customer && existing.UserId != userId)
+            return Forbid("You can not change someone else's review");
 
-        review.DataKrijimit = oldReview.DataKrijimit;
-
+        review.DataKrijimit = existing.DataKrijimit;
         _context.Entry(review).State = EntityState.Modified;
-
-        try
-        {
-            await _context.SaveChangesAsync();
-
-            await UpdateRestaurantRating(review.RestaurantId);
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            if (!ReviewExists(id))
-            {
-                return NotFound();
-            }
-            throw;
-        }
-
+        await _context.SaveChangesAsync();
+        await UpdateRestaurantRating(review.RestaurantId);
         return NoContent();
     }
 

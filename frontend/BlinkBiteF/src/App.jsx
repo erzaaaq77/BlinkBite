@@ -16,10 +16,14 @@ import CategoryManagement from "./components/CategoryManagement";
 import AdminBranchRequests from "./components/AdminBranchRequests";
 import RestaurantManagement from "./components/RestaurantManagement";
 import PromotionManagement from "./components/PromotionManagement";
+import ReviewModal from "./components/ReviewModal";
+
 const MerchantDashboard = lazy(() => import("./components/MerchantDashboard.jsx"));
 const DriverDashboard = lazy(() => import("./components/DriverDashboard"));
 const OrderTracking = lazy(() => import("./components/OrderTracking"));
 const FavoritesPage = lazy(() => import("./components/FavoritesPage.jsx"));
+const [reviewOrderId, setReviewOrderId] = useState(null);
+const [reviewRestaurantId, setReviewRestaurantId] = useState(null);
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5063/api").replace(/\/+$/, "");
 const ACCESS_TOKEN_KEY = "access_token";
@@ -3716,7 +3720,8 @@ const filtered = (restaurants || []).filter(r => {
 
       // Restrict merchant role strictly to merchant dashboard/menu/orders dashboard
       if (!isInvoiceRoute && isMerchantLikeRole) {
-        // Allowed: merchantDashboard, merchantMenu, myOrders (Orders Dashboard)
+        // Allowed: merchantDashboard, merchantMenu, 
+        // (Orders Dashboard)
         if (
           route.page !== "merchantDashboard" &&
           route.page !== "merchantMenu" &&
@@ -4965,6 +4970,20 @@ const filtered = (restaurants || []).filter(r => {
                         🧾 Invoice
                       </button>
                     </div>
+
+                    {order.statusLabel === "Delivered" && (
+  <div className="mt-2">
+    <button
+      className="btn btn-sm btn-outline-warning"
+      onClick={() => {
+        setReviewOrderId(order.id);
+        setReviewRestaurantId(order.restaurantId || order.restaurant?.id);
+      }}
+    >
+      ⭐ Write a Review
+    </button>
+  </div>)}
+
 
                     {Array.isArray(order.items) && order.items.length > 0 && (
                       <div className="order-items-preview mt-3">
