@@ -9,6 +9,7 @@ function RestaurantDetailsPage({
   onBack,
   onSelectBranch,
   restaurantId,
+    reviewsSlot,
 }) {
   const displayName = restaurant?.name || (restaurantId ? `Restaurant #${restaurantId}` : "Restaurant");
   const hasBranches = Array.isArray(branches) && branches.length > 0;
@@ -92,8 +93,11 @@ function RestaurantDetailsPage({
                 </div>
               )}
             </section>
+            
           </>
+        
         )}
+          {reviewsSlot}
       </section>
 
       <footer className="restaurants-footer mt-auto">

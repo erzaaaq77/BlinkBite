@@ -7,7 +7,7 @@ import logo from "./assets/LogoBB.webp";
 import locationImage from "./assets/location.webp";
 import MenuManagement from "./components/MenuManagement";
 import { Toaster } from "react-hot-toast";
-import { favoriteService } from "./services/FavoriteService";
+import { favoriteService } from "./services/FavoriteService"
 import { tokenService } from './services/tokenService';
 import InvoiceView from "./components/InvoiceView";
 import MerchantApplicationPage from "./components/MerchantApplicationPage";
@@ -212,7 +212,8 @@ function App() {
   const menuItemsLookupPromiseRef = useRef(null);
   const orderHubConnectionRef = useRef(null);
   const subscribedOrderGroupsRef = useRef(new Set());
-  
+  console.log("React object:", React);
+console.log("useState from React:", React?.useState);
   const getRouteState = () => {
     const hash = window.location.hash || "#/";
 
@@ -5456,34 +5457,34 @@ const handleRoleStatusUpdate = async (orderId, nextStatus) => {
         )}
 
         {page === "restaurantDetails" && (
-          <>
-            <RestaurantDetailsPage
-              restaurant={selectedRestaurant}
-              branches={restaurantBranches}
-              menuItems={restaurantMenuItems}
-              brandRestaurantCount={brandRestaurantCount}
-              loading={restaurantDetailsLoading}
-              error={restaurantDetailsError}
-              onSelectBranch={(branch) => handleBranchSelect(activeRestaurantId, branch?.id)}
-              onBack={() => {
-                if (selectedCategory) {
-                  window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
-                  return;
-                }
-                window.location.hash = "/";
-              }}
-              restaurantId={activeRestaurantId}
-            />
-            <ReviewList
-              restaurantId={activeRestaurantId}
-              canViewReviews={
-                isCustomerRole ||
-                isAdminRole ||
-                (merchantRestaurantIdForUi && String(activeRestaurantId) === String(merchantRestaurantIdForUi))
-              }
-              canDeleteReviews={isAdminRole}
-            />
-          </>
+         <RestaurantDetailsPage
+  restaurant={selectedRestaurant}
+  branches={restaurantBranches}
+  menuItems={restaurantMenuItems}
+  brandRestaurantCount={brandRestaurantCount}
+  loading={restaurantDetailsLoading}
+  error={restaurantDetailsError}
+  onSelectBranch={(branch) => handleBranchSelect(activeRestaurantId, branch?.id)}
+  onBack={() => {
+    if (selectedCategory) {
+      window.location.hash = `/restaurants/${encodeURIComponent(selectedCategory)}`;
+      return;
+    }
+    window.location.hash = "/";
+  }}
+  restaurantId={activeRestaurantId}
+  reviewsSlot={
+    <ReviewList
+      restaurantId={activeRestaurantId}
+      canViewReviews={
+        isCustomerRole ||
+        isAdminRole ||
+        (merchantRestaurantIdForUi && String(activeRestaurantId) === String(merchantRestaurantIdForUi))
+      }
+      canDeleteReviews={isAdminRole}
+    />
+  }
+/>
         )}
         
 
