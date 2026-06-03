@@ -246,6 +246,15 @@ function App() {
       };
     }
     
+    if (hash.startsWith("#/admin/drivers")) {
+  return {
+    page: "adminDrivers",
+    category: "",
+    restaurantId: null,
+    branchId: "",
+  };
+}
+
     if (hash.startsWith("#/admin/branch-requests")) {
       return {
         page: "adminBranchRequests",
@@ -3189,165 +3198,67 @@ const filtered = (restaurants || []).filter(r => {
     }
   };
 
-  const handleRoleOrderStatusUpdate = async (order, nextStatus) => {
-    // ========== LOGJET PËR DEBUG ==========
-    console.log("🔴 DELIVER BUTTON CLICKED!");
-    console.log("Order:", order);
-    console.log("Next Status:", nextStatus);
-    console.log("Order ID:", order?.id);
-    // ======================================
-    
-    const orderId = Number(order?.id);
-    if (!Number.isFinite(orderId) || !nextStatus) return;
+const handleRoleStatusUpdate = async (orderId, nextStatus) => {
+  setRoleActionOrderId(orderId);
+  setRoleActionMessage("");
 
-    const normalizedNextStatus = normalizeStatusLabel(nextStatus);
-    const statusCode = ORDER_STATUS_CODES[String(normalizedNextStatus).toLowerCase()] || null;
-
-    setRoleActionOrderId(orderId);
-    setRoleActionMessage("");
-
-    const payloadVariants = [
-      { status: normalizedNextStatus },
-      { Status: normalizedNextStatus },
-      { newStatus: normalizedNextStatus },
-      { NewStatus: normalizedNextStatus },
-      ...(statusCode ? [{ status: statusCode }, { Status: statusCode }, { statusi: statusCode }, { Statusi: statusCode }] : []),
-      ...(statusCode ? [{ status: normalizedNextStatus, statusCode }] : []),
-    ];
-
-    const explicitTransitionCandidates = [];
-    if (normalizedNextStatus === "Accepted") {
-      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/accept`, payload: JSON.stringify("") });
-    }
-    if (normalizedNextStatus === "Preparing") {
-      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/prepare`, payload: JSON.stringify("") });
-    }
-    if (normalizedNextStatus === "Ready") {
-      explicitTransitionCandidates.push({ method: "POST", url: `${API_BASE}/orders/${orderId}/ready`, payload: JSON.stringify("") });
-    }
-   if (normalizedNextStatus === "Delivered") {
-  console.log("📦 DELIVER ENDPOINT WILL BE CALLED");
-  console.log("URL:", `${API_BASE}/orders/${orderId}/deliver`);
-  
   try {
-    const token = getStoredToken();
-    const response = await fetch(`${API_BASE}/orders/${orderId}/deliver`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`
+    const normalizedNextStatus = String(nextStatus || "").trim().toLowerCase();
+
+    const endpointMap = {
+      accepted: {
+        method: "POST",
+        url: `${API_BASE}/orders/${orderId}/accept`,
+        body: JSON.stringify("Accepted by branch manager"),
       },
-      body: JSON.stringify("")
+      preparing: {
+        method: "POST",
+        url: `${API_BASE}/orders/${orderId}/prepare`,
+        body: JSON.stringify("Order is being prepared"),
+      },
+      ready: {
+        method: "POST",
+        url: `${API_BASE}/orders/${orderId}/ready`,
+        body: JSON.stringify("Order is ready"),
+      },
+      delivered: {
+        method: "POST",
+        url: `${API_BASE}/orders/${orderId}/deliver`,
+        body: JSON.stringify("Delivered by courier"),
+      },
+    };
+
+    const target = endpointMap[normalizedNextStatus] || {
+      method: "PUT",
+      url: `${API_BASE}/orders/${orderId}/status`,
+      body: JSON.stringify({ status: nextStatus }),
+    };
+
+    const response = await fetch(target.url, {
+      method: target.method,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: target.body,
     });
-    
-    console.log("Response status:", response.status);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log("✅ Order delivered:", data);
-      setRoleActionMessage(`Order #${orderId} delivered successfully!`);
-      setRoleToastVisible(true);
-      setTimeout(() => setRoleToastVisible(false), 3000);
-      
-      // Përditëso UI-në
-      setRoleOrders(current =>
-        current.map(o =>
-          Number(o.id) === orderId
-            ? { ...o, statusLabel: "Delivered" }
-            : o
-        )
-      );
-    } else {
-      const error = await response.text();
-      console.error("❌ Delivery failed:", error);
-      setRoleActionMessage(`Failed to deliver: ${response.status}`);
-      setRoleToastVisible(true);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Status update failed");
     }
+
+    setRoleActionMessage(`Order #${orderId} moved to ${nextStatus}.`);
+    setRoleToastVisible(true);
+
+    await fetchOperationalOrders();
   } catch (err) {
-    console.error("❌ Network error:", err);
-    setRoleActionMessage("Network error during delivery");
+    console.error("Order status update failed:", err);
+    setRoleActionMessage(err.message || "Order status update failed.");
+    setRoleToastVisible(true);
+  } finally {
+    setRoleActionOrderId(null);
   }
-  
-  setRoleActionOrderId(null);
-  return;
-}
-
-    const genericCandidates = [
-      { method: "PUT", url: `${API_BASE}/orders/${orderId}/status` },
-      { method: "PATCH", url: `${API_BASE}/orders/${orderId}/status` },
-      { method: "POST", url: `${API_BASE}/orders/${orderId}/status` },
-      { method: "PUT", url: `${API_BASE}/orders/${orderId}/update-status` },
-      { method: "PATCH", url: `${API_BASE}/orders/${orderId}/update-status` },
-      { method: "POST", url: `${API_BASE}/orders/${orderId}/update-status` },
-      { method: "PUT", url: `${API_BASE}/orders/update-status/${orderId}` },
-      { method: "PATCH", url: `${API_BASE}/orders/update-status/${orderId}` },
-      { method: "POST", url: `${API_BASE}/orders/update-status/${orderId}` },
-    ];
-
-    const requestCandidates = [...explicitTransitionCandidates, ...genericCandidates];
-
-    try {
-      let updated = false;
-
-      for (const candidate of requestCandidates) {
-        const candidatePayloads = candidate.payload
-          ? [candidate.payload]
-          : payloadVariants.map((p) => JSON.stringify(p));
-
-        for (const payloadBody of candidatePayloads) {
-          console.log(`Trying: ${candidate.method} ${candidate.url}`);
-          const res = await authenticatedFetch(candidate.url, {
-            method: candidate.method,
-            headers: { "Content-Type": "application/json" },
-            body: payloadBody,
-          });
-
-          console.log(`Response status: ${res.status}`);
-
-          if (res.ok) {
-            updated = true;
-            break;
-          }
-
-          if ([401, 403].includes(res.status)) {
-            const errPayload = await res.json().catch(() => null);
-            setRoleActionMessage(extractErrorMessage(errPayload, `Failed to update order (HTTP ${res.status}).`));
-            setRoleActionOrderId(null);
-            return;
-          }
-        }
-
-        if (updated) break;
-      }
-
-      if (!updated) {
-        setRoleActionMessage("Order status endpoint not found. Check backend route for status update.");
-        return;
-      }
-
-      setRoleActionMessage(`Order #${orderId} moved to ${normalizedNextStatus}.`);
-      setRoleToastVisible(true);
-      clearTimeout(roleToastTimerRef.current);
-      roleToastTimerRef.current = setTimeout(() => setRoleToastVisible(false), 3500);
-      setRoleOrders((current) =>
-        current.map((entry) =>
-          Number(entry?.id) === orderId
-            ? {
-                ...entry,
-                statusLabel: normalizedNextStatus,
-              }
-            : entry
-        )
-      );
-    } catch (err) {
-      console.error(err);
-      setRoleActionMessage("Could not update order status right now.");
-      setRoleToastVisible(true);
-      clearTimeout(roleToastTimerRef.current);
-      roleToastTimerRef.current = setTimeout(() => setRoleToastVisible(false), 4000);
-    } finally {
-      setRoleActionOrderId(null);
-    }
 };
 
   const handleSignup = async () => {
@@ -3818,14 +3729,8 @@ const filtered = (restaurants || []).filter(r => {
         }
       }
 
-      if (hash.startsWith("#/admin/drivers")) {
-  return {
-    page: "adminDrivers",
-    category: "",
-    restaurantId: null,
-    branchId: "",
-  };
-}
+  
+
       
       // Courier should use Driver Dashboard, not Orders Dashboard (/my-orders)
       if (!isInvoiceRoute && isCourierRole && route.page === "myOrders") {
@@ -4888,22 +4793,69 @@ const filtered = (restaurants || []).filter(r => {
                                 </div>
                                 {actions.length > 0 && (
                                   <div className="kanban-actions" onClick={e => e.stopPropagation()}>
-                                    {actions.map((action) => (
-                                      <button
-                                        key={`${order.id}-${action.nextStatus}`}
-                                        type="button"
-                                        className="kanban-action-btn"
-                                        style={{ background: col.color }}
-                                        disabled={Number(roleActionOrderId) === Number(order.id)}
-                                        onClick={() => handleRoleOrderStatusUpdate(order, action.nextStatus)}
-                                      >
-                                        {Number(roleActionOrderId) === Number(order.id) ? (
-                                          <><i className="bi bi-hourglass-split me-1"></i>Updating...</>
-                                        ) : (
-                                          <><i className="bi bi-arrow-right-circle me-1"></i>{action.label}</>
-                                        )}
-                                      </button>
-                                    ))}
+                                    {actions.map((action) => {
+  // Nëse është butoni "Deliver" për Courier, përdor endpoint-in specifik
+  if (action.nextStatus === "Delivered" && isCourierRole) {
+    return (
+      <button
+        key={`${order.id}-${action.nextStatus}`}
+        type="button"
+        className="kanban-action-btn"
+        style={{ background: col.color }}
+        disabled={Number(roleActionOrderId) === Number(order.id)}
+        onClick={async () => {
+          console.log("🚚 Courier delivering order:", order.id);
+          const orderId = order.id;
+          try {
+            const token = getStoredToken();
+            const response = await fetch(`${API_BASE}/orders/${orderId}/deliver`, {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify("Delivered by courier"),
+            });
+            
+            if (response.ok) {
+              console.log("✅ Order delivered successfully");
+              await fetchOperationalOrders();
+              setRoleActionMessage(`Order #${orderId} delivered!`);
+              setRoleToastVisible(true);
+              setTimeout(() => setRoleToastVisible(false), 3000);
+            } else {
+              const error = await response.text();
+              console.error("❌ Delivery failed:", error);
+              setRoleActionMessage(`Failed: ${response.status}`);
+              setRoleToastVisible(true);
+            }
+          } catch (err) {
+            console.error("❌ Error:", err);
+            setRoleActionMessage("Network error");
+          } finally {
+            setRoleActionOrderId(null);
+          }
+        }}
+      >
+        {Number(roleActionOrderId) === Number(order.id) ? "Delivering..." : action.label}
+      </button>
+    );
+  }
+  
+  // Për butonat e tjerë (Accept, Preparing, Ready), vazhdo normalisht
+  return (
+    <button
+      key={`${order.id}-${action.nextStatus}`}
+      type="button"
+      className="kanban-action-btn"
+      style={{ background: col.color }}
+      disabled={Number(roleActionOrderId) === Number(order.id)}
+      onClick={() => handleRoleStatusUpdate(order.id, action.nextStatus)}
+    >
+      {Number(roleActionOrderId) === Number(order.id) ? "Updating..." : action.label}
+    </button>
+  );
+})}
                                   </div>
                                 )}
                               </div>
@@ -4958,7 +4910,7 @@ const filtered = (restaurants || []).filter(r => {
                                 type="button"
                                 className={action.buttonClass}
                                 disabled={Number(roleActionOrderId) === Number(order.id)}
-                                onClick={() => handleRoleOrderStatusUpdate(order, action.nextStatus)}
+                                onClick={() => handleRoleStatusUpdate(order.id, action.nextStatus)}
                               >
                                 {Number(roleActionOrderId) === Number(order.id) ? "Updating..." : action.label}
                               </button>
@@ -5528,6 +5480,7 @@ const filtered = (restaurants || []).filter(r => {
             />
           </>
         )}
+        
 
         {page === "branchMenu" && (
           <BranchMenuPage
@@ -5938,6 +5891,7 @@ const filtered = (restaurants || []).filter(r => {
           "adminApplications",
           "adminBranchRequests",
           "adminCategories",
+          "adminDrivers",
           "partnerCouriers",
           "partnerMerchants",
           "partnerCompanies",

@@ -163,21 +163,32 @@ const DriverDashboard = ({ token, onBack }) => {
   }, []);
 
   const markDelivered = async (orderId) => {
-    setActionLoading(`${orderId}-deliver`);
-    try {
-      await axios.put(
-        `${API_BASE_URL}/orders/${orderId}/status`,
-        { status: "Delivered" },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      await fetchData();
-      showToast(`Order #${orderId} marked as delivered.`, "success");
-    } catch {
-      showToast("Failed to mark as delivered.", "danger");
-    } finally {
-      setActionLoading(null);
+  setActionLoading(`${orderId}-deliver`);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/deliver`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify("Delivered by courier"),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(errorText || "Failed to mark as delivered");
     }
-  };
+
+    await fetchData();
+    showToast(`Order #${orderId} delivered.`, "success");
+  } catch (error) {
+    console.error("Mark delivered failed:", error);
+    showToast(error.message || "Failed to mark as delivered.", "danger");
+  } finally {
+    setActionLoading(null);
+  }
+};
 
   const acceptOrder = async (orderId) => {
     setActionLoading(`${orderId}-accept`);
