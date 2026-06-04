@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace FoodDeliveryyy.Controllers;
 
@@ -175,26 +176,29 @@ public class ReviewsController : ControllerBase
 
         return CreatedAtAction(nameof(GetReviews), new { id = review.Id }, createdReview);
     }
-
     [HttpPut("{id}")]
     [Authorize(Roles = AppRoles.Customer + "," + AppRoles.Admin)]
-    public async Task<IActionResult> UpdateReview(int id, Reviews review)
+    public async Task<IActionResult> UpdateReview(int id, [FromBody] JsonElement updateData)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         var role = AppRoles.Normalize(User.FindFirst(ClaimTypes.Role)?.Value);
 
-        var existing = await _context.Reviews.AsNoTracking()
-            .FirstOrDefaultAsync(r => r.Id == id);
-        if (existing == null) return NotFound();
+        var existingReview = await _context.Reviews.FindAsync(id);
+        if (existingReview == null) return NotFound();
 
-        if (role == AppRoles.Customer && existing.UserId != userId)
-            return Forbid("You can not change someone else's review");
+        if (role == AppRoles.Customer && existingReview.UserId != userId)
+            return Forbid("You cannot change someone else's review");
 
-        review.DataKrijimit = existing.DataKrijimit;
-        _context.Entry(review).State = EntityState.Modified;
+        if (updateData.TryGetProperty("vlersimi", out var ratingProp))
+            existingReview.Vlersimi = ratingProp.GetDecimal();
+
+        if (updateData.TryGetProperty("komenti", out var commentProp))
+            existingReview.Komenti = commentProp.GetString();
+
         await _context.SaveChangesAsync();
-        await UpdateRestaurantRating(review.RestaurantId);
-        return NoContent();
+        await UpdateRestaurantRating(existingReview.RestaurantId);
+
+        return Ok(existingReview);
     }
 
     [HttpDelete("{id}")]
