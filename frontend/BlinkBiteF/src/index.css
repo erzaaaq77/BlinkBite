@@ -2797,18 +2797,26 @@ body {
 .restaurant-menu {
   margin-top: 0;
 }
+.merchant-dashboard-page{
+  padding-top: 70px !important;
+}
 
 /* Rregullim për të gjitha faqet që kanë navbar fixed */
 .restaurants-page,
 .restaurant-details-page,
 .cart-page,
 .orders-page,
-.merchant-dashboard-page,
+
 .driver-dashboard-page,
-.partners-page,
+
 .branch-menu-page,
 .home-page {
-  padding-top: 50px !important;
+  padding-top: 90px !important;
+  
+}
+.partners-page {
+  padding-top: 10px !important;
+  margin-top: 10px !important;
 }
 
 /* Për mobile */

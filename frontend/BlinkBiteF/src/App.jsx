@@ -3348,6 +3348,12 @@ const handleRoleStatusUpdate = async (orderId, nextStatus) => {
           setLoginMessage("");
           setLoginUsername("");
           setLoginPassword("");
+          const role = getRoleFromJwt();
+  const roleLower = String(role || "").toLowerCase();
+  
+  if (roleLower === "courier") {
+    window.location.hash = "/driver/dashboard";
+  }
           await fetchCategories();
           if (selectedCategory) {
             await fetchRestaurantsByCategory(selectedCategory);
