@@ -67,7 +67,7 @@ const MerchantApplicationPage = () => {
       const response = await axios.post(`${API_BASE_URL}/applications/restaurant`, formData);
       if (response.status === 200 || response.status === 201) {
         setMessageType("success");
-        setMessage("✅ Aplikimi u dërgua me sukses! Admini do t'ju kontaktojë së shpejti.");
+        setMessage("✅ Application submitted successfully! Admin will contact you soon.");
         setFormData({
           restaurantName: "",
           restaurantDescription: "",
@@ -80,7 +80,7 @@ const MerchantApplicationPage = () => {
       }
     } catch (error) {
       setMessageType("error");
-      setMessage(error.response?.data?.message || "❌ Ndodhi një gabim. Ju lutemi provoni përsëri.");
+      setMessage(error.response?.data?.message || "❌ An error occurred. Please try again.");
     } finally {
       setSubmitting(false);
     }

@@ -2779,3 +2779,50 @@ body {
   color: #f5c518 !important;
   text-decoration: underline !important;
 }
+
+/* Rregullim për Restaurant Details Page */
+.restaurant-details-page {
+  padding-top: 55px !important;
+  margin-top: 0 !important;
+}
+
+/* Rregullim për Branch Menu Page */
+.branch-menu-page {
+  padding-top: 55px !important;
+}
+
+/* Rregullim për të gjitha faqet që kanë content */
+.restaurant-summary-card,
+.restaurant-branches,
+.restaurant-menu {
+  margin-top: 0;
+}
+
+/* Rregullim për të gjitha faqet që kanë navbar fixed */
+.restaurants-page,
+.restaurant-details-page,
+.cart-page,
+.orders-page,
+.merchant-dashboard-page,
+.driver-dashboard-page,
+.partners-page,
+.branch-menu-page,
+.home-page {
+  padding-top: 50px !important;
+}
+
+/* Për mobile */
+@media (max-width: 768px) {
+  .restaurants-page,
+  .restaurant-details-page,
+  .cart-page,
+  .orders-page,
+  .merchant-dashboard-page,
+  .driver-dashboard-page,
+  .partners-page,
+  .branch-menu-page,
+  .home-page {
+    padding-top: 12px;
+  }
+}
+

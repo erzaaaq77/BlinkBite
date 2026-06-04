@@ -34,6 +34,8 @@ namespace FoodDeliveryyy.Data
 
         public DbSet<BranchApplication> BranchApplications { get; set; }
 
+        public DbSet<CustomerAddress> CustomerAddresses { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

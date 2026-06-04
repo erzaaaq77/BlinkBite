@@ -402,6 +402,23 @@ public class DashboardController : ControllerBase
         var today = DateTime.Today;
         var startOfWeek = today.AddDays(-(int)today.DayOfWeek);
 
+        // ✅ ADD THIS - Available orders (Ready dhe pa shofer)
+        var availableOrders = await _context.Orders
+            .Where(o => o.Statusi == OrderStatus.Ready
+                     && o.AssignedCourierId == null
+                     && !_context.Deliveries.Any(d => d.OrderId == o.Id && d.Statusi != DeliveryStatus.Delivered))
+            .Include(o => o.Restaurant)
+            .Select(o => new
+            {
+                o.Id,
+                o.AdresaDorezimit,
+                o.ShumaTotale,
+                RestaurantName = o.Restaurant.Emertimi,
+                o.Statusi,
+                o.DataPorosis
+            })
+            .ToListAsync();
+
         var dashboard = new
         {
             Driver = new
@@ -418,22 +435,26 @@ public class DashboardController : ControllerBase
                 ThisWeek = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.DataMarrjes != null && d.DataMarrjes.Value.Date >= startOfWeek),
                 Completed = await _context.Deliveries.CountAsync(d => d.DriverId == driver.Id && d.Statusi == DeliveryStatus.Delivered)
             },
+
+            AvailableOrders = availableOrders,
+
             CurrentOrders = await _context.Orders
-    .Where(o => o.AssignedCourierId == userId
-             && o.Statusi != OrderStatus.Delivered
-             && o.Statusi != OrderStatus.Cancelled)
-    .Include(o => o.Restaurant)
-    .Select(o => new
-    {
-        o.Id,
-        o.AdresaDorezimit,
-        o.ShumaTotale,
-        RestaurantName = o.Restaurant.Emertimi,
-        o.Statusi,
-        o.DataPorosis,
-        o.AssignedAt
-    })
-    .ToListAsync(),
+.Where(o => o.AssignedCourierId == userId
+         && o.Statusi != OrderStatus.Delivered
+         && o.Statusi != OrderStatus.Cancelled)
+.Include(o => o.Restaurant)
+.Select(o => new
+{
+    o.Id,
+    o.AdresaDorezimit,
+    o.ShumaTotale,
+    RestaurantName = o.Restaurant.Emertimi,
+    o.Statusi,
+    o.DataPorosis,
+    o.AssignedAt
+})
+.ToListAsync(),
+
             DeliveryHistory = await _context.Orders
     .Where(o => o.AssignedCourierId == userId
              && o.Statusi == OrderStatus.Delivered)
@@ -448,20 +469,6 @@ public class DashboardController : ControllerBase
         RestaurantName = o.Restaurant.Emertimi,
         o.DataPorosis,
         DeliveredAt = o.AssignedAt
-    })
-    .ToListAsync(),
-
-            AvailableOrders = await _context.Orders
-    .Where(o => o.Statusi == OrderStatus.Ready
-             && o.AssignedCourierId == null)
-    .Include(o => o.Restaurant)
-    .Select(o => new
-    {
-        o.Id,
-        o.AdresaDorezimit,
-        o.ShumaTotale,
-        RestaurantName = o.Restaurant.Emertimi,
-        o.DataPorosis
     })
     .ToListAsync(),
             Performance = new
@@ -482,6 +489,9 @@ public class DashboardController : ControllerBase
     public async Task<IActionResult> AcceptOrder(int orderId)
     {
         var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized("Courier user id not found.");
+
         var driver = await _context.DeliveryDrivers.FirstOrDefaultAsync(d => d.UserId == userId);
         if (driver == null)
             return NotFound("Driver profile not found.");
@@ -492,27 +502,71 @@ public class DashboardController : ControllerBase
 
         if (order == null)
             return NotFound("Order not found.");
+
         if (order.Statusi != OrderStatus.Ready)
             return BadRequest("Order is not in Ready status.");
-        if (order.Delivery != null)
+
+        if (!string.IsNullOrWhiteSpace(order.AssignedCourierId) || order.Delivery != null)
             return BadRequest("Order already has a driver assigned.");
+
+        order.AssignedCourierId = userId;
+        order.AssignedAt = DateTime.UtcNow;
 
         var delivery = new Deliveries
         {
             OrderId = orderId,
             DriverId = driver.Id,
             Statusi = DeliveryStatus.Pending,
-            DataMarrjes = DateTime.Now
+            DataMarrjes = DateTime.UtcNow
         };
 
         _context.Deliveries.Add(delivery);
         await _context.SaveChangesAsync();
 
-        return Ok(new { message = "Order accepted.", deliveryId = delivery.Id });
+        return Ok(new
+        {
+            message = "Order accepted.",
+            deliveryId = delivery.Id,
+            assignedCourierId = order.AssignedCourierId,
+            assignedAt = order.AssignedAt
+        });
+    }
+ 
+[HttpPost("Driver/mark-delivered/{orderId}")]
+    [Authorize(Roles = AppRoles.Courier)]
+    public async Task<IActionResult> MarkOrderDelivered(int orderId)
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized("Courier user id not found.");
+
+        var driver = await _context.DeliveryDrivers.FirstOrDefaultAsync(d => d.UserId == userId);
+        if (driver == null)
+            return NotFound("Driver profile not found.");
+
+        var delivery = await _context.Deliveries
+            .FirstOrDefaultAsync(d => d.OrderId == orderId && d.DriverId == driver.Id);
+
+        if (delivery == null)
+            return NotFound("Delivery not found for this driver.");
+
+        var order = await _context.Orders.FindAsync(orderId);
+        if (order == null)
+            return NotFound("Order not found.");
+
+        // Update delivery status
+        delivery.Statusi = DeliveryStatus.Delivered;
+        delivery.DataDorezimit = DateTime.UtcNow;  // ← Përdor DataDorezimit, jo DataMbarimit!
+
+        // Update order status
+        order.Statusi = OrderStatus.Delivered;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Order marked as delivered.", orderId = order.Id });
     }
 }
-
-public class TopProductDto
+    public class TopProductDto
 {
     public int MenuItemId { get; set; }
     public string Name { get; set; } = string.Empty;

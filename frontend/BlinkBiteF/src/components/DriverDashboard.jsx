@@ -166,14 +166,15 @@ const DriverDashboard = ({ token, onBack }) => {
   setActionLoading(`${orderId}-deliver`);
 
   try {
-    const response = await fetch(`${API_BASE_URL}/orders/${orderId}/deliver`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify("Delivered by courier"),
-    });
+    const response = await fetch(
+      `${API_BASE_URL}/dashboard/driver/mark-delivered/${orderId}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();

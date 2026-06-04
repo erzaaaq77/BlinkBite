@@ -45,7 +45,7 @@ const CART_ITEM_QUICK_REQUESTS = [
   "Extra spicy",
   "No cheese",
 ];
-const DELIVERY_FEE_MODE = "distance_tiered";
+const DELIVERY_FEE_MODE = "branch_fixed";
 const DELIVERY_FEE_MODELS = {
   branch_fixed: {
     label: "Branch fixed fee",
@@ -438,6 +438,7 @@ console.log("useState from React:", React?.useState);
         branchId: "",
       };
     }
+    
 
     return {
       page: "home",
@@ -3395,29 +3396,35 @@ const handleRoleStatusUpdate = async (orderId, nextStatus) => {
     }
   };
 
-  const handleSaveAddress = async () => {
-    try {
-      const res = await authenticatedFetch(`${API_BASE}/addresses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          Country: addressCountry,
-          City: addressCity,
-          Adresa: addressStreet,
-          PostalCode: addressPostal,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to save address");
-      closeModal("#locationModal");
-      setAddressCountry("");
-      setAddressCity("");
-      setAddressStreet("");
-      setAddressPostal("");
-    } catch (err) {
-      console.error(err);
-      alert("Could not save address. Make sure you are logged in.");
-    }
-  };
+const handleSaveAddress = () => {
+  const fullAddress = [addressStreet, addressCity, addressCountry]
+    .filter(Boolean)
+    .join(", ");
+  
+  if (!fullAddress) {
+    alert("Please fill all address fields");
+    return;
+  }
+  
+  // Ruaje vetëm në localStorage
+  localStorage.setItem("saved_delivery_address", fullAddress);
+  setDeliveryAddress(fullAddress);
+  
+  closeModal("#locationModal");
+  setAddressCountry("");
+  setAddressCity("");
+  setAddressStreet("");
+  setAddressPostal("");
+  
+  setOrderMessage("Address saved successfully!");
+  setTimeout(() => setOrderMessage(""), 3000);
+};
+useEffect(() => {
+  const savedAddress = localStorage.getItem("saved_delivery_address");
+  if (savedAddress && !deliveryAddress) {
+    setDeliveryAddress(savedAddress);
+  }
+}, []);
 
   const closeModal = (selector) => {
     const resetModalUiState = () => {
@@ -5828,31 +5835,11 @@ const handleRoleStatusUpdate = async (orderId, nextStatus) => {
                     <span>Delivery</span>
                     <strong>EUR {cartDeliveryFee.toFixed(2)}</strong>
                   </div>
-                  <div className="cart-fee-explainer mb-2">
-                    <div className="small cart-fee-mode">
-                      <strong>Fee model:</strong> {deliveryPricing.modeLabel}
-                    </div>
-                    <div className="small text-muted">
-                      <strong>Rule:</strong> {deliveryPricing.ruleLabel}
-                      {Number.isFinite(Number(deliveryPricing.usedDistanceKm)) && (
-                        <>
-                          {" | "}
-                          <strong>Distance:</strong> {Number(deliveryPricing.usedDistanceKm).toFixed(2)} km
-                        </>
-                      )}
-                    </div>
-                    {Array.isArray(DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE]?.tiers) && (
-                      <div className="small text-muted mt-1">
-                        Tiers: {DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE].tiers
-                          .map((tier) => {
-                            const maxKm = Number(tier.maxKm);
-                            const label = Number.isFinite(maxKm) ? `0-${maxKm}km` : `>${DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE].tiers[DELIVERY_FEE_MODELS[DELIVERY_FEE_MODE].tiers.length - 2]?.maxKm || 0}km`;
-                            return `${label}: EUR ${Number(tier.fee || 0).toFixed(2)}`;
-                          })
-                          .join(" | ")}
-                      </div>
-                    )}
-                  </div>
+          <div className="cart-fee-explainer mb-2">
+  <div className="small cart-fee-mode">
+    <strong>Delivery fee:</strong> EUR {cartDeliveryFee.toFixed(2)}
+  </div>
+</div>
                   <div className="d-flex justify-content-between mb-3 cart-summary-total">
                     <span className="fw-semibold">Total</span>
                     <strong>EUR {cartTotal.toFixed(2)}</strong>
