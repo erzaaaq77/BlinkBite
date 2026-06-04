@@ -20,6 +20,7 @@ const getReviewRating = (review) => {
 
 const getReviewComment = (review) => {
   return (
+    review?.Komenti ??
     review?.komenti ??
     review?.Komenti ??
     review?.koment ??
